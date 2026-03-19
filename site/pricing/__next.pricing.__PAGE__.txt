@@ -1,7 +1,9 @@
 1:"$Sreact.fragment"
-2:I[70061,["/_next/static/chunks/0mz-_p508x2i6.js","/_next/static/chunks/086iou-zmav_7.js","/_next/static/chunks/0d3shmwh5_nmn.js","/_next/static/chunks/01qavszcu1k_k.js"],"default"]
-3:I[7311,["/_next/static/chunks/0mz-_p508x2i6.js","/_next/static/chunks/086iou-zmav_7.js","/_next/static/chunks/0d3shmwh5_nmn.js","/_next/static/chunks/01qavszcu1k_k.js"],"default"]
-4:I[97367,["/_next/static/chunks/0mz-_p508x2i6.js","/_next/static/chunks/086iou-zmav_7.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
-5:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[[["$","$L2",null,{}],["$","$L3",null,{}],["$","section",null,{"className":"py-16 text-center px-4","children":["$","p",null,{"className":"text-[#94A3B8] text-sm","children":"All sales are final. No refunds. Contact support before purchasing."}]}]],[["$","script","script-0",{"src":"/_next/static/chunks/01qavszcu1k_k.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"cIVox_aAbLTEP1S8nQ2pq"}
-6:null
+2:I[47257,["/_next/static/chunks/0e4uwm7144ync.js","/_next/static/chunks/0laewqmn0h4.~.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"ClientPageRoot"]
+3:I[56195,["/_next/static/chunks/0e4uwm7144ync.js","/_next/static/chunks/0laewqmn0h4.~.js","/_next/static/chunks/0d3shmwh5_nmn.js","/_next/static/chunks/0.yyf8-q_fuaa.js"],"default"]
+6:I[97367,["/_next/static/chunks/0e4uwm7144ync.js","/_next/static/chunks/0laewqmn0h4.~.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
+7:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/_next/static/chunks/0.yyf8-q_fuaa.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"U_YNotVbIF4t5vLTANcXN"}
+4:{}
+5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
+8:null
