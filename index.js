@@ -80,15 +80,36 @@ app.use(cors({
 
 app.use(express.json({ limit: '1mb' }));
 
-// Root redirect → dashboard
-app.get('/', (req, res) => res.redirect('/dashboard'));
+// Serve pages — read files directly (works in Vercel serverless)
+function servePage(filename) {
+  const filePath = path.join(__dirname, 'dashboard', filename);
+  if (fs.existsSync(filePath)) {
+    return fs.readFileSync(filePath, 'utf8');
+  }
+  return null;
+}
 
-// Serve dashboard — read file directly (works in Vercel serverless)
-const DASHBOARD_HTML = fs.readFileSync(path.join(__dirname, 'dashboard', 'index.html'), 'utf8');
-app.get('/dashboard', (req, res) => {
+const SITE_HTML = servePage('site.html');
+const ADMIN_HTML = servePage('index.html');
+
+// Public site
+app.get('/', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
-  res.send(DASHBOARD_HTML);
+  res.send(SITE_HTML || ADMIN_HTML);
 });
+
+// Admin dashboard (old)
+app.get('/admin', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(ADMIN_HTML);
+});
+
+// Catch-all for SPA routes
+app.get('/login', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
+app.get('/dashboard', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
+app.get('/dashboard/*', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
+app.get('/theme', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
+app.get('/pricing', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
 
 // Rate limiting
 const rateLimiter = {};
@@ -515,6 +536,39 @@ function getKillSwitchCSS() {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '3.0.0', timestamp: new Date().toISOString() });
+});
+
+// User login with license key
+app.post('/api/auth/login', (req, res) => {
+  const { licenseKey } = req.body;
+  if (!licenseKey) return res.status(400).json({ error: 'License key required' });
+  const license = store.licenses.find(l => l.license_key === licenseKey && l.active);
+  if (!license) return res.status(401).json({ error: 'Invalid license key' });
+  if (license.expires_at && new Date(license.expires_at) < new Date()) {
+    return res.status(401).json({ error: 'License expired' });
+  }
+  res.json({
+    success: true,
+    license: {
+      key: license.license_key,
+      domain: license.domain,
+      permanent_domain: license.permanent_domain,
+      plan: license.plan,
+      active: license.active,
+      created_at: license.created_at,
+      expires_at: license.expires_at,
+      last_verified_at: license.last_verified_at,
+      request_count: license.request_count || 0,
+      notes: license.notes || '',
+      store_name: license.store_name || ''
+    }
+  });
+});
+
+// Check if key is admin
+app.post('/api/auth/check-admin', (req, res) => {
+  const { adminKey } = req.body;
+  res.json({ isAdmin: adminKey === ADMIN_KEY });
 });
 
 // Remote content
