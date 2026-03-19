@@ -80,25 +80,59 @@ app.use(cors({
 
 app.use(express.json({ limit: '1mb' }));
 
-// Serve pages — read files directly (works in Vercel serverless)
-function servePage(filename) {
-  const filePath = path.join(__dirname, 'dashboard', filename);
-  if (fs.existsSync(filePath)) {
-    return fs.readFileSync(filePath, 'utf8');
-  }
+// ─── Serve Next.js static site from /site ───────────────────────
+const siteDir = path.join(__dirname, 'site');
+app.use('/_next', express.static(path.join(siteDir, '_next'), { maxAge: '365d', immutable: true }));
+app.use('/fonts', express.static(path.join(siteDir, 'fonts')));
+app.use('/images', express.static(path.join(siteDir, 'images')));
+
+function serveSitePage(pagePath) {
+  const htmlPath = path.join(siteDir, pagePath, 'index.html');
+  if (fs.existsSync(htmlPath)) return fs.readFileSync(htmlPath, 'utf8');
+  const directPath = path.join(siteDir, pagePath + '.html');
+  if (fs.existsSync(directPath)) return fs.readFileSync(directPath, 'utf8');
   return null;
 }
 
-const SITE_HTML = servePage('site.html');
-const ADMIN_HTML = servePage('index.html');
+// Site pages
+const sitePages = ['/', '/pricing', '/login', '/dashboard', '/docs', '/support'];
+sitePages.forEach(route => {
+  const pagePath = route === '/' ? '' : route.slice(1);
+  app.get(route, (req, res) => {
+    const html = serveSitePage(pagePath) || serveSitePage('');
+    if (html) { res.setHeader('Content-Type', 'text/html'); res.send(html); }
+    else res.status(404).send('Not found');
+  });
+  // Also handle trailing slash
+  if (route !== '/') {
+    app.get(route + '/', (req, res) => {
+      const html = serveSitePage(pagePath);
+      if (html) { res.setHeader('Content-Type', 'text/html'); res.send(html); }
+      else res.redirect(route);
+    });
+  }
+});
 
-// Public site
-app.get('/', (req, res) => {
-  res.setHeader('Content-Type', 'text/html');
-  res.send(SITE_HTML || ADMIN_HTML);
+// Docs sub-pages
+app.get('/docs/:slug', (req, res) => {
+  const html = serveSitePage('docs/' + req.params.slug);
+  if (html) { res.setHeader('Content-Type', 'text/html'); res.send(html); }
+  else res.redirect('/docs');
+});
+app.get('/docs/:slug/', (req, res) => {
+  const html = serveSitePage('docs/' + req.params.slug);
+  if (html) { res.setHeader('Content-Type', 'text/html'); res.send(html); }
+  else res.redirect('/docs');
 });
 
 // Admin dashboard (old)
+function serveDashboardPage(filename) {
+  const filePath = path.join(__dirname, 'dashboard', filename);
+  if (fs.existsSync(filePath)) return fs.readFileSync(filePath, 'utf8');
+  return null;
+}
+const ADMIN_HTML = serveDashboardPage('index.html');
+
 app.get('/admin', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
   res.send(ADMIN_HTML);

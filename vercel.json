@@ -10,22 +10,6 @@
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/index.js" },
-    { "src": "/admin(.*)", "dest": "/index.js" },
-    { "src": "/_next/(.*)", "dest": "/site/_next/$1" },
-    { "src": "/fonts/(.*)", "dest": "/site/fonts/$1" },
-    { "src": "/images/(.*)", "dest": "/site/images/$1" },
-    { "src": "/dashboard/(.*)", "dest": "/site/dashboard/$1" },
-    { "src": "/login/(.*)", "dest": "/site/login/$1" },
-    { "src": "/pricing/(.*)", "dest": "/site/pricing/$1" },
-    { "src": "/docs/(.*)", "dest": "/site/docs/$1" },
-    { "src": "/support/(.*)", "dest": "/site/support/$1" },
-    { "src": "/dashboard", "dest": "/site/dashboard/index.html" },
-    { "src": "/login", "dest": "/site/login/index.html" },
-    { "src": "/pricing", "dest": "/site/pricing/index.html" },
-    { "src": "/docs", "dest": "/site/docs/index.html" },
-    { "src": "/support", "dest": "/site/support/index.html" },
-    { "src": "^/$", "dest": "/site/index.html" },
     { "src": "/(.*)", "dest": "/index.js" }
   ]
 }
