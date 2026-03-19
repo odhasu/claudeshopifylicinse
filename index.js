@@ -49,6 +49,23 @@ function saveStore() {
 
 loadStore();
 
+// ─── Seed "og" universal license if it doesn't exist ────────────
+if (!store.licenses.find(l => l.license_key === 'og')) {
+  store.licenses.push({
+    id: store._nextId++,
+    license_key: 'og',
+    domain: '*',
+    permanent_domain: '*',
+    plan: 'unlimited',
+    active: true,
+    expires_at: null,
+    created_at: new Date().toISOString(),
+    notes: 'Universal owner license — works on all stores'
+  });
+  saveStore();
+  console.log('[Scaled] Seeded universal "og" license');
+}
+
 // ─── Middleware ──────────────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -98,6 +115,11 @@ function validateLicense(licenseKey, domain) {
   if (!license) return { valid: false, reason: 'invalid_key' };
   if (license.expires_at && new Date(license.expires_at) < new Date()) {
     return { valid: false, reason: 'expired' };
+  }
+
+  // Wildcard domain = works on any store
+  if (license.domain === '*' || license.permanent_domain === '*') {
+    return { valid: true, license };
   }
 
   const norm = d => (d || '').replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '').toLowerCase();
