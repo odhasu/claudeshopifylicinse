@@ -5,14 +5,15 @@
  * and validates licenses. Shell sections on Shopify are empty containers;
  * this server fills them with content for licensed stores only.
  *
+ * Uses JSON file storage (Vercel-compatible, no native modules).
+ * Data persists in /tmp on Vercel (survives warm instances).
+ *
  * Endpoints:
  *   POST /api/v3/render         — Main: validates license, renders all sections
  *   GET  /api/remote-content    — Returns CSS/HTML/JS patches per domain
  *   GET  /api/loader/v3/scaled-loader.js — Serves the loader script
  *   GET  /api/health            — Health check
  *   Admin routes under /api/admin/*
- *
- * Deploy to Railway: https://railway.app
  */
 
 const express = require('express');
@@ -20,60 +21,33 @@ const cors = require('cors');
 const helmet = require('helmet');
 const crypto = require('crypto');
 const path = require('path');
-const Database = require('better-sqlite3');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ─── Database Setup ─────────────────────────────────────────────
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'licenses.db');
-const fs = require('fs');
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+// ─── JSON Store (Vercel-compatible) ─────────────────────────────
+// Persists to /tmp on Vercel, or ./data locally
+const DATA_DIR = process.env.VERCEL ? '/tmp' : path.join(__dirname, 'data');
+const DB_FILE = path.join(DATA_DIR, 'store.json');
 
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
+try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch(e) {}
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS licenses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    license_key TEXT UNIQUE NOT NULL,
-    domain TEXT NOT NULL,
-    permanent_domain TEXT,
-    store_name TEXT,
-    plan TEXT DEFAULT 'standard',
-    active INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT (datetime('now')),
-    expires_at TEXT,
-    last_verified_at TEXT,
-    request_count INTEGER DEFAULT 0
-  );
+let store = { licenses: [], request_log: [], remote_content: [], _nextId: 1 };
 
-  CREATE TABLE IF NOT EXISTS request_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    license_key TEXT,
-    domain TEXT,
-    ip TEXT,
-    user_agent TEXT,
-    status TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
+function loadStore() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      store = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    }
+  } catch(e) { console.log('[Store] Fresh start — no saved data'); }
+}
 
-  CREATE TABLE IF NOT EXISTS remote_content (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    domain TEXT,
-    css TEXT,
-    html TEXT,
-    js TEXT,
-    redirect_url TEXT,
-    active INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
+function saveStore() {
+  try { fs.writeFileSync(DB_FILE, JSON.stringify(store, null, 2)); } catch(e) {}
+}
 
-  CREATE INDEX IF NOT EXISTS idx_licenses_key ON licenses(license_key);
-  CREATE INDEX IF NOT EXISTS idx_licenses_domain ON licenses(domain);
-  CREATE INDEX IF NOT EXISTS idx_request_log_created ON request_log(created_at);
-  CREATE INDEX IF NOT EXISTS idx_remote_content_domain ON remote_content(domain);
-`);
+loadStore();
 
 // ─── Middleware ──────────────────────────────────────────────────
 app.use(helmet({
@@ -82,9 +56,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: (origin, callback) => {
-    callback(null, true); // Validate domain in route handler
-  },
+  origin: (origin, callback) => { callback(null, true); },
   methods: ['GET', 'POST', 'DELETE', 'PUT'],
   allowedHeaders: ['Content-Type', 'X-Admin-Key'],
 }));
@@ -104,13 +76,6 @@ function rateLimit(ip, maxPerMinute = 60) {
   rateLimiter[ip].push(now);
   return true;
 }
-setInterval(() => {
-  const now = Date.now();
-  for (const ip of Object.keys(rateLimiter)) {
-    rateLimiter[ip] = rateLimiter[ip].filter(t => now - t < 60000);
-    if (rateLimiter[ip].length === 0) delete rateLimiter[ip];
-  }
-}, 300000);
 
 // ─── License Helpers ────────────────────────────────────────────
 function generateLicenseKey() {
@@ -122,7 +87,7 @@ function generateLicenseKey() {
 }
 
 function validateLicense(licenseKey, domain) {
-  const license = db.prepare('SELECT * FROM licenses WHERE license_key = ? AND active = 1').get(licenseKey);
+  const license = store.licenses.find(l => l.license_key === licenseKey && l.active);
   if (!license) return { valid: false, reason: 'invalid_key' };
   if (license.expires_at && new Date(license.expires_at) < new Date()) {
     return { valid: false, reason: 'expired' };
@@ -137,30 +102,38 @@ function validateLicense(licenseKey, domain) {
     return { valid: false, reason: 'domain_mismatch', expected: licenseDomain };
   }
 
-  db.prepare('UPDATE licenses SET last_verified_at = datetime(\'now\'), request_count = request_count + 1 WHERE id = ?').run(license.id);
+  license.last_verified_at = new Date().toISOString();
+  license.request_count = (license.request_count || 0) + 1;
+  saveStore();
   return { valid: true, license };
 }
 
 function logRequest(licenseKey, domain, ip, userAgent, status) {
-  db.prepare('INSERT INTO request_log (license_key, domain, ip, user_agent, status) VALUES (?, ?, ?, ?, ?)').run(licenseKey, domain, ip, userAgent, status);
+  store.request_log.unshift({
+    id: store._nextId++,
+    license_key: licenseKey,
+    domain: domain,
+    ip: ip,
+    user_agent: userAgent,
+    status: status,
+    created_at: new Date().toISOString()
+  });
+  // Keep last 1000 logs
+  if (store.request_log.length > 1000) store.request_log = store.request_log.slice(0, 1000);
+  saveStore();
 }
 
 // ─── Section Renderers ──────────────────────────────────────────
-// Each renderer takes (settings, products, colors, config) and returns HTML string.
-
 const renderers = {};
 
 renderers['header-minimal'] = function(settings, products, colors, cfg) {
   const logo = settings.logo || cfg.logoUrl || '';
-  const logoMobile = settings.logo_mobile || logo;
   const links = [];
   for (let i = 1; i <= 6; i++) {
     const text = settings['nav_link_' + i + '_text'];
     const url = settings['nav_link_' + i + '_url'];
     if (text) links.push({ text, url: url || '#' });
   }
-
-  const accentColor = colors.accent1 || '#39ff14';
 
   return `<div class="header-pill-wrapper">
   <div class="header-pill">
@@ -304,12 +277,9 @@ renderers['product-grid'] = function(settings, products, colors, cfg) {
 renderers['testimonials'] = function(settings) {
   const images = settings.images || [];
   if (!images.length) return '';
-
   const headline = settings.headline || 'What Our Customers Say';
   const speed = settings.animationSpeed || 20;
   const imgHeight = settings.imageHeight || 250;
-
-  // Duplicate images for infinite scroll
   const allImages = [...images, ...images];
   const imgsHtml = allImages.map(img =>
     `<img src="${img.url}" alt="${escapeHtml(img.alt || '')}" style="height:${imgHeight}px;width:auto;border-radius:12px;object-fit:cover;flex-shrink:0;" loading="lazy">`
@@ -318,9 +288,7 @@ renderers['testimonials'] = function(settings) {
   return `<div style="padding:60px 0;overflow:hidden;">
     <h2 style="text-align:center;font-family:var(--font-heading);font-size:clamp(24px,4vw,36px);text-transform:uppercase;letter-spacing:-0.5px;margin-bottom:32px;color:#fff;">${escapeHtml(headline)}</h2>
     <div style="-webkit-mask:linear-gradient(90deg,transparent,#000 80px,#000 calc(100% - 80px),transparent);mask:linear-gradient(90deg,transparent,#000 80px,#000 calc(100% - 80px),transparent);">
-      <div style="display:flex;gap:16px;animation:testimonialScroll ${speed}s linear infinite;">
-        ${imgsHtml}
-      </div>
+      <div style="display:flex;gap:16px;animation:testimonialScroll ${speed}s linear infinite;">${imgsHtml}</div>
     </div>
   </div>`;
 };
@@ -329,7 +297,6 @@ renderers['faq'] = function(settings) {
   const heading = settings.heading || 'Frequently Asked Questions';
   const faqs = settings.faqs || [];
   if (!faqs.length) return '';
-
   const faqsHtml = faqs.map((faq, i) =>
     `<div class="faq-item" id="faq-item-${i}">
       <div class="faq-question" onclick="(function(){var item=document.getElementById('faq-item-${i}');var wasOpen=item.classList.contains('open');document.querySelectorAll('.faq-item.open').forEach(function(i){i.classList.remove('open')});if(!wasOpen)item.classList.add('open');})()">
@@ -351,8 +318,8 @@ renderers['chat'] = function(settings, products, colors) {
   const greeting = settings.greeting || 'Hey! How can I help?';
   const accent = colors.accent1 || '#39ff14';
 
-  return `<div class="chat-fab" id="chat-fab" onclick="document.getElementById('chat-window').classList.toggle('open')" style="position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:${accent};color:#000;display:flex;align-items:center;justify-content:center;z-index:998;box-shadow:0 4px 20px ${accent}66;cursor:pointer;transition:transform 0.2s;">
-  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  return `<div class="chat-fab" id="chat-fab" onclick="document.getElementById('chat-window').classList.toggle('open')" style="position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:${accent};color:#000;display:flex;align-items:center;justify-content:center;z-index:998;box-shadow:0 4px 20px ${accent}66;cursor:pointer;">
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
   ${settings.showPulse ? `<span style="position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:${accent};animation:chatPulse 2s infinite;"></span>` : ''}
 </div>
 <div class="chat-window" id="chat-window" style="position:fixed;bottom:96px;right:24px;width:380px;max-height:500px;background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:16px;z-index:999;display:none;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
@@ -368,7 +335,7 @@ renderers['chat'] = function(settings, products, colors) {
   </div>
   <div style="padding:12px;border-top:1px solid var(--color-border);display:flex;gap:8px;">
     <input type="text" id="chat-input" placeholder="Ask me anything..." style="flex:1;background:var(--color-bg-elevated,#1a1a1a);border:1px solid var(--color-border);border-radius:8px;padding:10px 12px;color:var(--color-text);font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')document.getElementById('chat-send').click()">
-    <button id="chat-send" style="background:${accent};color:#000;border:none;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;" onclick="(function(){var i=document.getElementById('chat-input'),m=document.getElementById('chat-messages');if(!i.value.trim())return;var d=document.createElement('div');d.style.cssText='background:${accent};color:#000;border-radius:12px 12px 4px 12px;padding:10px 14px;max-width:85%;font-size:14px;margin-left:auto;margin-bottom:8px;font-weight:500;';d.textContent=i.value;m.appendChild(d);i.value='';m.scrollTop=m.scrollHeight;setTimeout(function(){var r=document.createElement('div');r.style.cssText='background:var(--color-bg-elevated,#1a1a1a);border-radius:12px 12px 12px 4px;padding:10px 14px;max-width:85%;font-size:14px;color:var(--color-text);margin-bottom:8px;';r.textContent='Thanks for your message! We\\'ll get back to you soon.';m.appendChild(r);m.scrollTop=m.scrollHeight;},1000);})()">Send</button>
+    <button id="chat-send" style="background:${accent};color:#000;border:none;border-radius:8px;padding:10px 16px;font-weight:700;cursor:pointer;" onclick="(function(){var i=document.getElementById('chat-input'),m=document.getElementById('chat-messages');if(!i.value.trim())return;var d=document.createElement('div');d.style.cssText='background:${accent};color:#000;border-radius:12px 12px 4px 12px;padding:10px 14px;max-width:85%;font-size:14px;margin-left:auto;margin-bottom:8px;font-weight:500;';d.textContent=i.value;m.appendChild(d);i.value='';m.scrollTop=m.scrollHeight;setTimeout(function(){var r=document.createElement('div');r.style.cssText='background:var(--color-bg-elevated,#1a1a1a);border-radius:12px 12px 12px 4px;padding:10px 14px;max-width:85%;font-size:14px;color:var(--color-text);margin-bottom:8px;';r.textContent='Thanks for your message! We will get back to you soon.';m.appendChild(r);m.scrollTop=m.scrollHeight;},1000);})()">Send</button>
   </div>
 </div>`;
 };
@@ -377,8 +344,6 @@ renderers['reviews'] = function(settings, products, colors) {
   const title = settings.title || 'Customer Reviews';
   const subtitle = settings.subtitle || '';
   const accent = colors.accent1 || '#39ff14';
-
-  // Generate sample reviews (in production, these would come from a reviews API)
   const names = ['Alex M.', 'Sarah K.', 'Mike R.', 'Jordan T.', 'Emily W.', 'Chris B.'];
   const texts = [
     'Best vendor list I\'ve ever purchased. Made my money back in the first week!',
@@ -388,7 +353,6 @@ renderers['reviews'] = function(settings, products, colors) {
     'Great customer service and the vendor list exceeded my expectations.',
     'This is exactly what I needed to start my reselling journey. Thank you!'
   ];
-
   const reviewsHtml = names.map((name, i) =>
     `<div style="background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:12px;padding:20px;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
@@ -410,15 +374,12 @@ renderers['reviews'] = function(settings, products, colors) {
         <span style="color:var(--color-text-muted);font-size:14px;">(${names.length} reviews)</span>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-      ${reviewsHtml}
-    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">${reviewsHtml}</div>
   </div>`;
 };
 
 renderers['live-sales'] = function(settings, products, colors) {
   if (!settings.enabled || !products || !products.length) return '';
-
   const nameColor = settings.name_color || '#cc3d3d';
   const duration = (settings.display_duration || 7) * 1000;
   const minDelay = (settings.min_delay || 8) * 1000;
@@ -426,29 +387,14 @@ renderers['live-sales'] = function(settings, products, colors) {
   const initialDelay = (settings.initial_delay || 5) * 1000;
   const position = settings.position || 'bottom-left';
   const isLeft = position === 'bottom-left';
-
   const productsJson = JSON.stringify(products);
-  const names = JSON.stringify(['Alex','Jordan','Sarah','Mike','Emily','Chris','Taylor','Sam','Morgan','Casey']);
+  const namesJson = JSON.stringify(['Alex','Jordan','Sarah','Mike','Emily','Chris','Taylor','Sam','Morgan','Casey']);
 
   return `<div class="live-sales-toast" id="live-sales-toast" style="position:fixed;bottom:24px;${isLeft ? 'left' : 'right'}:24px;max-width:340px;background:rgba(99,99,99,0.25);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:14px 18px;z-index:997;transform:translateX(${isLeft ? '-120%' : '120%'});transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1);font-size:14px;color:#fff;">
   <span id="live-sales-text"></span>
 </div>
 <script>
-(function(){
-  var products=${productsJson};
-  var names=${names};
-  var toast=document.getElementById('live-sales-toast');
-  var text=document.getElementById('live-sales-text');
-  if(!toast||!products.length)return;
-  function show(){
-    var name=names[Math.floor(Math.random()*names.length)];
-    var product=products[Math.floor(Math.random()*products.length)];
-    text.innerHTML='<strong style="color:${nameColor}">'+name+'</strong> just purchased <strong>'+product+'</strong>';
-    toast.style.transform='translateX(0)';
-    setTimeout(function(){toast.style.transform='translateX(${isLeft ? '-120%' : '120%'})';},${duration});
-  }
-  setTimeout(function(){show();setInterval(show,${Math.round((minDelay + maxDelay) / 2)});},${initialDelay});
-})();
+(function(){var products=${productsJson};var names=${namesJson};var toast=document.getElementById('live-sales-toast');var text=document.getElementById('live-sales-text');if(!toast||!products.length)return;function show(){var name=names[Math.floor(Math.random()*names.length)];var product=products[Math.floor(Math.random()*products.length)];text.innerHTML='<strong style="color:${nameColor}">'+name+'</strong> just purchased <strong>'+product+'</strong>';toast.style.transform='translateX(0)';setTimeout(function(){toast.style.transform='translateX(${isLeft ? '-120%' : '120%'})';},${duration});}setTimeout(function(){show();setInterval(show,${Math.round((minDelay + maxDelay) / 2)});},${initialDelay});})();
 </script>`;
 };
 
@@ -464,7 +410,7 @@ renderers['footer'] = function(settings, products, colors) {
   return `<div style="border-top:1px solid var(--color-border);padding:40px 20px;text-align:center;">
     <div style="max-width:1200px;margin:0 auto;">
       <div style="font-family:var(--font-heading);font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px;">${escapeHtml(brandName)}</div>
-      ${socialLinks.length ? `<div style="display:flex;justify-content:center;gap:24px;margin-bottom:16px;">${socialLinks.map(l => `<a href="${escapeHtml(l.url)}" style="color:var(--color-text-muted);font-size:13px;transition:color 0.2s;" target="_blank" rel="noopener">${escapeHtml(l.name)}</a>`).join('')}</div>` : ''}
+      ${socialLinks.length ? `<div style="display:flex;justify-content:center;gap:24px;margin-bottom:16px;">${socialLinks.map(l => `<a href="${escapeHtml(l.url)}" style="color:var(--color-text-muted);font-size:13px;" target="_blank" rel="noopener">${escapeHtml(l.name)}</a>`).join('')}</div>` : ''}
       <p style="font-size:12px;color:var(--color-text-subtle);">&copy; ${year} ${escapeHtml(brandName)}. All rights reserved.</p>
     </div>
   </div>`;
@@ -479,7 +425,6 @@ function escapeHtml(str) {
 // ─── Critical CSS ───────────────────────────────────────────────
 function getCriticalCSS() {
   return `
-/* Header Pill */
 .header-pill-wrapper{position:fixed;top:var(--header-top,16px);left:0;right:0;z-index:999;display:flex;flex-direction:column;align-items:center;padding:0 20px;background:transparent;pointer-events:none;transition:top 0.25s ease-out}
 .header-pill{display:flex;align-items:center;justify-content:space-between;max-width:95vw;background:rgba(0,0,0,0.85);border:1px solid rgba(42,42,42,0.8);border-radius:999px;padding:6px;pointer-events:all;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .header-icon-btn{width:40px;height:40px;border-radius:50%;background:rgba(26,26,26,0.9);border:1px solid rgba(42,42,42,0.8);display:flex;align-items:center;justify-content:center;color:#fff;transition:background 0.2s,border-color 0.2s;flex-shrink:0}
@@ -497,8 +442,6 @@ function getCriticalCSS() {
 .header-dropdown nav a:hover{color:var(--color-accent)}
 .menu-toggle-icon{transition:transform 0.3s}
 .menu-toggle-icon.active{transform:rotate(90deg)}
-
-/* Product Grid */
 .product-grid-section{position:relative;overflow:hidden}
 .product-card{background:rgba(17,17,17,0.95);border:1px solid rgba(42,42,42,0.8);border-radius:var(--radius-md,12px);overflow:hidden;transition:transform 0.3s,border-color 0.3s,box-shadow 0.3s;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.03),inset 1.8px 3px 0 -2px rgba(255,255,255,0.15),0 2px 8px rgba(0,0,0,0.4)}
 .product-card:hover{transform:translateY(-3px);border-color:var(--color-accent);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06),0 8px 32px rgba(57,255,20,0.15)}
@@ -515,149 +458,54 @@ function getCriticalCSS() {
 .price-compare{color:rgba(107,114,128,0.9);text-decoration:line-through;font-size:14px}
 .product-card-actions{display:flex;gap:8px}
 .btn-cart-icon{width:44px;height:44px;border-radius:var(--radius-sm,8px);background:rgba(26,26,26,0.9);border:1px solid rgba(42,42,42,0.8);display:flex;align-items:center;justify-content:center;color:#fff;transition:background 0.2s,border-color 0.2s;flex-shrink:0;cursor:pointer}
-.btn-cart-icon:hover{border-color:#fff;color:#fff}
+.btn-cart-icon:hover{border-color:#fff}
 .btn-cart-icon.in-cart{background:rgba(34,197,94,0.9);border-color:rgba(34,197,94,0.9)}
 .btn-cart-icon svg{width:18px;height:18px}
-.btn-buy{flex:1;height:44px;border-radius:28px;background:var(--color-accent);color:#1a1a1a;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;justify-content:center;border:none;backdrop-filter:blur(4px);box-shadow:inset 0 1px 0 rgba(255,255,255,0.15),0 2px 12px rgba(57,255,20,0.35);transition:box-shadow 0.3s,transform 0.2s;cursor:pointer}
-.btn-buy:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,0.2),0 4px 24px rgba(57,255,20,0.55),0 0 40px rgba(57,255,20,0.2);transform:translateY(-1px)}
-
-/* Urgency */
+.btn-buy{flex:1;height:44px;border-radius:28px;background:var(--color-accent);color:#1a1a1a;font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;justify-content:center;border:none;box-shadow:inset 0 1px 0 rgba(255,255,255,0.15),0 2px 12px rgba(57,255,20,0.35);transition:box-shadow 0.3s,transform 0.2s;cursor:pointer}
+.btn-buy:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,0.2),0 4px 24px rgba(57,255,20,0.55);transform:translateY(-1px)}
 @keyframes urgencyScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 @keyframes urgencyPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
-
-/* Testimonials */
 @keyframes testimonialScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-
-/* FAQ */
 .faq-item{background:var(--color-bg-card);border:1px solid var(--color-border);border-radius:12px;margin-bottom:12px;overflow:hidden}
 .faq-question{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;cursor:pointer;font-weight:600;font-size:15px;color:var(--color-text)}
 .faq-toggle{width:30px;height:30px;border-radius:50%;background:var(--color-accent);color:#000;display:flex;align-items:center;justify-content:center;transition:transform 0.3s}
 .faq-item.open .faq-toggle{transform:rotate(180deg)}
 .faq-answer{max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.4s ease}
 .faq-item.open .faq-answer{max-height:500px;padding:0 20px 18px}
-
-/* Chat */
 .chat-window.open{display:flex!important}
 @keyframes chatPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.85)}}
-@media(max-width:768px){
-  .chat-window{position:fixed!important;inset:0!important;width:100%!important;max-height:none!important;border-radius:0!important}
-  .product-grid{grid-template-columns:repeat(2,1fr)!important}
-}
+@media(max-width:768px){.chat-window{position:fixed!important;inset:0!important;width:100%!important;max-height:none!important;border-radius:0!important}.product-grid{grid-template-columns:repeat(2,1fr)!important}}
 `;
 }
 
-// ─── Theme JS ───────────────────────────────────────────────────
-function getThemeJS() {
-  return ''; // JS is now inline in each rendered section
-}
-
-// ─── Kill-switch CSS ────────────────────────────────────────────
 function getKillSwitchCSS() {
-  return 'body>*:not(.scaled-license-notice-wrapper):not(.scaled-license-notice){opacity:0.1!important;pointer-events:none!important;filter:blur(4px)!important}';
+  return 'body>*:not(.scaled-license-notice-wrapper){opacity:0.1!important;pointer-events:none!important;filter:blur(4px)!important}';
 }
 
 // ─── API Routes ─────────────────────────────────────────────────
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '3.0.0', timestamp: new Date().toISOString() });
 });
 
-// Remote content API — returns CSS/HTML/JS patches per domain
+// Remote content
 app.get('/api/remote-content', (req, res) => {
   const domain = req.query.domain;
   if (!domain) return res.json([]);
-
   const norm = d => (d || '').replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '').toLowerCase();
-  const normalizedDomain = norm(domain);
-
-  // Check for any remote content patches for this domain
-  const patches = db.prepare('SELECT css, html, js, redirect_url FROM remote_content WHERE active = 1 AND (domain = ? OR domain = ?)').all(normalizedDomain, domain);
-
-  res.json(patches.length ? patches : []);
+  const patches = store.remote_content.filter(r => r.active && (norm(r.domain) === norm(domain)));
+  res.json(patches.map(p => ({ css: p.css, html: p.html, js: p.js, redirect_url: p.redirect_url })));
 });
 
-// V3 Render endpoint — main content delivery
+// V3 Render
 app.post('/api/v3/render', (req, res) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
   const userAgent = req.headers['user-agent'] || '';
 
-  if (!rateLimit(ip)) {
-    return res.status(429).json({ error: 'rate_limited' });
-  }
+  if (!rateLimit(ip)) return res.status(429).json({ error: 'rate_limited' });
 
   const { licenseKey, domain, permanentDomain, sections, colors, brandName, logoUrl, chatbot, urgency } = req.body;
 
-  if (!licenseKey || !domain) {
-    logRequest(licenseKey || 'none', domain || 'none', ip, userAgent, 'missing_params');
-    return res.status(400).json({ error: 'missing_params' });
-  }
-
-  // Validate license
-  let result = validateLicense(licenseKey, domain);
-  if (!result.valid && permanentDomain) {
-    result = validateLicense(licenseKey, permanentDomain);
-  }
-
-  if (!result.valid) {
-    logRequest(licenseKey, domain, ip, userAgent, result.reason);
-    return res.status(403).json({
-      error: result.reason,
-      killCSS: getKillSwitchCSS(),
-      message: result.reason === 'domain_mismatch'
-        ? 'This license is not authorized for this domain.'
-        : result.reason === 'expired'
-        ? 'License has expired.'
-        : 'Invalid license key.'
-    });
-  }
-
-  logRequest(licenseKey, domain, ip, userAgent, 'success');
-
-  // Render each section
-  const renderedSections = [];
-  const cfg = { brandName: brandName || '', logoUrl: logoUrl || null, chatbot: chatbot || {}, urgency: urgency || {} };
-
-  if (sections && Array.isArray(sections)) {
-    for (const section of sections) {
-      const renderer = renderers[section.type];
-      if (renderer) {
-        try {
-          const html = renderer(section.settings || {}, section.products || null, colors || {}, cfg);
-          renderedSections.push({
-            type: section.type,
-            elementId: section.elementId,
-            html: html
-          });
-        } catch (e) {
-          console.error(`[Render Error] Section ${section.type}:`, e.message);
-          renderedSections.push({
-            type: section.type,
-            elementId: section.elementId,
-            html: ''
-          });
-        }
-      }
-    }
-  }
-
-  res.json({
-    status: 'ok',
-    css: getCriticalCSS(),
-    js: getThemeJS(),
-    sections: renderedSections,
-    version: '3.0.0',
-    plan: result.license.plan
-  });
-});
-
-// Legacy V1 endpoint (backward compat)
-app.post('/api/v1/load', (req, res) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const userAgent = req.headers['user-agent'] || '';
-  if (!rateLimit(ip)) return res.status(429).json({ error: 'rate_limited' });
-
-  const { licenseKey, domain, permanentDomain } = req.body;
   if (!licenseKey || !domain) {
     logRequest(licenseKey || 'none', domain || 'none', ip, userAgent, 'missing_params');
     return res.status(400).json({ error: 'missing_params' });
@@ -668,35 +516,59 @@ app.post('/api/v1/load', (req, res) => {
 
   if (!result.valid) {
     logRequest(licenseKey, domain, ip, userAgent, result.reason);
-    return res.status(403).json({ error: result.reason, killCSS: getKillSwitchCSS(), message: 'Invalid license.' });
+    return res.status(403).json({
+      error: result.reason,
+      killCSS: getKillSwitchCSS(),
+      message: result.reason === 'domain_mismatch' ? 'This license is not authorized for this domain.'
+        : result.reason === 'expired' ? 'License has expired.' : 'Invalid license key.'
+    });
   }
 
   logRequest(licenseKey, domain, ip, userAgent, 'success');
-  res.json({ status: 'ok', css: getCriticalCSS(), js: getThemeJS(), version: '3.0.0', plan: result.license.plan });
-});
 
-// ─── Loader Script Serving ──────────────────────────────────────
-app.get('/api/loader/v3/scaled-loader.js', (req, res) => {
-  const distPath = path.join(__dirname, 'dist', 'scaled-loader.js');
-  const srcPath = path.join(__dirname, 'src', 'loader.js');
+  const renderedSections = [];
+  const cfg = { brandName: brandName || '', logoUrl: logoUrl || null, chatbot: chatbot || {}, urgency: urgency || {} };
 
-  res.setHeader('Content-Type', 'application/javascript');
-
-  if (fs.existsSync(distPath)) {
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.sendFile(distPath);
-  } else if (fs.existsSync(srcPath)) {
-    res.setHeader('Cache-Control', 'no-cache');
-    res.sendFile(srcPath);
-  } else {
-    res.status(404).send('// Loader not found. Run: node build.js');
+  if (sections && Array.isArray(sections)) {
+    for (const section of sections) {
+      const renderer = renderers[section.type];
+      if (renderer) {
+        try {
+          const html = renderer(section.settings || {}, section.products || null, colors || {}, cfg);
+          renderedSections.push({ type: section.type, elementId: section.elementId, html });
+        } catch (e) {
+          renderedSections.push({ type: section.type, elementId: section.elementId, html: '' });
+        }
+      }
+    }
   }
+
+  res.json({ status: 'ok', css: getCriticalCSS(), js: '', sections: renderedSections, version: '3.0.0', plan: result.license.plan });
 });
 
-// Keep old loader path working
-app.get('/api/loader/scaled-loader.js', (req, res) => {
-  res.redirect(301, '/api/loader/v3/scaled-loader.js');
+// Legacy V1
+app.post('/api/v1/load', (req, res) => {
+  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+  const userAgent = req.headers['user-agent'] || '';
+  if (!rateLimit(ip)) return res.status(429).json({ error: 'rate_limited' });
+  const { licenseKey, domain, permanentDomain } = req.body;
+  if (!licenseKey || !domain) return res.status(400).json({ error: 'missing_params' });
+  let result = validateLicense(licenseKey, domain);
+  if (!result.valid && permanentDomain) result = validateLicense(licenseKey, permanentDomain);
+  if (!result.valid) return res.status(403).json({ error: result.reason, killCSS: getKillSwitchCSS() });
+  res.json({ status: 'ok', css: getCriticalCSS(), js: '', version: '3.0.0', plan: result.license.plan });
 });
+
+// Loader
+app.get('/api/loader/v3/scaled-loader.js', (req, res) => {
+  const srcPath = path.join(__dirname, 'src', 'loader.js');
+  const distPath = path.join(__dirname, 'dist', 'scaled-loader.js');
+  res.setHeader('Content-Type', 'application/javascript');
+  if (fs.existsSync(distPath)) { res.setHeader('Cache-Control', 'public, max-age=3600'); res.sendFile(distPath); }
+  else if (fs.existsSync(srcPath)) { res.setHeader('Cache-Control', 'no-cache'); res.sendFile(srcPath); }
+  else res.status(404).send('// Loader not found');
+});
+app.get('/api/loader/scaled-loader.js', (req, res) => res.redirect(301, '/api/loader/v3/scaled-loader.js'));
 
 // ─── Admin Routes ───────────────────────────────────────────────
 const ADMIN_KEY = process.env.ADMIN_KEY || 'change-me-in-production';
@@ -710,87 +582,93 @@ function requireAdmin(req, res, next) {
 app.post('/api/admin/licenses', requireAdmin, (req, res) => {
   const { domain, permanent_domain, store_name, plan, expires_at } = req.body;
   if (!domain) return res.status(400).json({ error: 'domain is required' });
-
   const licenseKey = generateLicenseKey();
-  try {
-    db.prepare('INSERT INTO licenses (license_key, domain, permanent_domain, store_name, plan, expires_at) VALUES (?, ?, ?, ?, ?, ?)').run(licenseKey, domain, permanent_domain || '', store_name || '', plan || 'standard', expires_at || null);
-    res.json({ license_key: licenseKey, domain, plan: plan || 'standard', message: 'License created successfully' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const license = {
+    id: store._nextId++,
+    license_key: licenseKey,
+    domain,
+    permanent_domain: permanent_domain || '',
+    store_name: store_name || '',
+    plan: plan || 'standard',
+    active: 1,
+    created_at: new Date().toISOString(),
+    expires_at: expires_at || null,
+    last_verified_at: null,
+    request_count: 0
+  };
+  store.licenses.push(license);
+  saveStore();
+  res.json({ license_key: licenseKey, domain, plan: plan || 'standard', message: 'License created successfully' });
 });
 
 app.get('/api/admin/licenses', requireAdmin, (req, res) => {
-  const licenses = db.prepare('SELECT * FROM licenses ORDER BY created_at DESC').all();
-  res.json({ licenses });
+  res.json({ licenses: store.licenses.slice().reverse() });
 });
 
 app.delete('/api/admin/licenses/:key', requireAdmin, (req, res) => {
-  const result = db.prepare('UPDATE licenses SET active = 0 WHERE license_key = ?').run(req.params.key);
-  if (result.changes > 0) res.json({ message: 'License revoked' });
+  const license = store.licenses.find(l => l.license_key === req.params.key);
+  if (license) { license.active = 0; saveStore(); res.json({ message: 'License revoked' }); }
   else res.status(404).json({ error: 'License not found' });
 });
 
 app.get('/api/admin/logs', requireAdmin, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 100, 500);
-  const logs = db.prepare('SELECT * FROM request_log ORDER BY created_at DESC LIMIT ?').all(limit);
-  res.json({ logs });
+  res.json({ logs: store.request_log.slice(0, limit) });
 });
 
 app.get('/api/admin/stats', requireAdmin, (req, res) => {
-  const totalLicenses = db.prepare('SELECT COUNT(*) as count FROM licenses').get().count;
-  const activeLicenses = db.prepare('SELECT COUNT(*) as count FROM licenses WHERE active = 1').get().count;
-  const todayRequests = db.prepare("SELECT COUNT(*) as count FROM request_log WHERE created_at >= date('now')").get().count;
-  const failedToday = db.prepare("SELECT COUNT(*) as count FROM request_log WHERE status != 'success' AND created_at >= date('now')").get().count;
+  const today = new Date().toISOString().split('T')[0];
+  const totalLicenses = store.licenses.length;
+  const activeLicenses = store.licenses.filter(l => l.active).length;
+  const todayRequests = store.request_log.filter(l => l.created_at && l.created_at.startsWith(today)).length;
+  const failedToday = store.request_log.filter(l => l.created_at && l.created_at.startsWith(today) && l.status !== 'success').length;
   res.json({ licenses: { total: totalLicenses, active: activeLicenses }, requests: { today: todayRequests, failed_today: failedToday } });
 });
 
-// Admin: Remote content management
+// Remote content admin
 app.post('/api/admin/remote-content', requireAdmin, (req, res) => {
   const { domain, css, html, js, redirect_url } = req.body;
   if (!domain) return res.status(400).json({ error: 'domain is required' });
-  db.prepare('INSERT INTO remote_content (domain, css, html, js, redirect_url) VALUES (?, ?, ?, ?, ?)').run(domain, css || null, html || null, js || null, redirect_url || null);
+  store.remote_content.push({ id: store._nextId++, domain, css: css||null, html: html||null, js: js||null, redirect_url: redirect_url||null, active: 1, created_at: new Date().toISOString() });
+  saveStore();
   res.json({ message: 'Remote content added' });
 });
 
 app.get('/api/admin/remote-content', requireAdmin, (req, res) => {
-  const content = db.prepare('SELECT * FROM remote_content ORDER BY created_at DESC').all();
-  res.json({ content });
+  res.json({ content: store.remote_content });
 });
 
 app.delete('/api/admin/remote-content/:id', requireAdmin, (req, res) => {
-  db.prepare('DELETE FROM remote_content WHERE id = ?').run(req.params.id);
+  store.remote_content = store.remote_content.filter(r => r.id !== parseInt(req.params.id));
+  saveStore();
   res.json({ message: 'Remote content deleted' });
 });
 
-// ─── Theme ZIP Download ─────────────────────────────────────────
+// Theme ZIP download
 app.get('/api/admin/download-theme', requireAdmin, (req, res) => {
-  const archiver = require('archiver');
-  const themePath = path.join(__dirname, 'theme-dist');
-
-  if (!fs.existsSync(themePath)) {
-    return res.status(404).json({ error: 'Theme files not found. Run: node package-theme.js' });
+  try {
+    const archiver = require('archiver');
+    const themePath = path.join(__dirname, 'theme-dist');
+    if (!fs.existsSync(themePath)) return res.status(404).json({ error: 'Theme files not found' });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="scaled-theme-v3.zip"');
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', (err) => res.status(500).json({ error: err.message }));
+    archive.pipe(res);
+    archive.directory(themePath, false);
+    archive.finalize();
+  } catch(e) {
+    res.status(500).json({ error: 'archiver not installed — run npm install' });
   }
-
-  res.setHeader('Content-Type', 'application/zip');
-  res.setHeader('Content-Disposition', 'attachment; filename="scaled-theme-v3.zip"');
-
-  const archive = archiver('zip', { zlib: { level: 9 } });
-  archive.on('error', (err) => res.status(500).json({ error: err.message }));
-  archive.pipe(res);
-  archive.directory(themePath, false);
-  archive.finalize();
 });
 
 // ─── Start Server ───────────────────────────────────────────────
-// Only start if not imported by Vercel
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`[OGVendors] Theme protection server v3 running on port ${PORT}`);
-    console.log(`[OGVendors] Dashboard: http://localhost:${PORT}/dashboard`);
-    console.log(`[OGVendors] Admin key: ${ADMIN_KEY === 'change-me-in-production' ? '⚠️  USING DEFAULT KEY' : '✓ Custom key set'}`);
+    console.log(`[Scaled] Theme protection server v3 running on port ${PORT}`);
+    console.log(`[Scaled] Dashboard: http://localhost:${PORT}/dashboard`);
+    console.log(`[Scaled] Admin key: ${ADMIN_KEY === 'change-me-in-production' ? '⚠️  USING DEFAULT KEY' : '✓ Custom key set'}`);
   });
 }
 
-// Export for Vercel serverless
 module.exports = app;
