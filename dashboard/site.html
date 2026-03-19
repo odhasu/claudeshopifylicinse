@@ -9,22 +9,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #050505;
-      --bg-card: #0a0a0a;
-      --bg-elevated: #111;
-      --bg-hover: #161616;
-      --border: #1a1a1a;
-      --border-light: #2a2a2a;
-      --accent: #39ff14;
-      --accent-dim: rgba(57,255,20,0.08);
-      --accent-glow: rgba(57,255,20,0.2);
+      --bg: #f8fafc;
+      --bg-white: #ffffff;
+      --bg-card: #ffffff;
+      --bg-elevated: #f1f5f9;
+      --bg-hover: #f8fafc;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --accent-blue: #2563eb;
+      --accent-indigo: #4f46e5;
+      --accent-gradient: linear-gradient(135deg, #2563eb, #4f46e5);
+      --accent-gradient-r: linear-gradient(to right top, #2563eb, #4f46e5);
+      --accent-dim: rgba(37,99,235,0.08);
+      --accent-glow: rgba(79,70,229,0.15);
+      --green: #059669;
+      --green-bg: #d1fae5;
       --red: #ef4444;
-      --text: #fafafa;
-      --text-muted: #888;
-      --text-subtle: #555;
-      --font: 'Inter', -apple-system, sans-serif;
-      --radius: 16px;
-      --radius-sm: 10px;
+      --purple: #9333ea;
+      --purple-bg: #f3e8ff;
+      --blue-bg: #dbeafe;
+      --text: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --text-subtle: #94a3b8;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --radius: 20px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --radius-xs: 8px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.03);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.06), 0 4px 10px rgba(0,0,0,0.04);
+      --shadow-xl: 0 20px 50px rgba(0,0,0,0.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,200 +52,234 @@
     input { font-family: inherit; }
     img { display: block; max-width: 100%; }
 
+    /* ─── PAGE WRAPPER WITH SIDE GRADIENTS ─── */
+    .page-wrap { position: relative; overflow: hidden; }
+    .page-wrap::before { content: ''; position: fixed; top: 0; left: 0; width: 15%; height: 100%; background: linear-gradient(to right, rgba(59,130,246,0.12), rgba(96,165,250,0.06), transparent); pointer-events: none; z-index: 0; }
+    .page-wrap::after { content: ''; position: fixed; top: 0; right: 0; width: 15%; height: 100%; background: linear-gradient(to left, rgba(99,102,241,0.12), rgba(129,140,248,0.06), transparent); pointer-events: none; z-index: 0; }
+
     /* ─── NAVIGATION ─── */
-    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 24px; transition: background 0.3s; }
-    .nav.scrolled { background: rgba(5,5,5,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
-    .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-    .nav-logo { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; }
-    .nav-logo span { color: var(--accent); }
-    .nav-links { display: flex; align-items: center; gap: 32px; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-muted); transition: color 0.2s; }
-    .nav-links a:hover { color: var(--text); }
-    .nav-btn { padding: 10px 24px; border-radius: 999px; font-size: 13px; font-weight: 700; transition: all 0.2s; }
-    .nav-btn-outline { background: transparent; border: 1px solid var(--border-light); color: var(--text); }
-    .nav-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-    .nav-btn-primary { background: var(--accent); color: #000; }
-    .nav-btn-primary:hover { box-shadow: 0 0 30px var(--accent-glow); }
+    .nav { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100; width: calc(100% - 32px); max-width: 900px; }
+    .nav-pill { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 999px; padding: 8px 8px 8px 20px; box-shadow: var(--shadow-lg); }
+    .nav-logo { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+    .nav-logo-icon { width: 28px; height: 28px; border-radius: 8px; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; }
+    .nav-logo-icon svg { width: 16px; height: 16px; fill: white; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-link { padding: 8px 16px; font-size: 14px; font-weight: 500; color: var(--text-muted); border-radius: 999px; transition: all 0.2s; }
+    .nav-link:hover { color: var(--text); background: var(--bg-elevated); }
+    .nav-btn { padding: 10px 22px; border-radius: 999px; font-size: 13px; font-weight: 600; transition: all 0.3s; }
+    .nav-btn-primary { background: var(--accent-gradient); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
+    .nav-btn-primary:hover { box-shadow: 0 4px 16px rgba(37,99,235,0.4); transform: translateY(-1px); }
+    .nav-btn-ghost { color: var(--text-muted); }
+    .nav-btn-ghost:hover { color: var(--text); background: var(--bg-elevated); }
 
     /* ─── HERO ─── */
-    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 80px; position: relative; overflow: hidden; }
-    .hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 800px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); pointer-events: none; opacity: 0.4; }
-    .hero-content { position: relative; z-index: 2; max-width: 800px; }
-    .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: var(--accent-dim); border: 1px solid rgba(57,255,20,0.15); font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 32px; }
-    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
-    .hero h1 { font-size: clamp(48px, 8vw, 80px); font-weight: 900; letter-spacing: -3px; line-height: 0.95; margin-bottom: 24px; }
-    .hero h1 .accent { color: var(--accent); }
-    .hero p { font-size: 18px; color: var(--text-muted); line-height: 1.6; max-width: 550px; margin: 0 auto 40px; }
-    .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
-    .btn-lg { padding: 16px 40px; border-radius: 999px; font-size: 15px; font-weight: 800; transition: all 0.3s; }
-    .btn-accent { background: var(--accent); color: #000; box-shadow: 0 4px 20px rgba(57,255,20,0.3); }
-    .btn-accent:hover { box-shadow: 0 8px 40px rgba(57,255,20,0.5); transform: translateY(-2px); }
-    .btn-ghost { background: transparent; border: 1px solid var(--border-light); color: var(--text); }
-    .btn-ghost:hover { border-color: var(--text-muted); }
-    .hero-stats { display: flex; gap: 48px; justify-content: center; margin-top: 64px; }
-    .hero-stat { text-align: center; }
-    .hero-stat-num { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
-    .hero-stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 60px; position: relative; z-index: 1; }
+    .hero-ticker { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; border-radius: 999px; background: var(--bg-white); border: 1px solid var(--border); font-size: 14px; font-weight: 500; color: var(--text-muted); margin-bottom: 40px; box-shadow: var(--shadow); }
+    .hero-ticker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .hero-ticker strong { color: var(--text); font-weight: 700; }
+    .hero h1 { font-size: clamp(40px, 7vw, 64px); font-weight: 900; letter-spacing: -2px; line-height: 1.05; color: var(--text); margin-bottom: 24px; }
+    .hero h1 .highlight { background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero p { font-size: 17px; color: var(--text-muted); line-height: 1.7; max-width: 520px; margin: 0 auto 40px; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { display: inline-flex; align-items: center; gap: 8px; padding: 16px 32px; border-radius: var(--radius-md); background: var(--accent-gradient-r); color: white; font-size: 16px; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 15px rgba(37,99,235,0.3); }
+    .btn-primary:hover { box-shadow: 0 8px 25px rgba(37,99,235,0.4); transform: translateY(-2px); }
+    .btn-primary svg { width: 18px; height: 18px; }
+    .btn-secondary { display: inline-flex; align-items: center; gap: 8px; padding: 16px 32px; border-radius: var(--radius-md); background: var(--bg-white); border: 1px solid var(--border); color: var(--text-secondary); font-size: 16px; font-weight: 600; transition: all 0.2s; }
+    .btn-secondary:hover { border-color: #cbd5e1; background: var(--bg-elevated); }
+    .hero-badges { display: flex; gap: 24px; justify-content: center; margin-top: 48px; }
+    .hero-badge { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: var(--text-muted); }
+    .hero-badge .badge-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .hero-badge .badge-green { background: var(--green-bg); color: var(--green); }
+    .hero-badge .badge-blue { background: var(--blue-bg); color: var(--accent-blue); }
+    .hero-badge .badge-purple { background: var(--purple-bg); color: var(--purple); }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar { display: flex; justify-content: center; gap: 48px; padding: 60px 24px; position: relative; z-index: 1; }
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 36px; font-weight: 900; letter-spacing: -1.5px; color: var(--text); }
+    .stat-label { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
 
     /* ─── SECTIONS ─── */
-    .section { padding: 100px 24px; }
-    .section-header { text-align: center; max-width: 600px; margin: 0 auto 60px; }
-    .section-header h2 { font-size: clamp(32px, 5vw, 48px); font-weight: 900; letter-spacing: -2px; margin-bottom: 16px; }
+    .section { padding: 80px 24px; position: relative; z-index: 1; }
+    .section-alt { background: var(--bg-white); }
+    .section-header { text-align: center; max-width: 560px; margin: 0 auto 56px; }
+    .section-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-bottom: 16px; }
+    .section-badge-green { background: var(--green-bg); color: var(--green); }
+    .section-badge-blue { background: var(--blue-bg); color: var(--accent-blue); }
+    .section-badge-purple { background: var(--purple-bg); color: var(--purple); }
+    .section-header h2 { font-size: clamp(28px, 5vw, 40px); font-weight: 800; letter-spacing: -1.5px; color: var(--text); margin-bottom: 12px; }
     .section-header p { font-size: 16px; color: var(--text-muted); line-height: 1.6; }
 
     /* ─── FEATURES GRID ─── */
-    .features-grid { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .feature-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; transition: all 0.3s; }
-    .feature-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-    .feature-icon { width: 48px; height: 48px; border-radius: 12px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 20px; }
-    .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .features-grid { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; transition: all 0.3s; }
+    .feature-card:hover { border-color: rgba(37,99,235,0.3); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .feature-icon { width: 44px; height: 44px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
+    .feature-icon-blue { background: var(--blue-bg); }
+    .feature-icon-green { background: var(--green-bg); }
+    .feature-icon-purple { background: var(--purple-bg); }
+    .feature-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .feature-card p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
 
     /* ─── PRICING ─── */
-    .pricing-grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-    .pricing-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; position: relative; transition: all 0.3s; }
-    .pricing-card.featured { border-color: var(--accent); box-shadow: 0 0 60px rgba(57,255,20,0.1); }
-    .pricing-card.featured::before { content: 'MOST POPULAR'; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); padding: 6px 20px; border-radius: 999px; background: var(--accent); color: #000; font-size: 11px; font-weight: 800; letter-spacing: 0.05em; }
-    .pricing-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
-    .pricing-price { font-size: 48px; font-weight: 900; letter-spacing: -2px; margin-bottom: 4px; }
-    .pricing-price span { font-size: 16px; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
-    .pricing-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 32px; }
-    .pricing-features { list-style: none; margin-bottom: 32px; }
-    .pricing-features li { padding: 10px 0; font-size: 14px; color: var(--text-muted); display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
-    .pricing-features li:last-child { border: none; }
-    .pricing-features .check { color: var(--accent); font-size: 16px; flex-shrink: 0; }
-    .pricing-btn { width: 100%; padding: 16px; border-radius: 12px; font-size: 15px; font-weight: 700; text-align: center; transition: all 0.3s; display: block; }
-    .pricing-btn-accent { background: var(--accent); color: #000; }
-    .pricing-btn-accent:hover { box-shadow: 0 8px 30px rgba(57,255,20,0.4); }
-    .pricing-btn-outline { background: transparent; border: 1px solid var(--border-light); color: var(--text); }
-    .pricing-btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .pricing-grid { max-width: 800px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .pricing-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px; position: relative; transition: all 0.3s; }
+    .pricing-card:hover { box-shadow: var(--shadow-xl); }
+    .pricing-card.featured { border-color: var(--accent-blue); box-shadow: 0 0 0 1px var(--accent-blue), var(--shadow-xl); }
+    .pricing-badge { display: inline-flex; padding: 5px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; background: var(--accent-dim); color: var(--accent-blue); }
+    .pricing-card.featured .pricing-badge { background: var(--accent-gradient); color: white; }
+    .pricing-name { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .pricing-price { font-size: 48px; font-weight: 900; letter-spacing: -2px; color: var(--text); margin-bottom: 2px; }
+    .pricing-price span { font-size: 15px; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
+    .pricing-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; }
+    .pricing-features { list-style: none; margin-bottom: 28px; }
+    .pricing-features li { padding: 8px 0; font-size: 14px; color: var(--text-secondary); display: flex; align-items: center; gap: 10px; }
+    .pricing-features .check { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; }
+    .pricing-features .check-green { background: var(--green-bg); color: var(--green); }
+    .pricing-features .check-blue { background: var(--blue-bg); color: var(--accent-blue); }
+    .pricing-btn { width: 100%; padding: 14px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 700; text-align: center; transition: all 0.3s; display: block; }
+    .pricing-btn-primary { background: var(--accent-gradient); color: white; box-shadow: 0 2px 10px rgba(37,99,235,0.3); }
+    .pricing-btn-primary:hover { box-shadow: 0 4px 20px rgba(37,99,235,0.4); transform: translateY(-1px); }
+    .pricing-btn-dark { background: var(--text); color: white; }
+    .pricing-btn-dark:hover { background: #1e293b; }
 
     /* ─── TESTIMONIALS ─── */
-    .testimonials-row { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .testimonial-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
-    .testimonial-stars { color: #fbbf24; font-size: 14px; margin-bottom: 16px; }
-    .testimonial-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
-    .testimonial-author { display: flex; align-items: center; gap: 12px; }
-    .testimonial-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #000; }
-    .testimonial-name { font-size: 13px; font-weight: 600; }
+    .testimonials-row { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .testimonial-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+    .testimonial-stars { color: #f59e0b; font-size: 14px; margin-bottom: 12px; letter-spacing: 2px; }
+    .testimonial-text { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px; }
+    .testimonial-author { display: flex; align-items: center; gap: 10px; }
+    .testimonial-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
+    .testimonial-name { font-size: 13px; font-weight: 600; color: var(--text); }
     .testimonial-handle { font-size: 12px; color: var(--text-subtle); }
 
+    /* ─── FAQ ─── */
+    .faq-list { max-width: 640px; margin: 0 auto; }
+    .faq-item { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 10px; overflow: hidden; transition: all 0.2s; }
+    .faq-item:hover { border-color: #cbd5e1; }
+    .faq-q { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; cursor: pointer; font-weight: 600; font-size: 15px; color: var(--text); }
+    .faq-q svg { width: 18px; height: 18px; color: var(--text-subtle); transition: transform 0.3s; flex-shrink: 0; }
+    .faq-item.open .faq-q svg { transform: rotate(180deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.35s ease; }
+    .faq-item.open .faq-a { max-height: 300px; padding: 0 22px 18px; }
+    .faq-a p { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
     /* ─── FOOTER ─── */
-    .footer { border-top: 1px solid var(--border); padding: 60px 24px; }
-    .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .footer { border-top: 1px solid var(--border); padding: 48px 24px; position: relative; z-index: 1; background: var(--bg-white); }
+    .footer-inner { max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
     .footer-copy { font-size: 13px; color: var(--text-subtle); }
-    .footer-links { display: flex; gap: 24px; }
-    .footer-links a { font-size: 13px; color: var(--text-muted); }
-    .footer-links a:hover { color: var(--accent); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 13px; color: var(--text-muted); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--accent-blue); }
 
     /* ─── LOGIN PAGE ─── */
-    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .login-box { width: 100%; max-width: 420px; }
-    .login-box h1 { font-size: 32px; font-weight: 900; letter-spacing: -1px; text-align: center; margin-bottom: 8px; }
-    .login-box .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 40px; }
-    .form-group { margin-bottom: 20px; }
-    .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
-    .form-input { width: 100%; padding: 14px 16px; border-radius: var(--radius-sm); background: var(--bg-card); border: 1px solid var(--border); color: var(--text); font-size: 15px; outline: none; transition: border-color 0.2s; }
-    .form-input:focus { border-color: var(--accent); }
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; position: relative; z-index: 1; }
+    .login-box { width: 100%; max-width: 400px; background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; box-shadow: var(--shadow-xl); }
+    .login-box h1 { font-size: 28px; font-weight: 800; letter-spacing: -1px; text-align: center; margin-bottom: 6px; }
+    .login-box .subtitle { text-align: center; color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+    .form-input { width: 100%; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--bg); border: 1px solid var(--border); color: var(--text); font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .form-input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px var(--accent-dim); }
     .form-input::placeholder { color: var(--text-subtle); }
-    .form-btn { width: 100%; padding: 16px; border-radius: var(--radius-sm); background: var(--accent); color: #000; font-size: 15px; font-weight: 800; transition: all 0.3s; margin-top: 8px; }
-    .form-btn:hover { box-shadow: 0 8px 30px rgba(57,255,20,0.4); }
-    .form-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .form-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 16px; }
-    .form-divider { text-align: center; color: var(--text-subtle); font-size: 13px; margin: 24px 0; }
+    .form-btn { width: 100%; padding: 14px; border-radius: var(--radius-sm); background: var(--accent-gradient); color: white; font-size: 15px; font-weight: 700; transition: all 0.3s; margin-top: 8px; box-shadow: 0 2px 10px rgba(37,99,235,0.25); }
+    .form-btn:hover { box-shadow: 0 4px 20px rgba(37,99,235,0.4); transform: translateY(-1px); }
+    .form-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .form-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; }
+    .form-footer { text-align: center; color: var(--text-subtle); font-size: 13px; margin-top: 20px; }
+    .form-footer a { color: var(--accent-blue); font-weight: 600; }
 
     /* ─── DASHBOARD ─── */
-    .dash { display: flex; min-height: 100vh; }
-    .dash-sidebar { width: 260px; background: var(--bg-card); border-right: 1px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
-    .dash-sidebar-logo { font-size: 18px; font-weight: 900; padding: 0 8px; margin-bottom: 32px; }
-    .dash-sidebar-logo span { color: var(--accent); }
+    .dash { display: flex; min-height: 100vh; background: var(--bg); }
+    .dash-sidebar { width: 260px; background: var(--bg-white); border-right: 1px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
+    .dash-sidebar-logo { font-size: 17px; font-weight: 800; padding: 0 8px; margin-bottom: 28px; display: flex; align-items: center; gap: 8px; color: var(--text); }
+    .dash-sidebar-logo .logo-icon { width: 28px; height: 28px; border-radius: 8px; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; }
+    .dash-sidebar-logo .logo-icon svg { width: 16px; height: 16px; fill: white; }
     .dash-nav { flex: 1; }
-    .dash-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s; margin-bottom: 4px; }
-    .dash-nav-item:hover { background: var(--bg-hover); color: var(--text); }
-    .dash-nav-item.active { background: var(--accent-dim); color: var(--accent); }
+    .dash-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xs); font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.15s; margin-bottom: 2px; }
+    .dash-nav-item:hover { background: var(--bg-elevated); color: var(--text); }
+    .dash-nav-item.active { background: var(--accent-dim); color: var(--accent-blue); font-weight: 600; }
     .dash-nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-    .dash-nav-section { font-size: 11px; font-weight: 700; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.08em; padding: 20px 14px 8px; }
+    .dash-nav-section { font-size: 11px; font-weight: 700; color: var(--text-subtle); text-transform: uppercase; letter-spacing: 0.08em; padding: 16px 12px 6px; }
     .dash-sidebar-footer { padding: 16px 8px; border-top: 1px solid var(--border); }
-    .dash-user { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-    .dash-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: #000; flex-shrink: 0; }
-    .dash-user-info { overflow: hidden; }
-    .dash-user-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .dash-user-plan { font-size: 11px; color: var(--accent); font-weight: 600; text-transform: uppercase; }
+    .dash-user { display: flex; align-items: center; gap: 10px; }
+    .dash-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: white; flex-shrink: 0; }
+    .dash-user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .dash-user-plan { font-size: 11px; color: var(--accent-blue); font-weight: 600; text-transform: uppercase; }
 
     .dash-main { flex: 1; margin-left: 260px; padding: 32px; }
-    .dash-header { margin-bottom: 32px; }
-    .dash-header h1 { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+    .dash-header { margin-bottom: 28px; }
+    .dash-header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
     .dash-header p { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
 
-    /* Dashboard Cards */
-    .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
-    .dash-stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
-    .dash-stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-    .dash-stat-value { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
-    .dash-stat-value .accent { color: var(--accent); }
+    .dash-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .dash-stat-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px; }
+    .dash-stat-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .dash-stat-value { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+    .dash-stat-value .green { color: var(--green); }
+    .dash-stat-value .blue { color: var(--accent-blue); }
 
-    /* License Info */
-    .license-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; }
-    .license-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
-    .license-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .license-field { }
-    .license-field-label { font-size: 12px; color: var(--text-subtle); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .license-field-value { font-size: 14px; font-weight: 500; }
-    .license-key-display { display: flex; align-items: center; gap: 12px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 20px; }
-    .license-key-text { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; letter-spacing: 2px; flex: 1; }
-    .copy-btn { padding: 8px 16px; border-radius: 8px; background: var(--accent-dim); border: 1px solid rgba(57,255,20,0.2); color: var(--accent); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-    .copy-btn:hover { background: var(--accent); color: #000; }
+    .info-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 28px; margin-bottom: 16px; }
+    .info-card h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .info-field-label { font-size: 12px; color: var(--text-subtle); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .info-field-value { font-size: 14px; font-weight: 500; color: var(--text); }
+    .license-display { display: flex; align-items: center; gap: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 16px; }
+    .license-display-key { font-size: 17px; font-weight: 700; letter-spacing: 1px; flex: 1; color: var(--text); }
+    .copy-btn { padding: 7px 14px; border-radius: var(--radius-xs); background: var(--accent-dim); color: var(--accent-blue); font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid rgba(37,99,235,0.15); transition: all 0.2s; }
+    .copy-btn:hover { background: var(--accent-gradient); color: white; border-color: transparent; }
+
+    .quick-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .quick-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; cursor: pointer; transition: all 0.2s; }
+    .quick-card:hover { border-color: rgba(37,99,235,0.3); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .quick-card-icon { font-size: 28px; margin-bottom: 10px; }
+    .quick-card h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .quick-card p { font-size: 13px; color: var(--text-muted); }
 
     /* ─── IMAGE GENERATOR ─── */
-    .imgen { max-width: 1000px; }
-    .imgen-workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .imgen-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
-    .imgen-panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 20px; }
-    .imgen-canvas-wrap { aspect-ratio: 1; background: #111; border-radius: var(--radius-sm); overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
+    .imgen-workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1000px; }
+    .imgen-panel { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; }
+    .imgen-panel h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+    .imgen-canvas-wrap { aspect-ratio: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
     .imgen-canvas-wrap canvas { width: 100%; height: 100%; }
-    .imgen-templates { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
-    .imgen-template { aspect-ratio: 1; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+    .imgen-templates { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
+    .imgen-template { aspect-ratio: 1; border-radius: var(--radius-xs); cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
     .imgen-template:hover { transform: scale(1.05); }
-    .imgen-template.active { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
-    .imgen-upload { width: 100%; padding: 40px; border: 2px dashed var(--border-light); border-radius: var(--radius-sm); text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 20px; }
-    .imgen-upload:hover { border-color: var(--accent); background: var(--accent-dim); }
-    .imgen-upload p { font-size: 14px; color: var(--text-muted); }
-    .imgen-upload .upload-icon { font-size: 32px; margin-bottom: 8px; }
-    .imgen-slider { width: 100%; margin: 8px 0; accent-color: var(--accent); }
-    .imgen-field { margin-bottom: 16px; }
-    .imgen-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
-    .imgen-actions { display: flex; gap: 12px; margin-top: 20px; }
-    .imgen-btn { flex: 1; padding: 14px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; text-align: center; transition: all 0.2s; }
-    .imgen-btn-primary { background: var(--accent); color: #000; }
-    .imgen-btn-primary:hover { box-shadow: 0 4px 20px rgba(57,255,20,0.4); }
-    .imgen-btn-secondary { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text); }
+    .imgen-template.active { border-color: var(--accent-blue); box-shadow: 0 0 10px var(--accent-dim); }
+    .imgen-upload { width: 100%; padding: 32px; border: 2px dashed var(--border); border-radius: var(--radius-sm); text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; }
+    .imgen-upload:hover { border-color: var(--accent-blue); background: var(--accent-dim); }
+    .imgen-upload p { font-size: 13px; color: var(--text-muted); }
+    .imgen-upload .upload-icon { font-size: 28px; margin-bottom: 6px; }
+    .imgen-slider { width: 100%; margin: 6px 0; accent-color: var(--accent-blue); }
+    .imgen-field { margin-bottom: 14px; }
+    .imgen-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    .imgen-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .imgen-btn { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; text-align: center; transition: all 0.2s; }
+    .imgen-btn-primary { background: var(--accent-gradient); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.25); }
+    .imgen-btn-primary:hover { box-shadow: 0 4px 16px rgba(37,99,235,0.4); }
+    .imgen-btn-secondary { background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary); }
 
-    /* ─── DOWNLOAD PAGE ─── */
-    .download-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; text-align: center; max-width: 500px; }
-    .download-icon { font-size: 48px; margin-bottom: 16px; }
-    .download-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    /* ─── DOWNLOAD ─── */
+    .download-card { background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; text-align: center; max-width: 480px; }
+    .download-icon { font-size: 44px; margin-bottom: 12px; }
+    .download-card h3 { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
     .download-card p { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
     .download-steps { text-align: left; margin-bottom: 24px; }
-    .download-step { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-muted); }
+    .download-step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); font-size: 14px; color: var(--text-muted); }
     .download-step:last-child { border: none; }
-    .download-step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+    .download-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); color: var(--accent-blue); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
 
     /* ─── UTILITIES ─── */
     .hidden { display: none !important; }
-    .badge { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-    .badge-green { background: rgba(57,255,20,0.1); color: var(--accent); }
-    .badge-red { background: rgba(239,68,68,0.1); color: var(--red); }
-
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .fade-in { animation: fadeIn 0.4s ease-out; }
 
-    /* Mobile */
     @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .hero h1 { font-size: 40px; letter-spacing: -2px; }
-      .hero-stats { gap: 24px; }
-      .hero-stat-num { font-size: 24px; }
+      .nav { width: calc(100% - 16px); top: 8px; }
+      .nav-links .nav-link { display: none; }
+      .hero h1 { font-size: 36px; letter-spacing: -1.5px; }
+      .hero-badges { flex-direction: column; gap: 8px; }
+      .stats-bar { gap: 24px; flex-wrap: wrap; }
       .features-grid { grid-template-columns: 1fr; }
       .pricing-grid { grid-template-columns: 1fr; }
       .testimonials-row { grid-template-columns: 1fr; }
@@ -236,200 +287,164 @@
       .dash-main { margin-left: 0; }
       .dash-stats { grid-template-columns: 1fr; }
       .imgen-workspace { grid-template-columns: 1fr; }
-      .license-grid { grid-template-columns: 1fr; }
-      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .info-grid { grid-template-columns: 1fr; }
+      .quick-cards { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════ -->
-<!-- APP ROOT — SPA router switches pages here          -->
-<!-- ═══════════════════════════════════════════════════ -->
 <div id="app"></div>
 
 <script>
-// ─── STATE ──────────────────────────────────────────
 const API = window.location.origin;
 let currentPage = 'home';
-let user = null; // { key, domain, plan, ... }
+let user = null;
 let isAdmin = false;
 
 // ─── ROUTER ─────────────────────────────────────────
 function navigate(page) {
   currentPage = page;
-  const path = page === 'home' ? '/' : '/' + page;
-  history.pushState({page}, '', path);
+  history.pushState({page}, '', page === 'home' ? '/' : '/' + page);
   render();
   window.scrollTo(0, 0);
 }
+window.addEventListener('popstate', (e) => { currentPage = e.state?.page || getPageFromPath(); render(); });
+function getPageFromPath() { const p = location.pathname.replace(/^\//, '') || 'home'; return p.startsWith('dashboard') ? p : p; }
 
-window.addEventListener('popstate', (e) => {
-  currentPage = e.state?.page || getPageFromPath();
-  render();
-});
-
-function getPageFromPath() {
-  const p = location.pathname.replace(/^\//, '') || 'home';
-  if (p.startsWith('dashboard')) return p;
-  return p;
-}
-
-// ─── API CALLS ──────────────────────────────────────
+// ─── API ────────────────────────────────────────────
 async function apiLogin(licenseKey) {
-  const res = await fetch(API + '/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ licenseKey })
-  });
+  const res = await fetch(API + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ licenseKey }) });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Login failed');
   return data;
 }
 
-// ─── TEMPLATES ──────────────────────────────────────
-
-function renderNav(transparent = true) {
-  const isLoggedIn = !!user;
+// ─── NAV ────────────────────────────────────────────
+function renderNav() {
+  const loggedIn = !!user;
   return `
-    <nav class="nav ${transparent ? '' : 'scrolled'}" id="main-nav">
-      <div class="nav-inner">
-        <a class="nav-logo" href="#" onclick="event.preventDefault();navigate('home')">OG<span>Vendors</span></a>
+    <nav class="nav">
+      <div class="nav-pill">
+        <a class="nav-logo" href="#" onclick="event.preventDefault();navigate('home')">
+          <span class="nav-logo-icon"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></span>
+          OGVENDORS
+        </a>
         <div class="nav-links">
-          <a href="#" onclick="event.preventDefault();navigate('home')">Home</a>
-          <a href="#" onclick="event.preventDefault();navigate('theme')">Theme</a>
-          <a href="#" onclick="event.preventDefault();navigate('pricing')">Pricing</a>
-          ${isLoggedIn
-            ? `<a href="#" onclick="event.preventDefault();navigate('dashboard')" class="nav-btn nav-btn-primary">Dashboard</a>`
-            : `<a href="#" onclick="event.preventDefault();navigate('login')" class="nav-btn nav-btn-outline">Login</a>
-               <a href="#" onclick="event.preventDefault();navigate('pricing')" class="nav-btn nav-btn-primary">Get Started</a>`
-          }
+          <a class="nav-link" href="#" onclick="event.preventDefault();navigate('home')">Home</a>
+          <a class="nav-link" href="#" onclick="event.preventDefault();navigate('theme')">Theme</a>
+          <a class="nav-link" href="#" onclick="event.preventDefault();navigate('pricing')">Pricing</a>
+          ${loggedIn
+            ? `<a class="nav-btn nav-btn-primary" href="#" onclick="event.preventDefault();navigate('dashboard')">Dashboard</a>`
+            : `<a class="nav-btn nav-btn-ghost" href="#" onclick="event.preventDefault();navigate('login')">Login</a>
+               <a class="nav-btn nav-btn-primary" href="#" onclick="event.preventDefault();navigate('pricing')">Get Started</a>`}
         </div>
       </div>
     </nav>`;
 }
 
 function renderFooter() {
-  return `
-    <footer class="footer">
-      <div class="footer-inner">
-        <div class="footer-copy">&copy; ${new Date().getFullYear()} OGVendors. All rights reserved.</div>
-        <div class="footer-links">
-          <a href="#" onclick="event.preventDefault();navigate('theme')">Theme</a>
-          <a href="#" onclick="event.preventDefault();navigate('pricing')">Pricing</a>
-          <a href="#" onclick="event.preventDefault();navigate('login')">Login</a>
-        </div>
-      </div>
-    </footer>`;
+  return `<footer class="footer"><div class="footer-inner">
+    <div class="footer-copy">&copy; ${new Date().getFullYear()} OGVendors. All rights reserved.</div>
+    <div class="footer-links">
+      <a href="#" onclick="event.preventDefault();navigate('theme')">Theme</a>
+      <a href="#" onclick="event.preventDefault();navigate('pricing')">Pricing</a>
+      <a href="#" onclick="event.preventDefault();navigate('login')">Login</a>
+    </div>
+  </div></footer>`;
 }
 
-// ─── HOME PAGE ──────────────────────────────────────
+// ─── HOME ───────────────────────────────────────────
 function renderHome() {
-  return `
-    ${renderNav(true)}
+  return `<div class="page-wrap">
+    ${renderNav()}
     <section class="hero">
-      <div class="hero-content fade-in">
-        <div class="hero-badge"><span class="dot"></span> Trusted by 500+ resellers</div>
-        <h1>The #1 Theme for <span class="accent">Resellers</span></h1>
-        <p>Build a professional Shopify store in minutes. Conversion-optimized, fully customizable, and built specifically for selling digital products.</p>
+      <div class="fade-in">
+        <div class="hero-ticker"><span class="dot"></span> Theme Store Sales: <strong>$2,847,391</strong></div>
+        <h1>The <span class="highlight">#1</span> Shopify Theme For Selling Digital Products</h1>
+        <p>Join 500+ resellers building profitable businesses selling vendor links. Get your professional store live in under 15 minutes.</p>
         <div class="hero-actions">
-          <a href="#" onclick="event.preventDefault();navigate('pricing')" class="btn-lg btn-accent">Get Started</a>
-          <a href="#" onclick="event.preventDefault();navigate('theme')" class="btn-lg btn-ghost">See Features</a>
+          <a href="#" onclick="event.preventDefault();navigate('pricing')" class="btn-primary">Use OGVendors <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></a>
+          <a href="#" onclick="event.preventDefault();navigate('theme')" class="btn-secondary">View Features</a>
         </div>
-        <div class="hero-stats">
-          <div class="hero-stat"><div class="hero-stat-num">500+</div><div class="hero-stat-label">Active Stores</div></div>
-          <div class="hero-stat"><div class="hero-stat-num">$2M+</div><div class="hero-stat-label">Revenue Generated</div></div>
-          <div class="hero-stat"><div class="hero-stat-num">4.9</div><div class="hero-stat-label">Star Rating</div></div>
-          <div class="hero-stat"><div class="hero-stat-num">100K+</div><div class="hero-stat-label">Customers Served</div></div>
+        <div class="hero-badges">
+          <div class="hero-badge"><span class="badge-icon badge-green">&#10003;</span> 140+ Features</div>
+          <div class="hero-badge"><span class="badge-icon badge-blue">&#10003;</span> No coding</div>
+          <div class="hero-badge"><span class="badge-icon badge-purple">&#10003;</span> One time Fee</div>
         </div>
       </div>
     </section>
 
+    <div class="stats-bar">
+      <div class="stat-item"><div class="stat-num">500+</div><div class="stat-label">Active Resellers</div></div>
+      <div class="stat-item"><div class="stat-num">$2.8M+</div><div class="stat-label">Combined Sales</div></div>
+      <div class="stat-item"><div class="stat-num">100K+</div><div class="stat-label">Customers Served</div></div>
+      <div class="stat-item"><div class="stat-num">4.9</div><div class="stat-label">Star Rating</div></div>
+    </div>
+
     <section class="section">
       <div class="section-header">
-        <h2>Built to <span style="color:var(--accent)">Convert</span></h2>
-        <p>Every feature is designed to maximize your sales and build trust with your customers.</p>
+        <div class="section-badge section-badge-blue">&#x2728; Features</div>
+        <h2>Everything Your Store Needs to Win</h2>
+        <p>Professional features that make you look like a million-dollar brand</p>
       </div>
       <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f916;</div>
-          <h3>AI Chatbot</h3>
-          <p>24/7 automated customer support that handles questions and objections while you sleep.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x26a1;</div>
-          <h3>Urgency Tools</h3>
-          <p>Live viewer counts, countdown timers, and stock indicators to drive immediate purchases.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x2b50;</div>
-          <h3>Social Proof</h3>
-          <p>Photo reviews, live purchase notifications, and trust badges that build instant credibility.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f3a8;</div>
-          <h3>Image Generator</h3>
-          <p>Create stunning product images with custom backgrounds and templates in seconds.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f4e6;</div>
-          <h3>Bundle Builder</h3>
-          <p>Automatic discount bundles that increase your average order value effortlessly.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f512;</div>
-          <h3>Anti-Theft Protection</h3>
-          <p>Server-side rendering with license validation. Your theme can't be stolen or pirated.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f504;</div>
-          <h3>Auto Updates</h3>
-          <p>Your theme updates automatically from our server. No manual downloads or re-installs needed.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f4f1;</div>
-          <h3>Mobile First</h3>
-          <p>Fully responsive design that looks incredible on every device. Optimized for mobile shoppers.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f680;</div>
-          <h3>Fast Setup</h3>
-          <p>Get your store live in under 15 minutes. Drag-and-drop customization, no coding required.</p>
-        </div>
+        ${renderFeatureCards()}
       </div>
     </section>
 
     ${renderTestimonials()}
+
+    <section class="section" style="text-align:center;">
+      <a href="#" onclick="event.preventDefault();navigate('pricing')" class="btn-primary">Get Started Today <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></a>
+    </section>
+
     ${renderFooter()}
-  `;
+  </div>`;
+}
+
+function renderFeatureCards() {
+  const features = [
+    { icon: '&#x1f916;', title: 'AI Chatbot', desc: '24/7 automated support that handles questions and objections while you sleep.', color: 'blue' },
+    { icon: '&#x26a1;', title: 'Urgency Tools', desc: 'Live viewer counts, countdown timers, and stock indicators to drive purchases.', color: 'purple' },
+    { icon: '&#x2b50;', title: 'Social Proof', desc: 'Photo reviews, live purchase notifications, and trust badges for credibility.', color: 'green' },
+    { icon: '&#x1f3a8;', title: 'Image Generator', desc: 'Create stunning product images with custom backgrounds in seconds.', color: 'blue' },
+    { icon: '&#x1f4e6;', title: 'Bundle Builder', desc: 'Automatic discount bundles that increase your average order value.', color: 'purple' },
+    { icon: '&#x1f512;', title: 'Anti-Theft Protection', desc: 'Server-side rendering with license validation. Your theme can\'t be stolen.', color: 'green' },
+    { icon: '&#x1f504;', title: 'Auto Updates', desc: 'Theme updates automatically from our server. No manual downloads needed.', color: 'blue' },
+    { icon: '&#x1f4f1;', title: 'Mobile First', desc: 'Fully responsive design that looks incredible on every device.', color: 'purple' },
+    { icon: '&#x1f680;', title: 'Fast Setup', desc: 'Get your store live in under 15 minutes. Drag-and-drop, no coding.', color: 'green' },
+  ];
+  return features.map(f => `
+    <div class="feature-card">
+      <div class="feature-icon feature-icon-${f.color}">${f.icon}</div>
+      <h3>${f.title}</h3>
+      <p>${f.desc}</p>
+    </div>`).join('');
 }
 
 function renderTestimonials() {
   const reviews = [
     { name: 'Alex M.', handle: '@alexresells', text: 'Best theme investment I\'ve made. Made my money back the first week. The conversion tools actually work.' },
     { name: 'Jordan T.', handle: '@jordanflips', text: 'Was using a basic free theme before. Switched to OGVendors and my conversion rate doubled overnight.' },
-    { name: 'Sarah K.', handle: '@sarahresells', text: 'The AI chatbot alone is worth the price. It handles all my customer questions while I source new products.' },
-    { name: 'Mike R.', handle: '@mikereseller', text: 'Image generator saves me hours every week. Product photos look professional without any design skills.' },
-    { name: 'Emily W.', handle: '@emilydeals', text: 'The urgency tools and live sales notifications actually create FOMO. My sales jumped 40% in the first month.' },
-    { name: 'Chris B.', handle: '@chrisvendors', text: 'Got banned and they remade my entire store in 24 hours. No other theme does that. Customer service is insane.' },
+    { name: 'Sarah K.', handle: '@sarahresells', text: 'The AI chatbot alone is worth the price. Handles all my customer questions while I source products.' },
   ];
   return `
-    <section class="section" style="background: var(--bg-card);">
+    <section class="section section-alt">
       <div class="section-header">
-        <h2>Loved by <span style="color:var(--accent)">Resellers</span></h2>
-        <p>Join hundreds of successful resellers using OGVendors to build their business.</p>
+        <div class="section-badge section-badge-green">&#x1f4ac; Reviews</div>
+        <h2>Loved by Resellers</h2>
+        <p>Join hundreds of successful resellers using OGVendors</p>
       </div>
       <div class="testimonials-row">
-        ${reviews.slice(0, 3).map(r => `
+        ${reviews.map(r => `
           <div class="testimonial-card">
             <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
             <div class="testimonial-text">"${r.text}"</div>
             <div class="testimonial-author">
               <div class="testimonial-avatar">${r.name[0]}</div>
-              <div>
-                <div class="testimonial-name">${r.name}</div>
-                <div class="testimonial-handle">${r.handle}</div>
-              </div>
+              <div><div class="testimonial-name">${r.name}</div><div class="testimonial-handle">${r.handle}</div></div>
             </div>
           </div>`).join('')}
       </div>
@@ -438,149 +453,126 @@ function renderTestimonials() {
 
 // ─── THEME PAGE ─────────────────────────────────────
 function renderTheme() {
-  return `
-    ${renderNav(true)}
-    <section class="hero" style="min-height:auto;padding-top:160px;padding-bottom:60px;">
-      <div class="hero-content fade-in">
-        <div class="hero-badge"><span class="dot"></span> 140+ Built-in Features</div>
-        <h1>The OG<span class="accent">Vendors</span> Theme</h1>
+  return `<div class="page-wrap">
+    ${renderNav()}
+    <section class="hero" style="min-height:auto;padding-top:140px;padding-bottom:40px;">
+      <div class="fade-in">
+        <div class="section-badge section-badge-blue">&#x2728; Theme</div>
+        <h1>The OG<span class="highlight">Vendors</span> Theme</h1>
         <p>A premium Shopify theme engineered specifically for digital product resellers. Server-side rendered, conversion-optimized, and impossible to pirate.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="section-header">
-        <h2>Everything You <span style="color:var(--accent)">Need</span></h2>
-        <p>Every tool a reseller needs to run a successful store, built right into the theme.</p>
+        <h2>Everything You Need</h2>
+        <p>Every tool a reseller needs to run a successful store, built right in.</p>
       </div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f6e1;&#xfe0f;</div>
-          <h3>Server-Side Rendering</h3>
-          <p>Theme content is rendered on our servers and injected in real-time. No one can copy your theme's code.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f4ca;</div>
-          <h3>Live Sales Notifications</h3>
-          <p>Show real-time purchase notifications to create social proof and urgency for visitors.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x2753;</div>
-          <h3>FAQ Section</h3>
-          <p>Beautiful accordion FAQ section to answer common questions and reduce support tickets.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f5bc;&#xfe0f;</div>
-          <h3>Testimonial Carousel</h3>
-          <p>Auto-scrolling image carousel to showcase customer screenshots and social proof.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f6d2;</div>
-          <h3>Smart Cart</h3>
-          <p>Add to cart with instant checkout or cart drawer. One-click buying optimized for conversions.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f310;</div>
-          <h3>Custom Domain Support</h3>
-          <p>Works on any Shopify domain. License tied to your store for maximum security.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f3a8;</div>
-          <h3>Full Customization</h3>
-          <p>Colors, fonts, layouts — everything is customizable from Shopify's theme editor. No code needed.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f4f1;</div>
-          <h3>Mobile Optimized</h3>
-          <p>Every section is responsive and looks perfect on phones, tablets, and desktops.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#x1f504;</div>
-          <h3>Lifetime Updates</h3>
-          <p>New features and improvements pushed automatically. Your store always has the latest version.</p>
-        </div>
+      <div class="features-grid">${renderFeatureCards()}</div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="section-header">
+        <div class="section-badge section-badge-purple">&#x2753; FAQ</div>
+        <h2>Frequently Asked Questions</h2>
+        <p>Everything you need to know about our Shopify theme</p>
+      </div>
+      <div class="faq-list">
+        ${[
+          { q: 'What exactly is this theme for?', a: 'OGVendors is built specifically for resellers who sell digital products like vendor links on Shopify. It includes all the conversion tools, social proof, and protection features you need.' },
+          { q: 'Do I need coding experience?', a: 'No. Everything is drag-and-drop through the Shopify theme editor. Just customize colors, text, and images to match your brand.' },
+          { q: 'What happens if my store gets banned?', a: 'Pro plan members get unlimited store remakes. We\'ll set up a brand new store for you with the same theme and configuration.' },
+          { q: 'How does the license protection work?', a: 'Your theme is powered by our server. Without a valid license key, the theme shows a blank page. This means nobody can steal or copy your theme.' },
+          { q: 'Are updates included?', a: 'Yes. Your theme updates automatically from our server. New features and improvements are pushed without you needing to do anything.' },
+        ].map((f, i) => `
+          <div class="faq-item" id="faq-${i}">
+            <div class="faq-q" onclick="document.getElementById('faq-${i}').classList.toggle('open')">
+              <span>${f.q}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="faq-a"><p>${f.a}</p></div>
+          </div>`).join('')}
       </div>
     </section>
 
     <section class="section" style="text-align:center;">
-      <a href="#" onclick="event.preventDefault();navigate('pricing')" class="btn-lg btn-accent">Get the Theme</a>
+      <a href="#" onclick="event.preventDefault();navigate('pricing')" class="btn-primary">Get the Theme <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></a>
     </section>
 
     ${renderFooter()}
-  `;
+  </div>`;
 }
 
-// ─── PRICING PAGE ───────────────────────────────────
+// ─── PRICING ────────────────────────────────────────
 function renderPricing() {
-  return `
-    ${renderNav(true)}
-    <section class="hero" style="min-height:auto;padding-top:160px;padding-bottom:20px;">
-      <div class="hero-content fade-in">
-        <h1>Simple <span class="accent">Pricing</span></h1>
-        <p>One-time payment. Lifetime access. No subscriptions, no hidden fees.</p>
+  return `<div class="page-wrap">
+    ${renderNav()}
+    <section class="hero" style="min-height:auto;padding-top:140px;padding-bottom:20px;">
+      <div class="fade-in">
+        <h1>Choose Your Plan</h1>
+        <p>One-time payment. Lifetime access. No subscriptions.</p>
       </div>
     </section>
 
-    <section class="section" style="padding-top:40px;">
+    <section class="section" style="padding-top:32px;">
       <div class="pricing-grid">
         <div class="pricing-card">
-          <div class="pricing-name">Starter</div>
-          <div class="pricing-price">$149 <span>one-time</span></div>
-          <div class="pricing-desc">Everything you need to launch your store</div>
+          <div class="pricing-badge">LITE</div>
+          <div class="pricing-name">OGVendors Lite</div>
+          <div class="pricing-price">$149 <span>one time</span></div>
+          <div class="pricing-desc">Everything you need to launch</div>
           <ul class="pricing-features">
-            <li><span class="check">&#10003;</span> Full theme access</li>
-            <li><span class="check">&#10003;</span> All 140+ features</li>
-            <li><span class="check">&#10003;</span> Product image generator</li>
-            <li><span class="check">&#10003;</span> Setup documentation</li>
-            <li><span class="check">&#10003;</span> Lifetime updates</li>
-            <li><span class="check">&#10003;</span> Email support</li>
+            <li><span class="check check-green">&#10003;</span> Full theme with 140+ features</li>
+            <li><span class="check check-green">&#10003;</span> 1 store license</li>
+            <li><span class="check check-green">&#10003;</span> Product image generator</li>
+            <li><span class="check check-green">&#10003;</span> Built-in setup support</li>
+            <li><span class="check check-green">&#10003;</span> Complete documentation</li>
+            <li><span class="check check-green">&#10003;</span> Lifetime updates</li>
           </ul>
-          <a href="#" onclick="event.preventDefault();navigate('login')" class="pricing-btn pricing-btn-outline">Get Started</a>
+          <a href="#" onclick="event.preventDefault();navigate('login')" class="pricing-btn pricing-btn-dark">Purchase Now</a>
         </div>
         <div class="pricing-card featured">
-          <div class="pricing-name">Pro</div>
-          <div class="pricing-price">$299 <span>one-time</span></div>
+          <div class="pricing-badge">PRO</div>
+          <div class="pricing-name">OGVendors Pro</div>
+          <div class="pricing-price">$299 <span>one time</span></div>
           <div class="pricing-desc">For serious resellers who want everything</div>
           <ul class="pricing-features">
-            <li><span class="check">&#10003;</span> Everything in Starter</li>
-            <li><span class="check">&#10003;</span> 1-on-1 store setup</li>
-            <li><span class="check">&#10003;</span> Unlimited remakes if banned</li>
-            <li><span class="check">&#10003;</span> Priority support</li>
-            <li><span class="check">&#10003;</span> Private Discord community</li>
-            <li><span class="check">&#10003;</span> Custom branding setup</li>
+            <li><span class="check check-blue">&#10003;</span> Everything in Lite</li>
+            <li><span class="check check-blue">&#10003;</span> 1-on-1 full store setup</li>
+            <li><span class="check check-blue">&#10003;</span> Unlimited store remakes if banned</li>
+            <li><span class="check check-blue">&#10003;</span> Priority support</li>
+            <li><span class="check check-blue">&#10003;</span> Private OGVendors community</li>
+            <li><span class="check check-blue">&#10003;</span> Custom branding setup</li>
           </ul>
-          <a href="#" onclick="event.preventDefault();navigate('login')" class="pricing-btn pricing-btn-accent">Get Pro</a>
+          <a href="#" onclick="event.preventDefault();navigate('login')" class="pricing-btn pricing-btn-primary">Purchase Now</a>
         </div>
       </div>
-
-      <div style="text-align:center;margin-top:48px;">
-        <p style="font-size:14px;color:var(--text-subtle);">All sales are final. No refunds. Questions? Contact support before purchasing.</p>
-      </div>
+      <p style="text-align:center;margin-top:32px;font-size:14px;color:var(--text-subtle);">All sales are final. No refunds. Contact support before purchasing.</p>
     </section>
 
     ${renderTestimonials()}
     ${renderFooter()}
-  `;
+  </div>`;
 }
 
-// ─── LOGIN PAGE ─────────────────────────────────────
+// ─── LOGIN ──────────────────────────────────────────
 function renderLogin() {
-  return `
-    ${renderNav(false)}
-    <div class="login-page fade-in">
-      <div class="login-box">
+  return `<div class="page-wrap">
+    ${renderNav()}
+    <div class="login-page">
+      <div class="login-box fade-in">
         <h1>Welcome Back</h1>
         <p class="subtitle">Enter your license key to access your dashboard</p>
         <div class="form-group">
           <label class="form-label">License Key</label>
-          <input type="text" class="form-input" id="login-key" placeholder="Enter your license key" autocomplete="off">
+          <input type="text" class="form-input" id="login-key" placeholder="Enter your license key" autocomplete="off" onkeydown="if(event.key==='Enter')handleLogin()">
         </div>
         <button class="form-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
         <div class="form-error hidden" id="login-error"></div>
-        <div class="form-divider">Don't have a license? <a href="#" onclick="event.preventDefault();navigate('pricing')" style="color:var(--accent);font-weight:600;">Get one here</a></div>
+        <div class="form-footer">Don't have a license? <a href="#" onclick="event.preventDefault();navigate('pricing')">Get one here</a></div>
       </div>
     </div>
-  `;
+  </div>`;
 }
 
 async function handleLogin() {
@@ -589,165 +581,82 @@ async function handleLogin() {
   const err = document.getElementById('login-error');
   const key = input.value.trim();
   if (!key) { err.textContent = 'Please enter a license key'; err.classList.remove('hidden'); return; }
-
-  btn.disabled = true;
-  btn.textContent = 'Signing in...';
-  err.classList.add('hidden');
-
+  btn.disabled = true; btn.textContent = 'Signing in...'; err.classList.add('hidden');
   try {
     const data = await apiLogin(key);
     user = data.license;
     localStorage.setItem('og_license', JSON.stringify(user));
-    // Check admin
-    const adminRes = await fetch(API + '/api/auth/check-admin', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adminKey: key })
-    });
+    const adminRes = await fetch(API + '/api/auth/check-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminKey: key }) });
     const adminData = await adminRes.json();
     isAdmin = adminData.isAdmin;
     localStorage.setItem('og_admin', isAdmin ? '1' : '0');
     navigate('dashboard');
   } catch (e) {
-    err.textContent = e.message;
-    err.classList.remove('hidden');
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
+    err.textContent = e.message; err.classList.remove('hidden'); btn.disabled = false; btn.textContent = 'Sign In';
   }
 }
 
 // ─── DASHBOARD ──────────────────────────────────────
 function renderDashboard() {
   if (!user) { navigate('login'); return ''; }
-  const subPage = currentPage.replace('dashboard/', '').replace('dashboard', '') || 'overview';
+  const sub = currentPage.replace('dashboard/', '').replace('dashboard', '') || 'overview';
   const navItems = [
     { id: 'overview', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>', label: 'Overview' },
     { id: 'image-generator', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>', label: 'Image Generator' },
     { id: 'download', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>', label: 'Download Theme' },
     { id: 'setup', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>', label: 'Setup Guide' },
   ];
+  return `<div class="dash">
+    <aside class="dash-sidebar">
+      <div class="dash-sidebar-logo">
+        <span class="logo-icon"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg></span>
+        OGVENDORS
+      </div>
+      <div class="dash-nav">
+        <div class="dash-nav-section">Main</div>
+        ${navItems.map(n => `<div class="dash-nav-item ${sub === n.id ? 'active' : ''}" onclick="navigate('dashboard/${n.id}')">${n.icon} ${n.label}</div>`).join('')}
+        ${isAdmin ? `<div class="dash-nav-section">Admin</div><div class="dash-nav-item" onclick="window.location.href='/admin'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Admin Panel</div>` : ''}
+      </div>
+      <div class="dash-sidebar-footer">
+        <div class="dash-user">
+          <div class="dash-user-avatar">${(user.domain || 'U')[0].toUpperCase()}</div>
+          <div><div class="dash-user-name">${user.store_name || user.domain || 'My Store'}</div><div class="dash-user-plan">${user.plan || 'standard'} plan</div></div>
+        </div>
+        <button onclick="handleLogout()" style="background:none;border:none;color:var(--text-subtle);font-size:12px;cursor:pointer;margin-top:10px;">Sign out</button>
+      </div>
+    </aside>
+    <main class="dash-main fade-in">
+      ${sub === 'overview' ? renderOverview() : sub === 'image-generator' ? renderImageGen() : sub === 'download' ? renderDownload() : sub === 'setup' ? renderSetup() : renderOverview()}
+    </main>
+  </div>`;
+}
 
+function renderOverview() {
   return `
-    <div class="dash">
-      <aside class="dash-sidebar">
-        <div class="dash-sidebar-logo">OG<span>Vendors</span></div>
-        <div class="dash-nav">
-          <div class="dash-nav-section">Main</div>
-          ${navItems.map(n => `
-            <div class="dash-nav-item ${subPage === n.id ? 'active' : ''}" onclick="navigate('dashboard/${n.id}')">
-              ${n.icon} ${n.label}
-            </div>`).join('')}
-          ${isAdmin ? `
-            <div class="dash-nav-section">Admin</div>
-            <div class="dash-nav-item" onclick="window.location.href='/admin'">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Admin Panel
-            </div>` : ''}
-        </div>
-        <div class="dash-sidebar-footer">
-          <div class="dash-user">
-            <div class="dash-user-avatar">${(user.domain || 'U')[0].toUpperCase()}</div>
-            <div class="dash-user-info">
-              <div class="dash-user-name">${user.store_name || user.domain || 'My Store'}</div>
-              <div class="dash-user-plan">${user.plan || 'standard'} plan</div>
-            </div>
-          </div>
-          <div style="margin-top:12px;">
-            <button onclick="handleLogout()" style="background:none;border:none;color:var(--text-subtle);font-size:12px;cursor:pointer;">Sign out</button>
-          </div>
-        </div>
-      </aside>
-      <main class="dash-main fade-in">
-        ${subPage === 'overview' ? renderDashOverview()
-          : subPage === 'image-generator' ? renderImageGenerator()
-          : subPage === 'download' ? renderDownload()
-          : subPage === 'setup' ? renderSetupGuide()
-          : renderDashOverview()}
-      </main>
+    <div class="dash-header"><h1>Welcome back</h1><p>Your license overview and store status</p></div>
+    <div class="dash-stats">
+      <div class="dash-stat-card"><div class="dash-stat-label">Status</div><div class="dash-stat-value"><span class="green">Active</span></div></div>
+      <div class="dash-stat-card"><div class="dash-stat-label">Plan</div><div class="dash-stat-value">${(user.plan||'Standard').charAt(0).toUpperCase()+(user.plan||'standard').slice(1)}</div></div>
+      <div class="dash-stat-card"><div class="dash-stat-label">Requests</div><div class="dash-stat-value">${user.request_count||0}</div></div>
+    </div>
+    <div class="info-card">
+      <h3>License Information</h3>
+      <div class="license-display"><span class="license-display-key">${user.key}</span><button class="copy-btn" onclick="navigator.clipboard.writeText('${user.key}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',2000)">Copy</button></div>
+      <div class="info-grid">
+        <div><div class="info-field-label">Domain</div><div class="info-field-value">${user.domain==='*'?'All domains (universal)':user.domain||'Not set'}</div></div>
+        <div><div class="info-field-label">Created</div><div class="info-field-value">${user.created_at?new Date(user.created_at).toLocaleDateString():'N/A'}</div></div>
+        <div><div class="info-field-label">Expires</div><div class="info-field-value">${user.expires_at?new Date(user.expires_at).toLocaleDateString():'Never'}</div></div>
+        <div><div class="info-field-label">Last Verified</div><div class="info-field-value">${user.last_verified_at?new Date(user.last_verified_at).toLocaleString():'Never'}</div></div>
+      </div>
+    </div>
+    <div class="quick-cards">
+      <div class="quick-card" onclick="navigate('dashboard/image-generator')"><div class="quick-card-icon">&#x1f3a8;</div><h3>Image Generator</h3><p>Create professional product images</p></div>
+      <div class="quick-card" onclick="navigate('dashboard/download')"><div class="quick-card-icon">&#x1f4e5;</div><h3>Download Theme</h3><p>Download your theme ZIP file</p></div>
     </div>`;
 }
 
-function renderDashOverview() {
-  return `
-    <div class="dash-header">
-      <h1>Welcome back</h1>
-      <p>Here's your license overview and store status</p>
-    </div>
-
-    <div class="dash-stats">
-      <div class="dash-stat-card">
-        <div class="dash-stat-label">Status</div>
-        <div class="dash-stat-value"><span class="accent">Active</span></div>
-      </div>
-      <div class="dash-stat-card">
-        <div class="dash-stat-label">Plan</div>
-        <div class="dash-stat-value">${(user.plan || 'Standard').charAt(0).toUpperCase() + (user.plan || 'standard').slice(1)}</div>
-      </div>
-      <div class="dash-stat-card">
-        <div class="dash-stat-label">Requests</div>
-        <div class="dash-stat-value">${user.request_count || 0}</div>
-      </div>
-    </div>
-
-    <div class="license-card">
-      <h3>License Information</h3>
-      <div class="license-key-display">
-        <span class="license-key-text" id="license-key-text">${user.key}</span>
-        <button class="copy-btn" onclick="copyKey()">Copy</button>
-      </div>
-      <div class="license-grid">
-        <div class="license-field">
-          <div class="license-field-label">Domain</div>
-          <div class="license-field-value">${user.domain === '*' ? 'All domains (universal)' : user.domain || 'Not set'}</div>
-        </div>
-        <div class="license-field">
-          <div class="license-field-label">Created</div>
-          <div class="license-field-value">${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</div>
-        </div>
-        <div class="license-field">
-          <div class="license-field-label">Expires</div>
-          <div class="license-field-value">${user.expires_at ? new Date(user.expires_at).toLocaleDateString() : 'Never'}</div>
-        </div>
-        <div class="license-field">
-          <div class="license-field-label">Last Verified</div>
-          <div class="license-field-value">${user.last_verified_at ? new Date(user.last_verified_at).toLocaleString() : 'Never'}</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div class="license-card" style="cursor:pointer;" onclick="navigate('dashboard/image-generator')">
-        <div style="font-size:32px;margin-bottom:12px;">&#x1f3a8;</div>
-        <h3>Image Generator</h3>
-        <p style="font-size:14px;color:var(--text-muted);">Create professional product images with custom backgrounds</p>
-      </div>
-      <div class="license-card" style="cursor:pointer;" onclick="navigate('dashboard/download')">
-        <div style="font-size:32px;margin-bottom:12px;">&#x1f4e5;</div>
-        <h3>Download Theme</h3>
-        <p style="font-size:14px;color:var(--text-muted);">Download your theme ZIP file for Shopify installation</p>
-      </div>
-    </div>
-  `;
-}
-
-function copyKey() {
-  navigator.clipboard.writeText(user.key);
-  const btn = document.querySelector('.copy-btn');
-  btn.textContent = 'Copied!';
-  setTimeout(() => btn.textContent = 'Copy', 2000);
-}
-
 // ─── IMAGE GENERATOR ────────────────────────────────
-let imgenState = {
-  bgTemplate: 0,
-  productImg: null,
-  productScale: 70,
-  productY: 50,
-  textTop: '',
-  textBottom: '',
-  textColor: '#ffffff',
-  fontSize: 32
-};
-
+let imgenState = { bgTemplate: 0, productImg: null, productScale: 70, productY: 50, textTop: '', textBottom: '', textColor: '#ffffff', fontSize: 32 };
 const bgTemplates = [
   { name: 'Midnight', colors: ['#0a0a0a', '#1a1a2e'] },
   { name: 'Emerald', colors: ['#064e3b', '#0a0a0a'] },
@@ -759,322 +668,111 @@ const bgTemplates = [
   { name: 'Grape', colors: ['#581c87', '#0a0a0a'] },
 ];
 
-function renderImageGenerator() {
+function renderImageGen() {
   return `
-    <div class="dash-header">
-      <h1>Image Generator</h1>
-      <p>Create professional product images with custom backgrounds and text</p>
-    </div>
-    <div class="imgen">
-      <div class="imgen-workspace">
-        <div class="imgen-panel">
-          <h3>Preview</h3>
-          <div class="imgen-canvas-wrap">
-            <canvas id="imgen-canvas" width="1080" height="1080"></canvas>
-          </div>
-          <div class="imgen-actions">
-            <button class="imgen-btn imgen-btn-primary" onclick="downloadImage()">Download PNG</button>
-            <button class="imgen-btn imgen-btn-secondary" onclick="resetImgen()">Reset</button>
-          </div>
-        </div>
-        <div class="imgen-panel">
-          <h3>Background</h3>
-          <div class="imgen-templates">
-            ${bgTemplates.map((t, i) => `
-              <div class="imgen-template ${imgenState.bgTemplate === i ? 'active' : ''}"
-                   style="background:linear-gradient(135deg, ${t.colors[0]}, ${t.colors[1]});"
-                   title="${t.name}"
-                   onclick="selectBg(${i})"></div>
-            `).join('')}
-          </div>
-
-          <h3>Product Image</h3>
-          <div class="imgen-upload" onclick="document.getElementById('imgen-file').click()">
-            <div class="upload-icon">&#x1f4f7;</div>
-            <p>${imgenState.productImg ? 'Image loaded — click to change' : 'Click to upload product image'}</p>
-          </div>
-          <input type="file" id="imgen-file" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
-
-          <div class="imgen-field">
-            <label>Product Size: ${imgenState.productScale}%</label>
-            <input type="range" class="imgen-slider" min="20" max="100" value="${imgenState.productScale}" oninput="imgenState.productScale=+this.value;drawCanvas()">
-          </div>
-          <div class="imgen-field">
-            <label>Vertical Position: ${imgenState.productY}%</label>
-            <input type="range" class="imgen-slider" min="0" max="100" value="${imgenState.productY}" oninput="imgenState.productY=+this.value;drawCanvas()">
-          </div>
-
-          <h3 style="margin-top:20px;">Text Overlay</h3>
-          <div class="imgen-field">
-            <label>Top Text</label>
-            <input class="form-input" placeholder="e.g. NEW DROP" value="${imgenState.textTop}" oninput="imgenState.textTop=this.value;drawCanvas()">
-          </div>
-          <div class="imgen-field">
-            <label>Bottom Text</label>
-            <input class="form-input" placeholder="e.g. $29.99" value="${imgenState.textBottom}" oninput="imgenState.textBottom=this.value;drawCanvas()">
-          </div>
-          <div style="display:flex;gap:12px;">
-            <div class="imgen-field" style="flex:1;">
-              <label>Text Color</label>
-              <input type="color" value="${imgenState.textColor}" style="width:100%;height:36px;border:none;border-radius:8px;cursor:pointer;" onchange="imgenState.textColor=this.value;drawCanvas()">
-            </div>
-            <div class="imgen-field" style="flex:1;">
-              <label>Font Size: ${imgenState.fontSize}px</label>
-              <input type="range" class="imgen-slider" min="16" max="72" value="${imgenState.fontSize}" oninput="imgenState.fontSize=+this.value;drawCanvas()">
-            </div>
-          </div>
+    <div class="dash-header"><h1>Image Generator</h1><p>Create professional product images with custom backgrounds and text</p></div>
+    <div class="imgen-workspace">
+      <div class="imgen-panel">
+        <h3>Preview</h3>
+        <div class="imgen-canvas-wrap"><canvas id="imgen-canvas" width="1080" height="1080"></canvas></div>
+        <div class="imgen-actions">
+          <button class="imgen-btn imgen-btn-primary" onclick="downloadImage()">Download PNG</button>
+          <button class="imgen-btn imgen-btn-secondary" onclick="resetImgen()">Reset</button>
         </div>
       </div>
-    </div>
-  `;
+      <div class="imgen-panel">
+        <h3>Background</h3>
+        <div class="imgen-templates">${bgTemplates.map((t,i) => `<div class="imgen-template ${imgenState.bgTemplate===i?'active':''}" style="background:linear-gradient(135deg,${t.colors[0]},${t.colors[1]});" title="${t.name}" onclick="selectBg(${i})"></div>`).join('')}</div>
+        <h3>Product Image</h3>
+        <div class="imgen-upload" onclick="document.getElementById('imgen-file').click()">
+          <div class="upload-icon">&#x1f4f7;</div>
+          <p>${imgenState.productImg ? 'Image loaded — click to change' : 'Click to upload product image'}</p>
+        </div>
+        <input type="file" id="imgen-file" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+        <div class="imgen-field"><label>Product Size: ${imgenState.productScale}%</label><input type="range" class="imgen-slider" min="20" max="100" value="${imgenState.productScale}" oninput="imgenState.productScale=+this.value;drawCanvas()"></div>
+        <div class="imgen-field"><label>Vertical Position: ${imgenState.productY}%</label><input type="range" class="imgen-slider" min="0" max="100" value="${imgenState.productY}" oninput="imgenState.productY=+this.value;drawCanvas()"></div>
+        <h3 style="margin-top:16px;">Text Overlay</h3>
+        <div class="imgen-field"><label>Top Text</label><input class="form-input" placeholder="e.g. NEW DROP" value="${imgenState.textTop}" oninput="imgenState.textTop=this.value;drawCanvas()"></div>
+        <div class="imgen-field"><label>Bottom Text</label><input class="form-input" placeholder="e.g. $29.99" value="${imgenState.textBottom}" oninput="imgenState.textBottom=this.value;drawCanvas()"></div>
+        <div style="display:flex;gap:10px;">
+          <div class="imgen-field" style="flex:1;"><label>Text Color</label><input type="color" value="${imgenState.textColor}" style="width:100%;height:34px;border:none;border-radius:8px;cursor:pointer;" onchange="imgenState.textColor=this.value;drawCanvas()"></div>
+          <div class="imgen-field" style="flex:1;"><label>Font Size: ${imgenState.fontSize}px</label><input type="range" class="imgen-slider" min="16" max="72" value="${imgenState.fontSize}" oninput="imgenState.fontSize=+this.value;drawCanvas()"></div>
+        </div>
+      </div>
+    </div>`;
 }
 
-function selectBg(i) {
-  imgenState.bgTemplate = i;
-  render();
-  drawCanvas();
-}
-
-function handleImageUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const img = new Image();
-  img.onload = () => { imgenState.productImg = img; drawCanvas(); };
-  img.src = URL.createObjectURL(file);
-}
-
+function selectBg(i) { imgenState.bgTemplate = i; render(); drawCanvas(); }
+function handleImageUpload(e) { const f = e.target.files[0]; if(!f)return; const img = new Image(); img.onload = () => { imgenState.productImg = img; drawCanvas(); }; img.src = URL.createObjectURL(f); }
 function drawCanvas() {
-  const canvas = document.getElementById('imgen-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = 1080, H = 1080;
-
-  // Background
+  const canvas = document.getElementById('imgen-canvas'); if(!canvas)return;
+  const ctx = canvas.getContext('2d'); const W = 1080, H = 1080;
   const bg = bgTemplates[imgenState.bgTemplate];
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, bg.colors[0]);
-  grad.addColorStop(1, bg.colors[1]);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-
-  // Add subtle grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
-  for (let i = 0; i < H; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
-
-  // Glow behind product
-  if (imgenState.productImg) {
-    const glowGrad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, 350);
-    glowGrad.addColorStop(0, 'rgba(57,255,20,0.08)');
-    glowGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = glowGrad;
-    ctx.fillRect(0, 0, W, H);
-  }
-
-  // Product image
-  if (imgenState.productImg) {
-    const img = imgenState.productImg;
-    const scale = imgenState.productScale / 100;
-    const maxSize = W * 0.8;
-    const ratio = Math.min(maxSize / img.width, maxSize / img.height) * scale;
-    const dw = img.width * ratio;
-    const dh = img.height * ratio;
-    const dx = (W - dw) / 2;
-    const dy = (H - dh) * (imgenState.productY / 100);
-
-    // Shadow
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 60;
-    ctx.shadowOffsetY = 20;
-    ctx.drawImage(img, dx, dy, dw, dh);
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetY = 0;
-  }
-
-  // Top text
-  if (imgenState.textTop) {
-    ctx.fillStyle = imgenState.textColor;
-    ctx.font = `900 ${imgenState.fontSize * 2}px Inter, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    // Text shadow
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 10;
-    ctx.fillText(imgenState.textTop, W/2, 60);
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-  }
-
-  // Bottom text
-  if (imgenState.textBottom) {
-    ctx.fillStyle = imgenState.textColor;
-    ctx.font = `800 ${imgenState.fontSize * 1.5}px Inter, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 10;
-    ctx.fillText(imgenState.textBottom, W/2, H - 60);
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-  }
+  const grad = ctx.createLinearGradient(0,0,W,H); grad.addColorStop(0,bg.colors[0]); grad.addColorStop(1,bg.colors[1]);
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
+  for(let i=0;i<W;i+=40){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,H);ctx.stroke();}
+  for(let i=0;i<H;i+=40){ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(W,i);ctx.stroke();}
+  if(imgenState.productImg){const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,350);g.addColorStop(0,'rgba(37,99,235,0.1)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+  if(imgenState.productImg){const img=imgenState.productImg;const s=imgenState.productScale/100;const m=W*0.8;const r=Math.min(m/img.width,m/img.height)*s;const dw=img.width*r;const dh=img.height*r;const dx=(W-dw)/2;const dy=(H-dh)*(imgenState.productY/100);ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=60;ctx.shadowOffsetY=20;ctx.drawImage(img,dx,dy,dw,dh);ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;}
+  if(imgenState.textTop){ctx.fillStyle=imgenState.textColor;ctx.font=`900 ${imgenState.fontSize*2}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='top';ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=10;ctx.fillText(imgenState.textTop,W/2,60);ctx.shadowColor='transparent';ctx.shadowBlur=0;}
+  if(imgenState.textBottom){ctx.fillStyle=imgenState.textColor;ctx.font=`800 ${imgenState.fontSize*1.5}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=10;ctx.fillText(imgenState.textBottom,W/2,H-60);ctx.shadowColor='transparent';ctx.shadowBlur=0;}
 }
+function downloadImage(){const c=document.getElementById('imgen-canvas');if(!c)return;const l=document.createElement('a');l.download='product-image.png';l.href=c.toDataURL('image/png');l.click();}
+function resetImgen(){imgenState={bgTemplate:0,productImg:null,productScale:70,productY:50,textTop:'',textBottom:'',textColor:'#ffffff',fontSize:32};render();drawCanvas();}
 
-function downloadImage() {
-  const canvas = document.getElementById('imgen-canvas');
-  if (!canvas) return;
-  const link = document.createElement('a');
-  link.download = 'product-image.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-}
-
-function resetImgen() {
-  imgenState = { bgTemplate: 0, productImg: null, productScale: 70, productY: 50, textTop: '', textBottom: '', textColor: '#ffffff', fontSize: 32 };
-  render();
-  drawCanvas();
-}
-
-// ─── DOWNLOAD PAGE ──────────────────────────────────
 function renderDownload() {
   return `
-    <div class="dash-header">
-      <h1>Download Theme</h1>
-      <p>Download and install the OGVendors theme on your Shopify store</p>
-    </div>
+    <div class="dash-header"><h1>Download Theme</h1><p>Download and install the OGVendors theme on your Shopify store</p></div>
     <div class="download-card">
       <div class="download-icon">&#x1f4e6;</div>
       <h3>OGVendors Theme v3</h3>
-      <p>The latest version of the theme with all features included.</p>
+      <p>Latest version with all features included</p>
       <div class="download-steps">
-        <div class="download-step">
-          <div class="download-step-num">1</div>
-          <span>Download the ZIP file below</span>
-        </div>
-        <div class="download-step">
-          <div class="download-step-num">2</div>
-          <span>Go to Shopify Admin > Online Store > Themes</span>
-        </div>
-        <div class="download-step">
-          <div class="download-step-num">3</div>
-          <span>Click "Add theme" > "Upload ZIP file"</span>
-        </div>
-        <div class="download-step">
-          <div class="download-step-num">4</div>
-          <span>Open Theme Settings > License & Protection</span>
-        </div>
-        <div class="download-step">
-          <div class="download-step-num">5</div>
-          <span>Enter your license key: <strong style="color:var(--accent);">${user?.key || ''}</strong></span>
-        </div>
-        <div class="download-step">
-          <div class="download-step-num">6</div>
-          <span>Save and publish — you're live!</span>
-        </div>
+        <div class="download-step"><div class="download-step-num">1</div><span>Download the ZIP file below</span></div>
+        <div class="download-step"><div class="download-step-num">2</div><span>Go to Shopify Admin > Online Store > Themes</span></div>
+        <div class="download-step"><div class="download-step-num">3</div><span>Click "Add theme" > "Upload ZIP file"</span></div>
+        <div class="download-step"><div class="download-step-num">4</div><span>Open Theme Settings > License & Protection</span></div>
+        <div class="download-step"><div class="download-step-num">5</div><span>Enter your license key: <strong style="color:var(--accent-blue);">${user?.key||''}</strong></span></div>
+        <div class="download-step"><div class="download-step-num">6</div><span>Save and publish!</span></div>
       </div>
-      <button class="form-btn" onclick="downloadTheme()">Download Theme ZIP</button>
-    </div>
-  `;
+      <button class="form-btn" onclick="window.open(API+'/api/admin/download-theme?admin_key=og','_blank')">Download Theme ZIP</button>
+    </div>`;
 }
 
-function downloadTheme() {
-  window.open(API + '/api/admin/download-theme?admin_key=og', '_blank');
-}
-
-// ─── SETUP GUIDE ────────────────────────────────────
-function renderSetupGuide() {
+function renderSetup() {
+  const steps = [
+    { title: '1. Install the Theme', body: `Download the theme ZIP from the <a href="#" onclick="event.preventDefault();navigate('dashboard/download')" style="color:var(--accent-blue);font-weight:600;">Download page</a>, then upload it via <strong>Online Store > Themes > Add theme > Upload ZIP</strong>.` },
+    { title: '2. Enter Your License Key', body: `Open theme editor > <strong>Theme Settings > License & Protection</strong> and enter: <code style="background:var(--bg);padding:2px 8px;border-radius:4px;color:var(--accent-blue);">${user?.key||''}</code>` },
+    { title: '3. Customize Your Store', body: 'Use the theme editor to customize colors, branding, social links, and sections. Everything is drag-and-drop.' },
+    { title: '4. Add Products', body: `Add products in Shopify Admin > Products. Use the <a href="#" onclick="event.preventDefault();navigate('dashboard/image-generator')" style="color:var(--accent-blue);font-weight:600;">Image Generator</a> to create professional product images.` },
+    { title: '5. Publish & Launch', body: 'Hit <strong>Publish</strong> in the theme editor. Your store is live with server-side rendering and license protection.' },
+  ];
   return `
-    <div class="dash-header">
-      <h1>Setup Guide</h1>
-      <p>Step-by-step instructions to set up your store</p>
-    </div>
-    <div class="license-card">
-      <h3>1. Install the Theme</h3>
-      <p style="color:var(--text-muted);font-size:14px;line-height:1.8;">
-        Download the theme ZIP from the <a href="#" onclick="event.preventDefault();navigate('dashboard/download')" style="color:var(--accent);">Download page</a>, then upload it to your Shopify store via <strong>Online Store > Themes > Add theme > Upload ZIP</strong>.
-      </p>
-    </div>
-    <div class="license-card">
-      <h3>2. Enter Your License Key</h3>
-      <p style="color:var(--text-muted);font-size:14px;line-height:1.8;">
-        Open the theme editor, go to <strong>Theme Settings > License & Protection</strong>, and enter your license key: <code style="background:var(--bg-elevated);padding:2px 8px;border-radius:4px;color:var(--accent);">${user?.key || ''}</code>
-      </p>
-    </div>
-    <div class="license-card">
-      <h3>3. Customize Your Store</h3>
-      <p style="color:var(--text-muted);font-size:14px;line-height:1.8;">
-        Use the theme editor to customize colors, branding, social links, and all section settings. Everything is drag-and-drop — no coding needed.
-      </p>
-    </div>
-    <div class="license-card">
-      <h3>4. Add Your Products</h3>
-      <p style="color:var(--text-muted);font-size:14px;line-height:1.8;">
-        Add your vendor list products in Shopify Admin > Products. Use the <a href="#" onclick="event.preventDefault();navigate('dashboard/image-generator')" style="color:var(--accent);">Image Generator</a> to create professional product images.
-      </p>
-    </div>
-    <div class="license-card">
-      <h3>5. Publish & Launch</h3>
-      <p style="color:var(--text-muted);font-size:14px;line-height:1.8;">
-        Once everything looks good, hit <strong>Publish</strong> in the theme editor. Your store is now live with server-side rendering and license protection enabled.
-      </p>
-    </div>
-  `;
+    <div class="dash-header"><h1>Setup Guide</h1><p>Step-by-step instructions to get your store live</p></div>
+    ${steps.map(s => `<div class="info-card"><h3>${s.title}</h3><p style="color:var(--text-muted);font-size:14px;line-height:1.8;">${s.body}</p></div>`).join('')}`;
 }
 
-// ─── LOGOUT ─────────────────────────────────────────
-function handleLogout() {
-  user = null;
-  isAdmin = false;
-  localStorage.removeItem('og_license');
-  localStorage.removeItem('og_admin');
-  navigate('home');
-}
+function handleLogout() { user = null; isAdmin = false; localStorage.removeItem('og_license'); localStorage.removeItem('og_admin'); navigate('home'); }
 
 // ─── RENDER ─────────────────────────────────────────
 function render() {
   const app = document.getElementById('app');
-  let page = currentPage;
-
-  if (page === 'home') app.innerHTML = renderHome();
-  else if (page === 'theme') app.innerHTML = renderTheme();
-  else if (page === 'pricing') app.innerHTML = renderPricing();
-  else if (page === 'login') app.innerHTML = renderLogin();
-  else if (page.startsWith('dashboard')) app.innerHTML = renderDashboard();
+  const p = currentPage;
+  if (p === 'home') app.innerHTML = renderHome();
+  else if (p === 'theme') app.innerHTML = renderTheme();
+  else if (p === 'pricing') app.innerHTML = renderPricing();
+  else if (p === 'login') app.innerHTML = renderLogin();
+  else if (p.startsWith('dashboard')) app.innerHTML = renderDashboard();
   else app.innerHTML = renderHome();
-
-  // Init canvas after render
-  if (page.includes('image-generator')) {
-    setTimeout(drawCanvas, 50);
-  }
-
-  // Nav scroll effect
-  if (['home', 'theme', 'pricing'].includes(page)) {
-    initNavScroll();
-  }
-}
-
-function initNavScroll() {
-  const nav = document.getElementById('main-nav');
-  if (!nav) return;
-  const handler = () => {
-    if (window.scrollY > 50) nav.classList.add('scrolled');
-    else nav.classList.remove('scrolled');
-  };
-  window.removeEventListener('scroll', handler);
-  window.addEventListener('scroll', handler);
-  handler();
+  if (p.includes('image-generator')) setTimeout(drawCanvas, 50);
 }
 
 // ─── INIT ───────────────────────────────────────────
-(function init() {
-  // Restore session
+(function() {
   const saved = localStorage.getItem('og_license');
-  if (saved) {
-    try { user = JSON.parse(saved); } catch(e) {}
-  }
+  if (saved) try { user = JSON.parse(saved); } catch(e) {}
   isAdmin = localStorage.getItem('og_admin') === '1';
-
   currentPage = getPageFromPath();
   render();
 })();
