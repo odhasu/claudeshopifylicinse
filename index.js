@@ -63,6 +63,9 @@ app.use(cors({
 
 app.use(express.json({ limit: '1mb' }));
 
+// Root redirect → dashboard
+app.get('/', (req, res) => res.redirect('/dashboard'));
+
 // Serve dashboard
 app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')));
 
