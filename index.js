@@ -66,8 +66,12 @@ app.use(express.json({ limit: '1mb' }));
 // Root redirect → dashboard
 app.get('/', (req, res) => res.redirect('/dashboard'));
 
-// Serve dashboard
-app.use('/dashboard', express.static(path.join(__dirname, 'dashboard')));
+// Serve dashboard — read file directly (works in Vercel serverless)
+const DASHBOARD_HTML = fs.readFileSync(path.join(__dirname, 'dashboard', 'index.html'), 'utf8');
+app.get('/dashboard', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.send(DASHBOARD_HTML);
+});
 
 // Rate limiting
 const rateLimiter = {};
