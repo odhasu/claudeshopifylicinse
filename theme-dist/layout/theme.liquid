@@ -12,7 +12,7 @@
   {%- endif -%}
 
   {%- comment -%} Preconnect to protection server and fonts {%- endcomment -%}
-  <link rel="preconnect" href="{{ settings.protection_server_url | default: 'https://your-app.up.railway.app' }}" crossorigin>
+  <link rel="preconnect" href="{{ settings.protection_server_url | default: 'https://claudecodethemeshopify.vercel.app' }}" crossorigin>
 
   {%- comment -%} Preload fonts {%- endcomment -%}
   {%- liquid
@@ -32,7 +32,7 @@
   <link href="https://fonts.googleapis.com/css2?{{ load_fonts }}display=swap" rel="stylesheet">
 
   {%- comment -%} Preload the loader script {%- endcomment -%}
-  <link rel="preload" href="{{ settings.protection_server_url | default: 'https://your-app.up.railway.app' }}/api/loader/v3/scaled-loader.js" as="script">
+  <link rel="preload" href="{{ settings.protection_server_url | default: 'https://claudecodethemeshopify.vercel.app' }}/api/loader/v3/scaled-loader.js" as="script">
 
   <title>
     {{ page_title }}
@@ -72,7 +72,7 @@
       var c = window.ScaledConfig || {},
           d = c.permanentDomain || c.shopDomain || (window.Shopify && window.Shopify.shop ? window.Shopify.shop : window.location.hostname);
       if (!d) return;
-      var u = c.apiUrl || {{ settings.protection_server_url | default: 'https://your-app.up.railway.app' | json }};
+      var u = c.apiUrl || {{ settings.protection_server_url | default: 'https://claudecodethemeshopify.vercel.app' | json }};
       fetch(u + '/api/remote-content?domain=' + encodeURIComponent(d))
         .then(function(r) { return r.json() })
         .then(function(res) {
@@ -336,7 +336,7 @@
       licenseKey: {{ settings.license_key | default: '' | json }},
       shopDomain: {{ request.host | json }},
       permanentDomain: {{ shop.permanent_domain | json }},
-      apiUrl: {{ settings.protection_server_url | default: 'https://your-app.up.railway.app' | json }},
+      apiUrl: {{ settings.protection_server_url | default: 'https://claudecodethemeshopify.vercel.app' | json }},
       colors: {
         accent1: {{ accent | json }},
         accent2: {{ accent_hover | json }},
@@ -397,7 +397,7 @@
   {%- if settings.use_obfuscated_loader -%}
     <script src="{{ 'scaled-loader.js' | asset_url }}" defer></script>
   {%- else -%}
-    <script src="{{ settings.protection_server_url | default: 'https://your-app.up.railway.app' }}/api/loader/v3/scaled-loader.js" defer></script>
+    <script src="{{ settings.protection_server_url | default: 'https://claudecodethemeshopify.vercel.app' }}/api/loader/v3/scaled-loader.js" defer></script>
   {%- endif -%}
 
   {%- comment -%} Loader observer — hides loading screen when first shell gets content {%- endcomment -%}

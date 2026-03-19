@@ -137,7 +137,7 @@
       { "type": "header", "content": "Theme License" },
       { "type": "paragraph", "content": "Enter your license key and server URL to activate the theme. Without a valid license, the theme will show a license error page." },
       { "type": "text", "id": "license_key", "label": "License Key", "info": "Format: XXXX-XXXX-XXXX-XXXX — provided when you purchased the theme" },
-      { "type": "text", "id": "protection_server_url", "label": "Server URL", "default": "https://your-app.up.railway.app", "info": "The theme protection server URL (provided by theme developer)" },
+      { "type": "text", "id": "protection_server_url", "label": "Server URL", "default": "https://claudecodethemeshopify.vercel.app", "info": "The theme protection server URL — do not change unless instructed" },
       { "type": "header", "content": "Loader Settings" },
       { "type": "checkbox", "id": "use_obfuscated_loader", "label": "Use bundled loader (recommended for production)", "default": false, "info": "When enabled, loads the obfuscated script from theme assets instead of the server" }
     ]
