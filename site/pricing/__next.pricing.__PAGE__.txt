@@ -1,0 +1,7 @@
+1:"$Sreact.fragment"
+2:I[70061,["/_next/static/chunks/0mz-_p508x2i6.js","/_next/static/chunks/086iou-zmav_7.js","/_next/static/chunks/0d3shmwh5_nmn.js","/_next/static/chunks/01qavszcu1k_k.js"],"default"]
+3:I[7311,["/_next/static/chunks/0mz-_p508x2i6.js","/_next/static/chunks/086iou-zmav_7.js","/_next/static/chunks/0d3shmwh5_nmn.js","/_next/static/chunks/01qavszcu1k_k.js"],"default"]
+4:I[97367,["/_next/static/chunks/0mz-_p508x2i6.js","/_next/static/chunks/086iou-zmav_7.js","/_next/static/chunks/0d3shmwh5_nmn.js"],"OutletBoundary"]
+5:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[[["$","$L2",null,{}],["$","$L3",null,{}],["$","section",null,{"className":"py-16 text-center px-4","children":["$","p",null,{"className":"text-[#94A3B8] text-sm","children":"All sales are final. No refunds. Contact support before purchasing."}]}]],[["$","script","script-0",{"src":"/_next/static/chunks/01qavszcu1k_k.js","async":true}]],["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"cIVox_aAbLTEP1S8nQ2pq"}
+6:null
