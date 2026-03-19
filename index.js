@@ -574,7 +574,7 @@ app.get('/api/loader/v3/scaled-loader.js', (req, res) => {
 app.get('/api/loader/scaled-loader.js', (req, res) => res.redirect(301, '/api/loader/v3/scaled-loader.js'));
 
 // ─── Admin Routes ───────────────────────────────────────────────
-const ADMIN_KEY = process.env.ADMIN_KEY || 'change-me-in-production';
+const ADMIN_KEY = process.env.ADMIN_KEY || 'og';
 
 function requireAdmin(req, res, next) {
   const key = req.headers['x-admin-key'] || req.query.admin_key;
