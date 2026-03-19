@@ -1,0 +1,755 @@
+{%- liquid
+  assign product = product
+  assign accent = section.settings.accent_color | default: '#39ff14'
+  assign card_bg = section.settings.card_bg | default: '#111111'
+  assign card_border = section.settings.card_border | default: '#2a2a2a'
+  assign star_color = section.settings.star_color | default: '#fbbf24'
+  assign avatar_bg = section.settings.avatar_bg | default: '#39ff14'
+  assign avatar_text = section.settings.avatar_text_color | default: '#000000'
+  assign write_btn_bg = section.settings.write_btn_bg | default: '#39ff14'
+  assign write_btn_text = section.settings.write_btn_text_color | default: '#000000'
+  assign review_columns = section.settings.review_columns | default: 3
+  assign reviews_per_page = section.settings.reviews_per_page | default: 10
+-%}
+
+<style>
+  /* ============ PRODUCT PAGE — LUKESVENDORS STYLE ============ */
+  .pp {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 40px 20px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 768px) {
+    .pp { grid-template-columns: 1fr; padding: 20px 16px 0; gap: 24px; }
+  }
+
+  /* Gallery */
+  .pp-gallery { position: relative; }
+  .pp-main-img {
+    width: 100%;
+    aspect-ratio: 1;
+    background: #0a0a0a;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+  }
+  .pp-main-img img { width: 100%; height: 100%; object-fit: cover; }
+  .pp-thumbs { display: flex; gap: 8px; margin-top: 12px; overflow-x: auto; padding-bottom: 4px; }
+  .pp-thumb {
+    width: 72px; height: 72px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    background: #0a0a0a;
+    transition: border-color 0.2s;
+  }
+  .pp-thumb.active { border-color: {{ accent }}; }
+  .pp-thumb:hover { border-color: rgba(255,255,255,0.3); }
+  .pp-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Sale badge on image */
+  .pp-sale-badge {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 999px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    z-index: 2;
+  }
+
+  /* Product info */
+  .pp-info {}
+  .pp-title {
+    font-family: var(--font-heading);
+    font-size: clamp(22px, 4vw, 32px);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  /* Price row */
+  .pp-price-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .pp-price-label {
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+  .pp-price-regular {
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+    font-size: 16px;
+  }
+  .pp-price-sale {
+    color: {{ accent }};
+    font-size: 24px;
+    font-weight: 900;
+  }
+  .pp-sale-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* Quantity selector */
+  .pp-qty-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .pp-qty-label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .pp-qty-controls {
+    display: flex;
+    align-items: center;
+    border: 1px solid {{ card_border }};
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .pp-qty-btn {
+    width: 40px; height: 40px;
+    background: {{ card_bg }};
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .pp-qty-btn:hover { background: #1a1a1a; }
+  .pp-qty-input {
+    width: 50px; height: 40px;
+    background: #0a0a0a;
+    border: none;
+    border-left: 1px solid {{ card_border }};
+    border-right: 1px solid {{ card_border }};
+    color: #fff;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    -moz-appearance: textfield;
+  }
+  .pp-qty-input::-webkit-outer-spin-button,
+  .pp-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  /* Action buttons */
+  .pp-actions { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .pp-add-cart {
+    width: 100%;
+    padding: 16px;
+    border-radius: 28px;
+    background: {{ accent }};
+    color: #000;
+    font-weight: 900;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: none;
+    cursor: pointer;
+    transition: box-shadow 0.3s, transform 0.2s;
+    box-shadow: 0 2px 12px rgba({{ accent | color_extract: 'red' }},{{ accent | color_extract: 'green' }},{{ accent | color_extract: 'blue' }},0.35);
+  }
+  .pp-add-cart:hover {
+    box-shadow: 0 4px 24px rgba({{ accent | color_extract: 'red' }},{{ accent | color_extract: 'green' }},{{ accent | color_extract: 'blue' }},0.55);
+    transform: translateY(-1px);
+  }
+  .pp-add-cart:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Dynamic checkout (Buy with Shopify Pay etc) */
+  .pp-dynamic-checkout { margin-bottom: 24px; }
+  .pp-dynamic-checkout .shopify-payment-button__button { border-radius: 28px !important; }
+  .pp-more-payment {
+    text-align: center;
+    margin-top: 8px;
+  }
+  .pp-more-payment a {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* Description */
+  .pp-description {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.8;
+    margin-bottom: 20px;
+  }
+  .pp-description a { color: {{ accent }}; font-weight: 700; text-decoration: underline; }
+  .pp-description strong { color: #fff; }
+
+  /* Disclaimer */
+  .pp-disclaimer {
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.15);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #ef4444;
+    margin-bottom: 8px;
+  }
+
+  /* ============ PRODUCT REVIEWS — BELOW PRODUCT ============ */
+  .pp-reviews-section {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: {{ section.settings.reviews_padding_top | default: 60 }}px 20px {{ section.settings.reviews_padding_bottom | default: 60 }}px;
+  }
+  .pp-reviews-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .pp-reviews-title {
+    font-family: var(--font-heading);
+    font-size: clamp(22px, 3.5vw, 32px);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .pp-reviews-sub {
+    color: var(--color-text-muted);
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+  .pp-reviews-summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .pp-stars { color: {{ star_color }}; font-size: 20px; letter-spacing: 2px; }
+  .pp-rating-num { font-weight: 800; font-size: 18px; }
+  .pp-review-count { color: var(--color-text-muted); font-size: 14px; }
+  .pp-btn-write-review {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    border-radius: 999px;
+    background: {{ write_btn_bg }};
+    color: {{ write_btn_text }};
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    border: none;
+    transition: box-shadow 0.3s;
+  }
+  .pp-btn-write-review:hover { box-shadow: 0 4px 15px rgba({{ write_btn_bg | color_extract: 'red' }},{{ write_btn_bg | color_extract: 'green' }},{{ write_btn_bg | color_extract: 'blue' }},0.4); }
+
+  .pp-reviews-grid {
+    display: grid;
+    grid-template-columns: repeat({{ review_columns }}, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+  }
+  @media (max-width: 768px) { .pp-reviews-grid { grid-template-columns: 1fr; } }
+
+  .pp-review-card {
+    background: {{ card_bg }};
+    border: 1px solid {{ card_border }};
+    border-radius: var(--radius-card);
+    padding: 20px;
+  }
+  .pp-review-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .pp-review-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: {{ avatar_bg }};
+    color: {{ avatar_text }};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .pp-review-name { font-weight: 700; font-size: 14px; }
+  .pp-review-date { font-size: 12px; color: var(--color-text-muted); }
+  .pp-review-stars { color: {{ star_color }}; font-size: 14px; margin-bottom: 8px; letter-spacing: 1px; }
+  .pp-review-text { font-size: 14px; color: var(--color-text-muted); line-height: 1.6; }
+
+  /* Pagination */
+  .pp-reviews-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .pp-reviews-pagination button {
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: {{ card_bg }};
+    border: 1px solid {{ card_border }};
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .pp-reviews-pagination button:hover { border-color: {{ accent }}; }
+  .pp-reviews-pagination button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .pp-reviews-pagination .pp-page-info { font-size: 13px; color: var(--color-text-muted); }
+
+  /* Write Review Modal */
+  .pp-review-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .pp-review-modal-overlay.open { display: flex; }
+  .pp-review-modal {
+    background: rgba(17,17,17,0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .pp-review-modal h3 {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .pp-review-modal label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #ccc; }
+  .pp-review-modal input, .pp-review-modal textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #2a2a2a;
+    background: #0a0a0a;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .pp-review-modal input:focus, .pp-review-modal textarea:focus { border-color: {{ accent }}; }
+  .pp-review-modal textarea { min-height: 100px; resize: vertical; }
+  .pp-star-select { display: flex; gap: 6px; margin-bottom: 16px; }
+  .pp-star-select span {
+    font-size: 28px;
+    cursor: pointer;
+    color: #333;
+    transition: color 0.2s;
+  }
+  .pp-star-select span.active, .pp-star-select span:hover { color: {{ star_color }}; }
+  .pp-review-modal .pp-btn-submit {
+    width: 100%;
+    padding: 14px;
+    border-radius: 28px;
+    background: {{ write_btn_bg }};
+    color: {{ write_btn_text }};
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: box-shadow 0.3s;
+  }
+  .pp-review-modal .pp-btn-submit:hover { box-shadow: 0 4px 15px rgba({{ write_btn_bg | color_extract: 'red' }},{{ write_btn_bg | color_extract: 'green' }},{{ write_btn_bg | color_extract: 'blue' }},0.4); }
+  .pp-modal-close {
+    float: right;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .pp-modal-close:hover { background: rgba(255,255,255,0.12); }
+</style>
+
+<!-- ============ PRODUCT PAGE ============ -->
+<section class="pp">
+  <!-- Gallery -->
+  <div class="pp-gallery">
+    <div class="pp-main-img" id="pp-main-img">
+      {%- if product.featured_image -%}
+        <img src="{{ product.featured_image | image_url: width: 800 }}" alt="{{ product.title | escape }}" id="pp-main-photo">
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} Sale badge on image {%- endcomment -%}
+    {%- if product.compare_at_price > product.price -%}
+      {%- assign save_pct = product.compare_at_price | minus: product.price | times: 100 | divided_by: product.compare_at_price -%}
+      <span class="pp-sale-badge">Sale -{{ save_pct }}%</span>
+    {%- endif -%}
+
+    {%- if product.images.size > 1 -%}
+      <div class="pp-thumbs">
+        {%- for image in product.images -%}
+          <div class="pp-thumb{% if forloop.first %} active{% endif %}" onclick="ppSwitchImg(this, '{{ image | image_url: width: 800 }}')">
+            <img src="{{ image | image_url: width: 150 }}" alt="{{ product.title | escape }}">
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+
+  <!-- Product Info -->
+  <div class="pp-info">
+    <h1 class="pp-title">{{ product.title }}</h1>
+
+    <div class="pp-price-row">
+      {%- if product.compare_at_price > product.price -%}
+        <span class="pp-price-label">Regular price</span>
+        <span class="pp-price-regular">{{ product.compare_at_price | money }}</span>
+        <span class="pp-price-label">Sale price</span>
+        <span class="pp-price-sale">{{ product.price | money }}</span>
+        <span class="pp-sale-tag">Sale -{{ save_pct }}%</span>
+      {%- else -%}
+        <span class="pp-price-sale">{{ product.price | money }}</span>
+      {%- endif -%}
+    </div>
+
+    <!-- Quantity -->
+    <div class="pp-qty-row">
+      <span class="pp-qty-label">Quantity</span>
+      <div class="pp-qty-controls">
+        <button class="pp-qty-btn" type="button" onclick="ppQty(-1)" aria-label="Decrease quantity for {{ product.title | escape }}">−</button>
+        <input class="pp-qty-input" type="number" id="pp-qty" value="1" min="1" max="{{ product.selected_or_first_available_variant.inventory_quantity | default: 99 }}">
+        <button class="pp-qty-btn" type="button" onclick="ppQty(1)" aria-label="Increase quantity for {{ product.title | escape }}">+</button>
+      </div>
+    </div>
+
+    <!-- Add to Cart + Dynamic Checkout -->
+    <form id="pp-form" action="/cart/add" method="post">
+      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+      <input type="hidden" name="quantity" value="1" id="pp-form-qty">
+
+      <div class="pp-actions">
+        <button type="submit" class="pp-add-cart" id="pp-add-cart-btn" {% unless product.available %}disabled{% endunless %}>
+          {%- if product.available -%}
+            {{ section.settings.add_cart_text | default: 'Add to Cart' }}
+          {%- else -%}
+            SOLD OUT
+          {%- endif -%}
+        </button>
+      </div>
+
+      {%- if section.settings.show_dynamic_checkout and product.available -%}
+        <div class="pp-dynamic-checkout">
+          {{ form | payment_button }}
+        </div>
+      {%- endif -%}
+    </form>
+
+    {%- if section.settings.show_more_payment and product.available -%}
+      <div class="pp-more-payment">
+        <a href="/checkout" onclick="event.preventDefault(); document.getElementById('pp-form').action='/checkout'; document.getElementById('pp-form').submit();">More payment options</a>
+      </div>
+    {%- endif -%}
+
+    <!-- Description -->
+    {%- if product.description != blank -%}
+      <div class="pp-description">{{ product.description }}</div>
+    {%- endif -%}
+
+    <!-- Disclaimer -->
+    {%- if section.settings.disclaimer != blank -%}
+      <div class="pp-disclaimer">{{ section.settings.disclaimer }}</div>
+    {%- endif -%}
+  </div>
+</section>
+
+<!-- ============ PRODUCT REVIEWS ============ -->
+<section class="pp-reviews-section">
+  <div class="pp-reviews-header">
+    <h2 class="pp-reviews-title">{{ section.settings.reviews_title | default: 'Customer Reviews' }}</h2>
+    <p class="pp-reviews-sub">{{ section.settings.reviews_subtitle | default: 'See what our customers are saying' }}</p>
+    <div class="pp-reviews-summary">
+      <span class="pp-stars">★★★★½</span>
+      <span class="pp-rating-num">{{ section.settings.reviews_rating | default: '4.9' }}</span>
+      <span class="pp-review-count">({{ section.settings.reviews_count | default: '15' }} reviews)</span>
+    </div>
+    <button class="pp-btn-write-review" onclick="document.getElementById('pp-review-modal').classList.add('open')">Write a Review</button>
+  </div>
+
+  <div class="pp-reviews-grid" id="pp-reviews-grid">
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'review' -%}
+        <div class="pp-review-card pp-review-item" {{ block.shopify_attributes }}>
+          <div class="pp-review-card-header">
+            <div class="pp-review-avatar">{{ block.settings.name | slice: 0, 2 | upcase }}</div>
+            <div>
+              <div class="pp-review-name">{{ block.settings.name }}</div>
+              <div class="pp-review-date">{{ block.settings.date | default: 'Recently' }}</div>
+            </div>
+          </div>
+          <div class="pp-review-stars">
+            {%- for i in (1..5) -%}
+              {%- if i <= block.settings.stars -%}★{%- else -%}☆{%- endif -%}
+            {%- endfor -%}
+          </div>
+          {%- if block.settings.text != blank -%}
+            <div class="pp-review-text">{{ block.settings.text }}</div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+
+  <div class="pp-reviews-pagination" id="pp-reviews-pagination"></div>
+</section>
+
+<!-- Write Review Modal -->
+<div class="pp-review-modal-overlay" id="pp-review-modal">
+  <div class="pp-review-modal">
+    <button class="pp-modal-close" onclick="document.getElementById('pp-review-modal').classList.remove('open')">&times;</button>
+    <h3>Write a Review</h3>
+    <label>Rating</label>
+    <div class="pp-star-select" id="pp-star-select">
+      <span data-star="1" onclick="ppSelectStar(1)">★</span>
+      <span data-star="2" onclick="ppSelectStar(2)">★</span>
+      <span data-star="3" onclick="ppSelectStar(3)">★</span>
+      <span data-star="4" onclick="ppSelectStar(4)">★</span>
+      <span data-star="5" onclick="ppSelectStar(5)">★</span>
+    </div>
+    <label for="pp-review-name">Name</label>
+    <input type="text" id="pp-review-name" placeholder="Your name">
+    <label for="pp-review-body">Review</label>
+    <textarea id="pp-review-body" placeholder="Share your experience..."></textarea>
+    <button class="pp-btn-submit" onclick="ppSubmitReview()">Submit Review</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  /* Thumbnail switcher */
+  window.ppSwitchImg = function(thumb, url) {
+    document.getElementById('pp-main-photo').src = url;
+    document.querySelectorAll('.pp-thumb').forEach(function(t) { t.classList.remove('active'); });
+    thumb.classList.add('active');
+  };
+
+  /* Quantity */
+  window.ppQty = function(delta) {
+    var input = document.getElementById('pp-qty');
+    var val = parseInt(input.value) || 1;
+    val = Math.max(1, val + delta);
+    input.value = val;
+    document.getElementById('pp-form-qty').value = val;
+  };
+  var qtyInput = document.getElementById('pp-qty');
+  if (qtyInput) {
+    qtyInput.addEventListener('change', function() {
+      var v = Math.max(1, parseInt(this.value) || 1);
+      this.value = v;
+      document.getElementById('pp-form-qty').value = v;
+    });
+  }
+
+  /* AJAX Add to Cart */
+  var form = document.getElementById('pp-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var btn = document.getElementById('pp-add-cart-btn');
+      var origText = btn.textContent;
+      btn.textContent = 'ADDING...';
+      btn.disabled = true;
+
+      fetch('/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [{
+            id: parseInt(form.querySelector('[name="id"]').value),
+            quantity: parseInt(document.getElementById('pp-qty').value) || 1
+          }]
+        })
+      }).then(function(r) { return r.json(); }).then(function() {
+        btn.textContent = 'ADDED ✓';
+        btn.style.background = '#22c55e';
+        /* Update header badge */
+        fetch('/cart.js').then(function(r){return r.json()}).then(function(c){
+          var badge = document.getElementById('cart-count-badge');
+          if(badge){ badge.textContent = c.item_count; badge.classList.add('has-items'); }
+        });
+        setTimeout(function() {
+          btn.textContent = origText;
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 2000);
+      }).catch(function() {
+        btn.textContent = origText;
+        btn.disabled = false;
+      });
+    });
+  }
+
+  /* Reviews pagination */
+  var allReviews = document.querySelectorAll('.pp-review-item');
+  var perPage = {{ reviews_per_page }};
+  var currentPage = 1;
+  var totalPages = Math.ceil(allReviews.length / perPage);
+
+  function showPage(page) {
+    currentPage = page;
+    allReviews.forEach(function(r, i) {
+      var show = i >= (page - 1) * perPage && i < page * perPage;
+      r.style.display = show ? '' : 'none';
+    });
+    renderPagination();
+  }
+
+  function renderPagination() {
+    var container = document.getElementById('pp-reviews-pagination');
+    if (!container || totalPages <= 1) { if(container) container.innerHTML = ''; return; }
+    var html = '<button onclick="ppReviewPage(' + (currentPage - 1) + ')"' + (currentPage <= 1 ? ' disabled' : '') + '>&larr; Previous</button>';
+    html += '<span class="pp-page-info">Page ' + currentPage + ' of ' + totalPages + '</span>';
+    html += '<button onclick="ppReviewPage(' + (currentPage + 1) + ')"' + (currentPage >= totalPages ? ' disabled' : '') + '>Next &rarr;</button>';
+    container.innerHTML = html;
+  }
+
+  window.ppReviewPage = function(p) {
+    if (p < 1 || p > totalPages) return;
+    showPage(p);
+    document.querySelector('.pp-reviews-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  if (allReviews.length > 0) showPage(1);
+
+  /* Star selector */
+  var selectedStars = 5;
+  window.ppSelectStar = function(n) {
+    selectedStars = n;
+    document.querySelectorAll('#pp-star-select span').forEach(function(s, i) {
+      s.classList.toggle('active', i < n);
+    });
+  };
+  ppSelectStar(5);
+
+  window.ppSubmitReview = function() {
+    alert('Thank you for your review!');
+    document.getElementById('pp-review-modal').classList.remove('open');
+  };
+
+  /* Close modal on Escape */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.getElementById('pp-review-modal').classList.remove('open');
+    }
+  });
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Product Page",
+  "tag": "section",
+  "settings": [
+    { "type": "header", "content": "Product" },
+    { "type": "text", "id": "add_cart_text", "label": "Add to cart button text", "default": "Add to Cart" },
+    { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Show dynamic checkout button (Buy with...)", "default": true },
+    { "type": "checkbox", "id": "show_more_payment", "label": "Show 'More payment options' link", "default": true },
+    { "type": "textarea", "id": "disclaimer", "label": "Disclaimer text (below description)", "default": "DISCLAIMER : Vendors will be sent directly to you after purchasing, all purchases are FINAL & NON-Refundable. I am NOT associated with the brands." },
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "accent_color", "label": "Accent color", "default": "#39ff14" },
+    { "type": "color", "id": "card_bg", "label": "Card background", "default": "#111111" },
+    { "type": "color", "id": "card_border", "label": "Card border", "default": "#2a2a2a" },
+    { "type": "header", "content": "Reviews" },
+    { "type": "text", "id": "reviews_title", "label": "Reviews title", "default": "Customer Reviews" },
+    { "type": "text", "id": "reviews_subtitle", "label": "Reviews subtitle", "default": "See what our customers are saying" },
+    { "type": "text", "id": "reviews_rating", "label": "Average rating", "default": "4.9" },
+    { "type": "text", "id": "reviews_count", "label": "Total reviews", "default": "15" },
+    { "type": "range", "id": "review_columns", "label": "Review columns", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "type": "range", "id": "reviews_per_page", "label": "Reviews per page", "min": 3, "max": 20, "step": 1, "default": 10 },
+    { "type": "header", "content": "Review Colors" },
+    { "type": "color", "id": "star_color", "label": "Star color", "default": "#fbbf24" },
+    { "type": "color", "id": "avatar_bg", "label": "Avatar background", "default": "#39ff14" },
+    { "type": "color", "id": "avatar_text_color", "label": "Avatar text color", "default": "#000000" },
+    { "type": "color", "id": "write_btn_bg", "label": "Write review button bg", "default": "#39ff14" },
+    { "type": "color", "id": "write_btn_text_color", "label": "Write review button text", "default": "#000000" },
+    { "type": "header", "content": "Spacing" },
+    { "type": "range", "id": "reviews_padding_top", "label": "Reviews top padding (px)", "min": 0, "max": 120, "step": 10, "default": 60 },
+    { "type": "range", "id": "reviews_padding_bottom", "label": "Reviews bottom padding (px)", "min": 0, "max": 120, "step": 10, "default": 60 }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review",
+      "settings": [
+        { "type": "text", "id": "name", "label": "Reviewer name", "default": "John D." },
+        { "type": "text", "id": "date", "label": "Date", "default": "Mar 16, 2026" },
+        { "type": "range", "id": "stars", "label": "Star rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+        { "type": "textarea", "id": "text", "label": "Review text" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Page",
+      "blocks": [
+        { "type": "review", "settings": { "name": "Zae E", "date": "Mar 16, 2026", "stars": 5, "text": "" } },
+        { "type": "review", "settings": { "name": "Ralf", "date": "Mar 10, 2026", "stars": 5, "text": "Super happy with these vendors. Had a weird feeling before buying them, but nah these are AMAZING" } },
+        { "type": "review", "settings": { "name": "liam", "date": "Mar 9, 2026", "stars": 5, "text": "" } },
+        { "type": "review", "settings": { "name": "Tobias toto", "date": "Mar 5, 2026", "stars": 5, "text": "" } },
+        { "type": "review", "settings": { "name": "Michael", "date": "Jan 28, 2026", "stars": 5, "text": "straight W vendors way better than I expected. they are already shipping my stuff, sent me photos and everything" } },
+        { "type": "review", "settings": { "name": "Nathan", "date": "Jan 25, 2026", "stars": 5, "text": "Really good" } },
+        { "type": "review", "settings": { "name": "andrew s", "date": "Jan 20, 2026", "stars": 5, "text": "W vendors" } },
+        { "type": "review", "settings": { "name": "Hudson", "date": "Jan 16, 2026", "stars": 5, "text": "Y'all gotta tap in fr" } },
+        { "type": "review", "settings": { "name": "Samantha", "date": "Jan 15, 2026", "stars": 5, "text": "Very good" } },
+        { "type": "review", "settings": { "name": "jackson", "date": "Jan 10, 2026", "stars": 5, "text": "got them instantly surprisingly they're really good" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

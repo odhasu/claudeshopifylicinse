@@ -1,0 +1,19 @@
+<style>
+  .addresses-page { max-width:800px;margin:0 auto;padding:60px 20px; }
+  .addresses-page h1 { font-family:var(--font-heading);font-size:28px;text-transform:uppercase;margin-bottom:24px; }
+</style>
+<section class="addresses-page">
+  <h1>Addresses</h1>
+  <p style="color:var(--color-text-muted);">Manage your shipping addresses.</p>
+  {%- for address in customer.addresses -%}
+    <div style="background:var(--color-card-bg);border:1px solid var(--color-border);border-radius:var(--radius-card);padding:20px;margin-top:16px;">
+      <p>{{ address.address1 }}</p>
+      {%- if address.address2 != blank -%}<p>{{ address.address2 }}</p>{%- endif -%}
+      <p>{{ address.city }}, {{ address.province }} {{ address.zip }}</p>
+      <p>{{ address.country }}</p>
+    </div>
+  {%- endfor -%}
+</section>
+{% schema %}
+{ "name": "Addresses", "tag": "section", "settings": [] }
+{% endschema %}

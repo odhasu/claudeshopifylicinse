@@ -1,0 +1,33 @@
+<style>
+  .account-page { max-width:800px;margin:0 auto;padding:60px 20px; }
+  .account-page h1 { font-family:var(--font-heading);font-size:28px;text-transform:uppercase;margin-bottom:24px; }
+  .account-page a { color:var(--color-accent); }
+  .orders-table { width:100%;border-collapse:collapse;margin-top:24px; }
+  .orders-table th,.orders-table td { padding:12px;text-align:left;border-bottom:1px solid var(--color-border); }
+  .orders-table th { color:var(--color-text-muted);font-size:13px;text-transform:uppercase; }
+</style>
+<section class="account-page">
+  <h1>My Account</h1>
+  <p>Welcome, {{ customer.first_name }}. <a href="{{ routes.account_logout_url }}">Log out</a></p>
+  <h2 style="margin-top:40px;font-size:20px;">Order History</h2>
+  {%- if customer.orders.size > 0 -%}
+    <table class="orders-table">
+      <thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th></tr></thead>
+      <tbody>
+        {%- for order in customer.orders -%}
+          <tr>
+            <td><a href="{{ order.customer_url }}">{{ order.name }}</a></td>
+            <td>{{ order.created_at | date: "%B %d, %Y" }}</td>
+            <td>{{ order.fulfillment_status_label }}</td>
+            <td>{{ order.total_price | money }}</td>
+          </tr>
+        {%- endfor -%}
+      </tbody>
+    </table>
+  {%- else -%}
+    <p style="color:var(--color-text-muted);margin-top:12px;">No orders yet.</p>
+  {%- endif -%}
+</section>
+{% schema %}
+{ "name": "Account", "tag": "section", "settings": [] }
+{% endschema %}

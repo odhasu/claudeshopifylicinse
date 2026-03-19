@@ -1,0 +1,294 @@
+{%- liquid
+  assign title = section.settings.title | default: 'Customer Reviews'
+  assign subtitle = section.settings.subtitle | default: 'See what our customers are saying'
+  assign star_color = section.settings.star_color | default: '#fbbf24'
+  assign rating = section.settings.rating | default: '4.9'
+  assign review_count = section.settings.review_count | default: '15'
+  assign card_bg = section.settings.card_bg | default: '#111111'
+  assign card_border = section.settings.card_border | default: '#2a2a2a'
+  assign avatar_bg = section.settings.avatar_bg | default: '#39ff14'
+  assign avatar_text = section.settings.avatar_text_color | default: '#000000'
+  assign write_btn_bg = section.settings.write_btn_bg | default: '#39ff14'
+  assign write_btn_text = section.settings.write_btn_text_color | default: '#000000'
+  assign columns = section.settings.columns | default: 3
+-%}
+
+<style>
+  .reviews-section {
+    padding: {{ section.settings.padding_top | default: 60 }}px 20px {{ section.settings.padding_bottom | default: 60 }}px;
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+  .reviews-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .reviews-title {
+    font-family: var(--font-heading);
+    font-size: clamp(24px, 4vw, 36px);
+    text-transform: uppercase;
+    color: {{ section.settings.title_color | default: '#ffffff' }};
+    margin-bottom: 8px;
+  }
+  .reviews-subtitle {
+    color: {{ section.settings.subtitle_color | default: '#9ca3af' }};
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+  .reviews-summary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .reviews-stars { color: {{ star_color }}; font-size: 20px; letter-spacing: 2px; }
+  .reviews-rating { font-weight: 800; font-size: 18px; }
+  .reviews-count { color: var(--color-text-muted); font-size: 14px; }
+  .btn-write-review {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    border-radius: 999px;
+    background: {{ write_btn_bg }};
+    color: {{ write_btn_text }};
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transition: box-shadow 0.3s;
+    cursor: pointer;
+  }
+  .btn-write-review:hover { box-shadow: 0 4px 15px rgba(57,255,20,0.4); }
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat({{ columns }}, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+  }
+  @media (max-width: 768px) { .reviews-grid { grid-template-columns: 1fr; } }
+  .review-card {
+    background: {{ card_bg }};
+    border: 1px solid {{ card_border }};
+    border-radius: var(--radius-card);
+    padding: {{ section.settings.card_padding | default: 20 }}px;
+  }
+  .review-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .review-avatar {
+    width: {{ section.settings.avatar_size | default: 40 }}px;
+    height: {{ section.settings.avatar_size | default: 40 }}px;
+    border-radius: 50%;
+    background: {{ avatar_bg }};
+    color: {{ avatar_text }};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .review-name { font-weight: 700; font-size: 14px; }
+  .review-date { font-size: 12px; color: var(--color-text-muted); }
+  .review-stars { color: {{ star_color }}; font-size: 14px; margin-bottom: 8px; letter-spacing: 1px; }
+  .review-text { font-size: 14px; color: var(--color-text-muted); line-height: 1.6; }
+
+  /* Write Review Modal */
+  .review-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .review-modal-overlay.open { display: flex; }
+  .review-modal {
+    background: #111;
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .review-modal h3 {
+    font-family: var(--font-heading);
+    font-size: 22px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .review-modal label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #ccc; }
+  .review-modal input, .review-modal textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #2a2a2a;
+    background: #0a0a0a;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 16px;
+    font-family: inherit;
+  }
+  .review-modal textarea { min-height: 100px; resize: vertical; }
+  .star-selector { display: flex; gap: 6px; margin-bottom: 16px; }
+  .star-selector span {
+    font-size: 28px;
+    cursor: pointer;
+    color: #333;
+    transition: color 0.2s;
+  }
+  .star-selector span.active, .star-selector span:hover { color: {{ star_color }}; }
+  .review-modal .btn-submit {
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    background: {{ write_btn_bg }};
+    color: {{ write_btn_text }};
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+  }
+  .modal-close {
+    float: right;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+  }
+</style>
+
+<section class="reviews-section">
+  <div class="reviews-header">
+    <h2 class="reviews-title">{{ title }}</h2>
+    <p class="reviews-subtitle">{{ subtitle }}</p>
+    <div class="reviews-summary">
+      <span class="reviews-stars">★★★★★</span>
+      <span class="reviews-rating">{{ rating }}</span>
+      <span class="reviews-count">({{ review_count }} reviews)</span>
+    </div>
+    <button class="btn-write-review" onclick="document.getElementById('review-modal').classList.add('open')">+ Write a Review</button>
+  </div>
+
+  <div class="reviews-grid">
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'review' -%}
+        <div class="review-card" {{ block.shopify_attributes }}>
+          <div class="review-card-header">
+            <div class="review-avatar">{{ block.settings.name | slice: 0, 2 | upcase }}</div>
+            <div>
+              <div class="review-name">{{ block.settings.name }}</div>
+              <div class="review-date">{{ block.settings.date | default: 'Recently' }}</div>
+            </div>
+          </div>
+          <div class="review-stars">
+            {%- for i in (1..5) -%}
+              {%- if i <= block.settings.stars -%}★{%- else -%}☆{%- endif -%}
+            {%- endfor -%}
+          </div>
+          <div class="review-text">{{ block.settings.text }}</div>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</section>
+
+<!-- Write Review Modal -->
+<div class="review-modal-overlay" id="review-modal">
+  <div class="review-modal">
+    <button class="modal-close" onclick="document.getElementById('review-modal').classList.remove('open')">&times;</button>
+    <h3>Write a Review</h3>
+    <label>Rating</label>
+    <div class="star-selector" id="star-selector">
+      <span data-star="1" onclick="selectStar(1)">★</span>
+      <span data-star="2" onclick="selectStar(2)">★</span>
+      <span data-star="3" onclick="selectStar(3)">★</span>
+      <span data-star="4" onclick="selectStar(4)">★</span>
+      <span data-star="5" onclick="selectStar(5)">★</span>
+    </div>
+    <label for="review-name">Name</label>
+    <input type="text" id="review-name" placeholder="Your name">
+    <label for="review-text">Review</label>
+    <textarea id="review-text" placeholder="Share your experience..."></textarea>
+    <button class="btn-submit" onclick="submitReview()">Submit Review</button>
+  </div>
+</div>
+
+<script>
+  var selectedStars = 5;
+  function selectStar(n) {
+    selectedStars = n;
+    document.querySelectorAll('#star-selector span').forEach(function(s, i) {
+      s.classList.toggle('active', i < n);
+    });
+  }
+  selectStar(5);
+  function submitReview() {
+    alert('Thank you for your review!');
+    document.getElementById('review-modal').classList.remove('open');
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Reviews",
+  "tag": "section",
+  "settings": [
+    { "type": "header", "content": "Content" },
+    { "type": "text", "id": "title", "label": "Title", "default": "Customer Reviews" },
+    { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "See what our customers are saying" },
+    { "type": "text", "id": "rating", "label": "Average rating", "default": "4.9" },
+    { "type": "text", "id": "review_count", "label": "Total reviews", "default": "15" },
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "title_color", "label": "Title color", "default": "#ffffff" },
+    { "type": "color", "id": "subtitle_color", "label": "Subtitle color", "default": "#9ca3af" },
+    { "type": "color", "id": "star_color", "label": "Star color", "default": "#fbbf24" },
+    { "type": "color", "id": "card_bg", "label": "Card background", "default": "#111111" },
+    { "type": "color", "id": "card_border", "label": "Card border", "default": "#2a2a2a" },
+    { "type": "color", "id": "avatar_bg", "label": "Avatar background", "default": "#39ff14" },
+    { "type": "color", "id": "avatar_text_color", "label": "Avatar text color", "default": "#000000" },
+    { "type": "color", "id": "write_btn_bg", "label": "Write review button bg", "default": "#39ff14" },
+    { "type": "color", "id": "write_btn_text_color", "label": "Write review button text", "default": "#000000" },
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "columns", "label": "Columns", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "type": "range", "id": "avatar_size", "label": "Avatar size (px)", "min": 28, "max": 56, "step": 4, "default": 40 },
+    { "type": "range", "id": "card_padding", "label": "Card padding (px)", "min": 12, "max": 32, "step": 4, "default": 20 },
+    { "type": "range", "id": "padding_top", "label": "Top padding (px)", "min": 0, "max": 120, "step": 10, "default": 60 },
+    { "type": "range", "id": "padding_bottom", "label": "Bottom padding (px)", "min": 0, "max": 120, "step": 10, "default": 60 }
+  ],
+  "blocks": [
+    {
+      "type": "review",
+      "name": "Review",
+      "settings": [
+        { "type": "text", "id": "name", "label": "Reviewer name", "default": "John D." },
+        { "type": "text", "id": "date", "label": "Date", "default": "2 weeks ago" },
+        { "type": "range", "id": "stars", "label": "Star rating", "min": 1, "max": 5, "step": 1, "default": 5 },
+        { "type": "textarea", "id": "text", "label": "Review text", "default": "Amazing vendor list! Already made back my investment." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Reviews",
+      "blocks": [
+        { "type": "review", "settings": { "name": "Alex M.", "date": "1 week ago", "stars": 5, "text": "Best vendor list I've ever purchased. Made my money back in the first week!" } },
+        { "type": "review", "settings": { "name": "Sarah K.", "date": "2 weeks ago", "stars": 5, "text": "Incredible value. The suppliers are legit and the prices are unbeatable." } },
+        { "type": "review", "settings": { "name": "Mike R.", "date": "3 weeks ago", "stars": 5, "text": "Was skeptical at first but these vendors are 100% real. Already made sales!" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

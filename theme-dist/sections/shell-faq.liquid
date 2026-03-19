@@ -1,0 +1,46 @@
+<section id="scaled-faq" class="scaled-shell scaled-shell--loading" data-scaled-section="faq" aria-label="Frequently Asked Questions">
+</section>
+
+<script type="application/json" data-scaled-section-settings="faq">
+{
+  "heading": {{ section.settings.heading | default: "Frequently Asked Questions" | json }},
+  "faqs": [
+    {%- for block in section.blocks -%}
+      {%- unless forloop.first -%},{%- endunless -%}
+      {
+        "question": {{ block.settings.question | json }},
+        "answer": {{ block.settings.answer | strip_html | json }}
+      }
+    {%- endfor -%}
+  ]
+}
+</script>
+
+{% schema %}
+{
+  "name": "FAQ",
+  "class": "scaled-faq-wrapper",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Frequently Asked Questions" }
+  ],
+  "blocks": [
+    {
+      "type": "question",
+      "name": "Question",
+      "settings": [
+        { "type": "text", "id": "question", "label": "Question" },
+        { "type": "richtext", "id": "answer", "label": "Answer" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "FAQ",
+      "blocks": [
+        { "type": "question", "settings": { "question": "Is this legit?", "answer": "<p>Yes! All suppliers are personally verified.</p>" } },
+        { "type": "question", "settings": { "question": "How will I receive the vendors?", "answer": "<p>Instantly via email after purchase.</p>" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

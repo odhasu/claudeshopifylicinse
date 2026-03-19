@@ -1,0 +1,31 @@
+<style>
+  .order-page { max-width:800px;margin:0 auto;padding:60px 20px; }
+  .order-page h1 { font-family:var(--font-heading);font-size:28px;text-transform:uppercase;margin-bottom:24px; }
+  .order-table { width:100%;border-collapse:collapse;margin-top:24px; }
+  .order-table th,.order-table td { padding:12px;text-align:left;border-bottom:1px solid var(--color-border); }
+  .order-table th { color:var(--color-text-muted);font-size:13px;text-transform:uppercase; }
+  .order-table img { width:60px;height:60px;border-radius:8px;object-fit:cover; }
+</style>
+<section class="order-page">
+  <h1>{{ order.name }}</h1>
+  <p style="color:var(--color-text-muted);">Placed on {{ order.created_at | date: "%B %d, %Y" }}</p>
+  <table class="order-table">
+    <thead><tr><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
+    <tbody>
+      {%- for item in order.line_items -%}
+        <tr>
+          <td style="display:flex;align-items:center;gap:12px;">
+            {%- if item.image -%}<img src="{{ item.image | image_url: width: 120 }}" alt="{{ item.title }}">{%- endif -%}
+            {{ item.title }}
+          </td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.final_line_price | money }}</td>
+        </tr>
+      {%- endfor -%}
+    </tbody>
+  </table>
+  <p style="margin-top:24px;font-size:18px;font-weight:800;">Total: {{ order.total_price | money }}</p>
+</section>
+{% schema %}
+{ "name": "Order", "tag": "section", "settings": [] }
+{% endschema %}

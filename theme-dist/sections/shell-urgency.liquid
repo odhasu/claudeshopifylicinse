@@ -1,0 +1,18 @@
+<div id="scaled-urgency" class="scaled-urgency-shell" data-scaled-section="urgency" aria-live="polite">
+</div>
+
+{% schema %}
+{
+  "name": "Urgency Bar",
+  "class": "scaled-urgency-wrapper",
+  "settings": [
+    { "type": "checkbox", "id": "show_viewer_count", "label": "Show viewer count", "default": true },
+    { "type": "checkbox", "id": "show_recent_sales", "label": "Show recent sales", "default": true },
+    { "type": "checkbox", "id": "show_countdown", "label": "Show countdown", "default": false },
+    { "type": "text", "id": "countdown_end_date", "label": "Countdown end date (YYYY-MM-DD)" }
+  ],
+  "presets": [
+    { "name": "Urgency Bar" }
+  ]
+}
+{% endschema %}

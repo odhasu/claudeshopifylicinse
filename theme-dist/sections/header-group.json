@@ -1,0 +1,21 @@
+{
+  "type": "header",
+  "name": "Header Group",
+  "sections": {
+    "shell-header-minimal": {
+      "type": "shell-header-minimal",
+      "settings": {
+        "nav_link_1_text": "Home",
+        "nav_link_1_url": "/",
+        "nav_link_2_text": "",
+        "nav_link_3_text": "",
+        "nav_link_4_text": "",
+        "nav_link_5_text": "",
+        "nav_link_6_text": ""
+      }
+    }
+  },
+  "order": [
+    "shell-header-minimal"
+  ]
+}

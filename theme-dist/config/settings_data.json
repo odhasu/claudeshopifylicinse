@@ -1,0 +1,56 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "current": {
+    "color_accent": "#39ff14",
+    "color_accent_hover": "#2de010",
+    "color_background": "#000000",
+    "color_card_bg": "#111111",
+    "color_card_elevated": "#1a1a1a",
+    "color_border": "#2a2a2a",
+    "color_text_primary": "#ffffff",
+    "color_text_muted": "#9ca3af",
+    "color_text_subtle": "#6b7280",
+    "color_stars": "#fbbf24",
+    "color_success": "#22c55e",
+    "color_error": "#ef4444",
+    "heading_font": "DM Sans",
+    "body_font": "Inter",
+    "max_page_width": 1400,
+    "section_spacing": 50,
+    "grid_gap": 16,
+    "border_radius_card": 12,
+    "border_radius_button": 8,
+    "brand_name": "OGSELL",
+    "live_sales_enabled": true,
+    "live_sales_bg": "#333333",
+    "live_sales_text_color": "#ffffff",
+    "live_sales_name_color": "#cc3d3d",
+    "live_sales_names": "Alex,Jordan,Sarah,Mike,Emily,Chris,Taylor,Sam,Morgan,Casey",
+    "live_sales_products": "Elite Vendor Bundle,Premium Supplier List,Starter Pack,Ultimate Bundle",
+    "live_sales_delay": 5,
+    "live_sales_duration": 7,
+    "live_sales_min_interval": 8,
+    "live_sales_max_interval": 20,
+    "chat_enabled": true,
+    "chat_name": "Reselling Assistant",
+    "chat_greeting": "Hey! 👋 Welcome! Looking to start your reselling journey? I can help you pick the right bundle.",
+    "chat_placeholder": "Ask me anything...",
+    "chat_btn_bg": "#39ff14",
+    "chat_btn_size": 60,
+    "chat_window_width": 380,
+    "chat_window_bg": "#111111",
+    "chat_bottom": 24,
+    "chat_right": 24,
+    "header_font": "Bebas",
+    "hero_font": "Bebas",
+    "content_for_index": []
+  }
+}

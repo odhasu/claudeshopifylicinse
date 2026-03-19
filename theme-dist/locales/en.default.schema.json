@@ -1,0 +1,12 @@
+{
+  "settings_schema": {
+    "colors": { "name": "Colors" },
+    "typography": { "name": "Typography" },
+    "layout": { "name": "Layout" },
+    "branding": { "name": "Branding" },
+    "social_links": { "name": "Social Links" },
+    "live_sales_notification": { "name": "Live Sales Notification" },
+    "chat_widget": { "name": "Chat Widget" },
+    "custom_code": { "name": "Custom Code" }
+  }
+}

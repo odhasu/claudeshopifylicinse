@@ -1,0 +1,153 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "OGVendors Theme",
+    "theme_version": "1.0.0",
+    "theme_author": "OGVendors",
+    "theme_documentation_url": "https://ogvendors.com",
+    "theme_support_url": "https://ogvendors.com"
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      { "type": "header", "content": "Primary Colors" },
+      { "type": "color", "id": "color_accent", "label": "Accent color", "default": "#39ff14" },
+      { "type": "color", "id": "color_accent_hover", "label": "Accent hover", "default": "#2de010" },
+      { "type": "color", "id": "color_background", "label": "Page background", "default": "#0a0a0a" },
+      { "type": "color", "id": "color_card_bg", "label": "Card background", "default": "#111111" },
+      { "type": "color", "id": "color_card_elevated", "label": "Card elevated", "default": "#1a1a1a" },
+      { "type": "color", "id": "color_border", "label": "Borders", "default": "#2a2a2a" },
+      { "type": "header", "content": "Text Colors" },
+      { "type": "color", "id": "color_text_primary", "label": "Primary text", "default": "#ffffff" },
+      { "type": "color", "id": "color_text_muted", "label": "Muted text", "default": "#9ca3af" },
+      { "type": "color", "id": "color_text_subtle", "label": "Subtle text", "default": "#6b7280" },
+      { "type": "header", "content": "Misc Colors" },
+      { "type": "color", "id": "color_stars", "label": "Star rating color", "default": "#fbbf24" },
+      { "type": "color", "id": "color_success", "label": "Success color", "default": "#22c55e" },
+      { "type": "color", "id": "color_error", "label": "Error color", "default": "#ef4444" }
+    ]
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      { "type": "select", "id": "heading_font", "label": "Heading font", "default": "Satoshi", "options": [
+        { "value": "Satoshi", "label": "Satoshi (like Luke's Vendors)" },
+        { "value": "Anton", "label": "Anton" },
+        { "value": "Inter", "label": "Inter" },
+        { "value": "Bebas Neue", "label": "Bebas Neue" },
+        { "value": "Poppins", "label": "Poppins" },
+        { "value": "Montserrat", "label": "Montserrat" },
+        { "value": "Oswald", "label": "Oswald" },
+        { "value": "Outfit", "label": "Outfit" },
+        { "value": "Space Grotesk", "label": "Space Grotesk" },
+        { "value": "DM Sans", "label": "DM Sans" },
+        { "value": "Rubik", "label": "Rubik" },
+        { "value": "Raleway", "label": "Raleway" }
+      ]},
+      { "type": "select", "id": "body_font", "label": "Body font", "default": "Inter", "options": [
+        { "value": "system-ui, -apple-system, sans-serif", "label": "System Default" },
+        { "value": "Inter", "label": "Inter" },
+        { "value": "DM Sans", "label": "DM Sans" },
+        { "value": "Poppins", "label": "Poppins" },
+        { "value": "Satoshi", "label": "Satoshi" },
+        { "value": "Rubik", "label": "Rubik" },
+        { "value": "Montserrat", "label": "Montserrat" },
+        { "value": "Space Grotesk", "label": "Space Grotesk" },
+        { "value": "Outfit", "label": "Outfit" },
+        { "value": "Raleway", "label": "Raleway" }
+      ]}
+    ]
+  },
+  {
+    "name": "Layout",
+    "settings": [
+      { "type": "range", "id": "max_page_width", "label": "Max page width (px)", "min": 900, "max": 1600, "step": 50, "default": 1200 },
+      { "type": "range", "id": "section_spacing", "label": "Section spacing (px)", "min": 20, "max": 120, "step": 10, "default": 60 },
+      { "type": "range", "id": "grid_gap", "label": "Grid gap (px)", "min": 8, "max": 32, "step": 4, "default": 16 },
+      { "type": "range", "id": "border_radius_card", "label": "Card border radius (px)", "min": 0, "max": 24, "step": 2, "default": 12 },
+      { "type": "range", "id": "border_radius_button", "label": "Button border radius (px)", "min": 0, "max": 24, "step": 2, "default": 8 }
+    ]
+  },
+  {
+    "name": "Branding",
+    "settings": [
+      { "type": "image_picker", "id": "favicon", "label": "Favicon" },
+      { "type": "image_picker", "id": "logo", "label": "Logo (used globally)" },
+      { "type": "text", "id": "brand_name", "label": "Brand name", "default": "OGVENDORS" }
+    ]
+  },
+  {
+    "name": "Social Links",
+    "settings": [
+      { "type": "url", "id": "social_instagram", "label": "Instagram" },
+      { "type": "url", "id": "social_tiktok", "label": "TikTok" },
+      { "type": "url", "id": "social_youtube", "label": "YouTube" },
+      { "type": "url", "id": "social_twitter", "label": "Twitter / X" },
+      { "type": "url", "id": "social_facebook", "label": "Facebook" },
+      { "type": "url", "id": "social_snapchat", "label": "Snapchat" },
+      { "type": "url", "id": "social_discord", "label": "Discord" }
+    ]
+  },
+  {
+    "name": "Live Sales Notification",
+    "settings": [
+      { "type": "checkbox", "id": "live_sales_enabled", "label": "Enable live sales popup", "default": true },
+      { "type": "color", "id": "live_sales_bg", "label": "Notification background", "default": "#333333" },
+      { "type": "color", "id": "live_sales_text_color", "label": "Text color", "default": "#ffffff" },
+      { "type": "color", "id": "live_sales_name_color", "label": "Buyer name color", "default": "#cc3d3d" },
+      { "type": "text", "id": "live_sales_names", "label": "Buyer names (comma-separated)", "default": "Alex,Jordan,Sarah,Mike,Emily,Chris,Taylor,Sam,Morgan,Casey" },
+      { "type": "text", "id": "live_sales_products", "label": "Product names (comma-separated)", "default": "Elite Supplier List,Premium Vendor List,Starter Supplier Pack,Ultimate Supplier Bundle" },
+      { "type": "range", "id": "live_sales_delay", "label": "Initial delay (seconds)", "min": 1, "max": 30, "step": 1, "default": 5 },
+      { "type": "range", "id": "live_sales_duration", "label": "Show duration (seconds)", "min": 3, "max": 15, "step": 1, "default": 7 },
+      { "type": "range", "id": "live_sales_min_interval", "label": "Min interval (seconds)", "min": 5, "max": 30, "step": 1, "default": 8 },
+      { "type": "range", "id": "live_sales_max_interval", "label": "Max interval (seconds)", "min": 10, "max": 60, "step": 5, "default": 20 }
+    ]
+  },
+  {
+    "name": "AI Chatbot",
+    "settings": [
+      { "type": "header", "content": "General" },
+      { "type": "checkbox", "id": "chat_enabled", "label": "Enable Chatbot", "default": true },
+      { "type": "select", "id": "chat_mode", "label": "Chat Mode", "default": "builtin", "info": "Tidio gives you real AI + live chat. Built-in uses keyword matching.", "options": [
+        { "value": "tidio", "label": "Tidio (AI + Live Chat)" },
+        { "value": "builtin", "label": "Built-in (keyword matching)" },
+        { "value": "external", "label": "External (custom script)" }
+      ]},
+      { "type": "header", "content": "Tidio Settings" },
+      { "type": "text", "id": "chat_tidio_key", "label": "Tidio Public Key", "info": "Find this in Tidio dashboard → Settings → Installation → copy the key from the script URL (the part after tidio.co/ and before .js)" },
+      { "type": "checkbox", "id": "chat_custom_tidio_button", "label": "Use custom green button (instead of Tidio default)", "default": true, "info": "Shows our green chat button that opens Tidio when clicked" },
+      { "type": "header", "content": "External Chat Script" },
+      { "type": "textarea", "id": "chat_external_script", "label": "External embed code", "info": "Paste any chat widget embed code (Crisp, Intercom, etc.)" },
+      { "type": "header", "content": "Built-in Chat Settings" },
+      { "type": "text", "id": "chat_name", "label": "Chatbot Name", "default": "Reselling Assistant", "info": "Name shown in chat header" },
+      { "type": "textarea", "id": "chat_greeting", "label": "Greeting message", "default": "yooo whats good! u looking to start reselling? lmk if u need help picking the right suppliers 🔥" },
+      { "type": "text", "id": "chat_placeholder", "label": "Input placeholder", "default": "Ask me anything..." },
+      { "type": "header", "content": "Appearance" },
+      { "type": "color", "id": "chat_btn_bg", "label": "Button color", "default": "#39ff14" },
+      { "type": "range", "id": "chat_btn_size", "label": "Button size (px)", "min": 44, "max": 80, "step": 4, "default": 60 },
+      { "type": "range", "id": "chat_window_width", "label": "Chat window width (px)", "min": 300, "max": 500, "step": 20, "default": 380 },
+      { "type": "color", "id": "chat_window_bg", "label": "Window background", "default": "#111111" },
+      { "type": "range", "id": "chat_bottom", "label": "Bottom offset (px)", "min": 12, "max": 60, "step": 4, "default": 24 },
+      { "type": "range", "id": "chat_right", "label": "Right offset (px)", "min": 12, "max": 60, "step": 4, "default": 24 }
+    ]
+  },
+  {
+    "name": "License & Protection",
+    "settings": [
+      { "type": "header", "content": "Theme License" },
+      { "type": "paragraph", "content": "Enter your license key and server URL to activate the theme. Without a valid license, the theme will show a license error page." },
+      { "type": "text", "id": "license_key", "label": "License Key", "info": "Format: XXXX-XXXX-XXXX-XXXX — provided when you purchased the theme" },
+      { "type": "text", "id": "protection_server_url", "label": "Server URL", "default": "https://your-app.up.railway.app", "info": "The theme protection server URL (provided by theme developer)" },
+      { "type": "header", "content": "Loader Settings" },
+      { "type": "checkbox", "id": "use_obfuscated_loader", "label": "Use bundled loader (recommended for production)", "default": false, "info": "When enabled, loads the obfuscated script from theme assets instead of the server" }
+    ]
+  },
+  {
+    "name": "Custom Code",
+    "settings": [
+      { "type": "textarea", "id": "custom_css", "label": "Custom CSS" },
+      { "type": "textarea", "id": "custom_js", "label": "Custom JavaScript" },
+      { "type": "textarea", "id": "custom_head_code", "label": "Custom head code (tracking pixels, etc.)" }
+    ]
+  }
+]

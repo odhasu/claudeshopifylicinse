@@ -1,0 +1,49 @@
+{%- liquid
+  assign collection = collections.all
+-%}
+
+<section id="scaled-live-sales" class="scaled-shell scaled-shell--live-sales" data-scaled-section="live-sales" aria-label="Live Sales">
+</section>
+
+<script type="application/json" data-scaled-section-settings="live-sales">
+{
+  "enabled": {{ section.settings.enabled | default: true }},
+  "display_duration": {{ section.settings.display_duration | default: 7 }},
+  "min_delay": {{ section.settings.min_delay | default: 8 }},
+  "max_delay": {{ section.settings.max_delay | default: 20 }},
+  "initial_delay": {{ section.settings.initial_delay | default: 5 }},
+  "name_color": {{ section.settings.name_color | default: "#cc3d3d" | json }},
+  "position": {{ section.settings.position | default: "bottom-left" | json }}
+}
+</script>
+
+<script type="application/json" data-scaled-products="live-sales">
+[
+  {%- for product in collection.products limit: 20 -%}
+    {%- unless forloop.first -%},{%- endunless -%}
+    {{ product.title | json }}
+  {%- endfor -%}
+]
+</script>
+
+{% schema %}
+{
+  "name": "Live Sales",
+  "class": "scaled-live-sales-wrapper",
+  "settings": [
+    { "type": "checkbox", "id": "enabled", "label": "Enable live sales notifications", "default": true },
+    { "type": "range", "id": "display_duration", "label": "Display duration (seconds)", "min": 3, "max": 15, "step": 1, "default": 7 },
+    { "type": "range", "id": "min_delay", "label": "Min delay between (seconds)", "min": 5, "max": 30, "step": 1, "default": 8 },
+    { "type": "range", "id": "max_delay", "label": "Max delay between (seconds)", "min": 10, "max": 60, "step": 5, "default": 20 },
+    { "type": "range", "id": "initial_delay", "label": "Initial delay (seconds)", "min": 1, "max": 30, "step": 1, "default": 5 },
+    { "type": "color", "id": "name_color", "label": "Name color", "default": "#cc3d3d" },
+    { "type": "select", "id": "position", "label": "Position", "default": "bottom-left", "options": [
+      { "value": "bottom-left", "label": "Bottom left" },
+      { "value": "bottom-right", "label": "Bottom right" }
+    ]}
+  ],
+  "presets": [
+    { "name": "Live Sales" }
+  ]
+}
+{% endschema %}

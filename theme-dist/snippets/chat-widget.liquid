@@ -1,0 +1,343 @@
+{%- if settings.chat_enabled -%}
+{%- liquid
+  assign chat_mode = settings.chat_mode | default: 'builtin'
+  assign btn_bg = settings.chat_btn_bg | default: '#39ff14'
+  assign btn_size = settings.chat_btn_size | default: 60
+  assign chat_width = settings.chat_window_width | default: 380
+-%}
+
+{%- if chat_mode == 'tidio' and settings.chat_tidio_key != blank -%}
+  <!-- Tidio Live Chat — AI powered -->
+  <script src="//code.tidio.co/{{ settings.chat_tidio_key }}.js" async></script>
+  <style>
+    /* Hide Tidio default button if using custom fab */
+    {%- if settings.chat_custom_tidio_button -%}
+    #tidio-chat-iframe { bottom: {{ settings.chat_bottom | default: 24 | plus: btn_size | plus: 16 }}px !important; }
+    {%- endif -%}
+  </style>
+
+  {%- if settings.chat_custom_tidio_button -%}
+  <style>
+    .chat-fab {
+      position: fixed;
+      bottom: {{ settings.chat_bottom | default: 24 }}px;
+      right: {{ settings.chat_right | default: 24 }}px;
+      width: {{ btn_size }}px;
+      height: {{ btn_size }}px;
+      border-radius: 50%;
+      background: {{ btn_bg }};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 160;
+      box-shadow: 0 4px 20px rgba(57,255,20,0.3);
+      cursor: pointer;
+      transition: transform 0.2s;
+      border: none;
+    }
+    .chat-fab:hover { transform: scale(1.08); }
+    .chat-fab svg { width: 28px; height: 28px; color: #000; }
+    .chat-fab-dot {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #22c55e;
+      border: 2px solid #000;
+      animation: chatPulseDot 1.5s ease-in-out infinite;
+    }
+    @keyframes chatPulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+  </style>
+  <button class="chat-fab" onclick="if(window.tidioChatApi){tidioChatApi.open()}" aria-label="Open chat">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    <span class="chat-fab-dot"></span>
+  </button>
+  {%- endif -%}
+
+{%- elsif chat_mode == 'external' and settings.chat_external_script != blank -%}
+  <!-- External chat widget script -->
+  {{ settings.chat_external_script }}
+
+{%- else -%}
+  <!-- Built-in keyword chatbot -->
+  <style>
+    .chat-fab {
+      position: fixed;
+      bottom: {{ settings.chat_bottom | default: 24 }}px;
+      right: {{ settings.chat_right | default: 24 }}px;
+      width: {{ btn_size }}px;
+      height: {{ btn_size }}px;
+      border-radius: 50%;
+      background: {{ btn_bg }};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 160;
+      box-shadow: 0 4px 20px rgba(57,255,20,0.3);
+      cursor: pointer;
+      transition: transform 0.2s;
+      border: none;
+    }
+    .chat-fab:hover { transform: scale(1.08); }
+    .chat-fab svg { width: 28px; height: 28px; color: #000; }
+    .chat-fab-dot {
+      position: absolute;
+      top: 4px; right: 4px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #22c55e;
+      border: 2px solid #000;
+      animation: chatPulseDot 1.5s ease-in-out infinite;
+    }
+    @keyframes chatPulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+
+    .chat-window {
+      position: fixed;
+      bottom: {{ settings.chat_bottom | default: 24 | plus: btn_size | plus: 12 }}px;
+      right: {{ settings.chat_right | default: 24 }}px;
+      width: {{ chat_width }}px;
+      max-height: 500px;
+      background: {{ settings.chat_window_bg | default: '#111111' }};
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      z-index: 161;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    .chat-window.open { display: flex; }
+    .chat-close-btn {
+      position: absolute;
+      top: 10px; right: 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: background 0.2s;
+    }
+    .chat-close-btn:hover { background: rgba(255,255,255,0.12); }
+    .chat-messages {
+      position: relative;
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 320px;
+    }
+    .chat-msg {
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 85%;
+    }
+    .chat-msg.bot {
+      background: #1a1a1a;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .chat-msg.user {
+      background: {{ btn_bg }};
+      color: #000;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-msg a { color: {{ btn_bg }}; font-weight: 700; text-decoration: underline; }
+    .chat-typing {
+      align-self: flex-start;
+      padding: 10px 14px;
+      background: #1a1a1a;
+      border-radius: 12px;
+      border-bottom-left-radius: 4px;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .chat-typing span {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #555;
+      animation: typingBounce 1.4s ease-in-out infinite;
+    }
+    .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+    .chat-input-area {
+      padding: 12px 16px;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      gap: 8px;
+    }
+    .chat-input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid #2a2a2a;
+      background: #0a0a0a;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .chat-send {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: {{ btn_bg }};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: pointer;
+    }
+    .chat-send svg { width: 18px; height: 18px; color: #000; }
+
+    @media (max-width: 768px) {
+      .chat-window {
+        inset: 0;
+        width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        bottom: 0; right: 0;
+      }
+      .chat-window.open { position: fixed; }
+    }
+  </style>
+
+  <button class="chat-fab" id="chat-fab" aria-label="Open chat">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    <span class="chat-fab-dot"></span>
+  </button>
+
+  <div class="chat-window" id="chat-window">
+    <button class="chat-close-btn" id="chat-close">&times;</button>
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-msg bot">{{ settings.chat_greeting | default: "yooo whats good! u looking to start reselling? lmk if u need help picking the right suppliers 🔥" }}</div>
+    </div>
+    <div class="chat-input-area">
+      <input class="chat-input" id="chat-input" placeholder="{{ settings.chat_placeholder | default: 'Ask me anything...' }}" onkeypress="if(event.key==='Enter')sendChatMsg()">
+      <button class="chat-send" onclick="sendChatMsg()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+  (function() {
+    var fab = document.getElementById('chat-fab');
+    var win = document.getElementById('chat-window');
+    var close = document.getElementById('chat-close');
+    fab.addEventListener('click', function() { win.classList.toggle('open'); });
+    close.addEventListener('click', function() { win.classList.remove('open'); });
+
+    var keywords = {
+      'hello|hi|hey|yo|sup|whats up|wassup|whats good': [
+        "yooo whats good! u looking to get into reselling or u already in the game?",
+        "ayy whats up! need help picking the right suppliers? im here for u"
+      ],
+      'price|cost|how much|expensive|cheap|afford|money|pay|worth': [
+        "bro the prices are crazy good for what u get.. check em out <a href='/collections/all'>right here</a> 🔥",
+        "trust me the ROI on these is insane.. u make back what u paid on literally ur first flip"
+      ],
+      'legit|scam|trust|real|fake|honest|reliable|sketchy|cap': [
+        "nah bro this is 100% legit no cap.. every supplier is personally verified. peep the reviews 💯"
+      ],
+      'refund|return|money back|cancel': [
+        "since its digital theres no refunds but fr u wont need one.. the suppliers all work 😤"
+      ],
+      'deliver|receive|get|how do i|access|download|email|instant|when': [
+        "its instant bro! soon as u buy, supplier links hit ur email right away ⚡"
+      ],
+      'which|recommend|best|popular|suggest|what should|starter|beginner|first': [
+        "depends what ur into fr.. lmk what category interests u and ill point u to the right one 🎯"
+      ],
+      'start|begin|new|resell|flip|sell|hustle|side|how to': [
+        "its easy fr.. grab a supplier list, pick products, start listing. want help choosing? 💰"
+      ],
+      'profit|earn|make money|income|roi|margin': [
+        "2-5x margins easy bro.. some ppl making $1k+ first month no cap 📈"
+      ],
+      'thank|thanks|thx|bye|later|peace|cya|appreciate': [
+        "ayy no problem! go make that money 🚀"
+      ],
+      '^yes$|^yeah$|^sure$|^ok$|^yep$|^yea$|^bet$|^fs$': [
+        "bet! <a href='/collections/all'>check out the suppliers</a> 🎯"
+      ],
+      '^no$|^nah$|^nope$|^im good$|^nvm$': [
+        "aight no worries.. im here if u change ur mind 🤙"
+      ],
+      'think about|maybe later|not sure|idk|deciding': [
+        "99% of ppl just browse and never take action... dont be that guy 😭"
+      ]
+    };
+
+    var fallbacks = [
+      "yo you need help picking the right supplier? lmk what category ur interested in 🎯",
+      "bro lmk if u have any questions, im here 💪",
+      "99% of people just browse and never take action... dont be that guy 😭"
+    ];
+    var fi = 0;
+
+    function getResponse(text) {
+      var lower = text.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+      for (var p in keywords) {
+        if (new RegExp(p, 'i').test(lower)) {
+          var a = keywords[p];
+          return a[Math.floor(Math.random() * a.length)];
+        }
+      }
+      return fallbacks[fi++ % fallbacks.length];
+    }
+
+    window.sendChatMsg = function() {
+      var input = document.getElementById('chat-input');
+      var messages = document.getElementById('chat-messages');
+      var text = input.value.trim();
+      if (!text) return;
+
+      var userMsg = document.createElement('div');
+      userMsg.className = 'chat-msg user';
+      userMsg.textContent = text;
+      messages.appendChild(userMsg);
+      input.value = '';
+      messages.scrollTop = messages.scrollHeight;
+
+      // Typing indicator
+      var typing = document.createElement('div');
+      typing.className = 'chat-typing';
+      typing.id = 'chat-typing';
+      typing.innerHTML = '<span></span><span></span><span></span>';
+      messages.appendChild(typing);
+      messages.scrollTop = messages.scrollHeight;
+
+      setTimeout(function() {
+        var t = document.getElementById('chat-typing');
+        if (t) t.remove();
+        var botMsg = document.createElement('div');
+        botMsg.className = 'chat-msg bot';
+        botMsg.innerHTML = getResponse(text);
+        messages.appendChild(botMsg);
+        messages.scrollTop = messages.scrollHeight;
+      }, 800 + Math.random() * 1200);
+    };
+  })();
+  </script>
+{%- endif -%}
+{%- endif -%}

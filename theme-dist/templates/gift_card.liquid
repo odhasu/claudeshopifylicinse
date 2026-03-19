@@ -1,0 +1,25 @@
+{% layout none %}
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ 'gift_cards.issued.title' | t }}</title>
+  {{ content_for_header }}
+  <style>
+    body { background:#000; color:#fff; font-family:system-ui,sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; text-align:center; padding:40px; }
+    .gift-card h1 { font-size:2rem; margin-bottom:20px; }
+    .gift-card-code { font-size:1.5rem; font-weight:800; letter-spacing:4px; padding:20px; background:#111; border:1px solid #2a2a2a; border-radius:12px; margin:20px 0; }
+    .gift-card-balance { color:#39ff14; font-size:2rem; font-weight:900; }
+  </style>
+</head>
+<body>
+  <div class="gift-card">
+    <h1>{{ shop.name }} Gift Card</h1>
+    <div class="gift-card-balance">{{ gift_card.balance | money }}</div>
+    <div class="gift-card-code">{{ gift_card.code | format_code }}</div>
+    {%- if gift_card.expired -%}<p style="color:#cc3d3d;">This gift card has expired.</p>{%- endif -%}
+    {%- if gift_card.enabled -%}<p style="color:#22c55e;">This gift card is active.</p>{%- endif -%}
+  </div>
+</body>
+</html>

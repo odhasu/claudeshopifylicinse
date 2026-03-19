@@ -1,0 +1,48 @@
+<div id="scaled-header-minimal" class="scaled-shell scaled-shell--header-minimal" data-scaled-section="header-minimal" aria-label="Header">
+  <noscript>
+    <div class="scaled-shell__noscript">
+      <p>Enable JavaScript to view navigation.</p>
+    </div>
+  </noscript>
+</div>
+
+<script type="application/json" data-scaled-section-settings="header-minimal">
+{
+  "logo": {% if settings.logo %}{{ settings.logo | image_url: width: 400 | json }}{% else %}null{% endif %},
+  "logo_mobile": {% if settings.logo %}{{ settings.logo | image_url: width: 200 | json }}{% else %}null{% endif %},
+  "nav_link_1_text": {{ section.settings.nav_link_1_text | default: "" | json }},
+  "nav_link_1_url": {{ section.settings.nav_link_1_url | default: "/" | json }},
+  "nav_link_2_text": {{ section.settings.nav_link_2_text | default: "" | json }},
+  "nav_link_2_url": {{ section.settings.nav_link_2_url | json }},
+  "nav_link_3_text": {{ section.settings.nav_link_3_text | default: "" | json }},
+  "nav_link_3_url": {{ section.settings.nav_link_3_url | json }},
+  "nav_link_4_text": {{ section.settings.nav_link_4_text | default: "" | json }},
+  "nav_link_4_url": {{ section.settings.nav_link_4_url | json }},
+  "nav_link_5_text": {{ section.settings.nav_link_5_text | default: "" | json }},
+  "nav_link_5_url": {{ section.settings.nav_link_5_url | json }},
+  "nav_link_6_text": {{ section.settings.nav_link_6_text | default: "" | json }},
+  "nav_link_6_url": {{ section.settings.nav_link_6_url | json }}
+}
+</script>
+
+{% schema %}
+{
+  "name": "Header (Minimal)",
+  "class": "scaled-header-minimal-wrapper",
+  "settings": [
+    { "type": "header", "content": "Navigation Links" },
+    { "type": "text", "id": "nav_link_1_text", "label": "Link 1 text", "default": "Home" },
+    { "type": "url", "id": "nav_link_1_url", "label": "Link 1 URL" },
+    { "type": "text", "id": "nav_link_2_text", "label": "Link 2 text" },
+    { "type": "url", "id": "nav_link_2_url", "label": "Link 2 URL" },
+    { "type": "text", "id": "nav_link_3_text", "label": "Link 3 text" },
+    { "type": "url", "id": "nav_link_3_url", "label": "Link 3 URL" },
+    { "type": "text", "id": "nav_link_4_text", "label": "Link 4 text" },
+    { "type": "url", "id": "nav_link_4_url", "label": "Link 4 URL" },
+    { "type": "text", "id": "nav_link_5_text", "label": "Link 5 text" },
+    { "type": "url", "id": "nav_link_5_url", "label": "Link 5 URL" },
+    { "type": "text", "id": "nav_link_6_text", "label": "Link 6 text" },
+    { "type": "url", "id": "nav_link_6_url", "label": "Link 6 URL" }
+  ]
+}
+{% endschema %}

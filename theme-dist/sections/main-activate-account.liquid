@@ -1,0 +1,19 @@
+<style>
+  .auth-page { max-width:420px;margin:0 auto;padding:80px 20px;text-align:center; }
+  .auth-page h1 { font-family:var(--font-heading);font-size:28px;text-transform:uppercase;margin-bottom:32px; }
+  .auth-page form { display:flex;flex-direction:column;gap:16px; }
+  .auth-page input { padding:14px 16px;border-radius:var(--radius-button);border:1px solid var(--color-border);background:var(--color-card-bg);color:#fff;font-size:14px; }
+  .auth-page button { padding:14px;border-radius:var(--radius-button);background:var(--color-accent);color:#000;font-weight:800;font-size:14px;text-transform:uppercase;border:none;cursor:pointer; }
+</style>
+<section class="auth-page">
+  <h1>Activate Account</h1>
+  {%- form 'activate_customer_password' -%}
+    {{ form.errors | default_errors }}
+    <input type="password" name="customer[password]" placeholder="Password" required>
+    <input type="password" name="customer[password_confirmation]" placeholder="Confirm password" required>
+    <button type="submit">Activate</button>
+  {%- endform -%}
+</section>
+{% schema %}
+{ "name": "Activate Account", "tag": "section", "settings": [] }
+{% endschema %}

@@ -1,0 +1,44 @@
+<style>
+  .page-404 {
+    text-align: center;
+    padding: 120px 20px;
+    min-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .page-404 h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(48px, 10vw, 96px);
+    color: var(--color-accent);
+    margin-bottom: 16px;
+  }
+  .page-404 p { color: var(--color-text-muted); font-size: 18px; margin-bottom: 32px; }
+  .page-404 a {
+    display: inline-block;
+    padding: 14px 32px;
+    border-radius: var(--radius-button);
+    background: var(--color-accent);
+    color: #000;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 14px;
+    transition: box-shadow 0.3s;
+  }
+  .page-404 a:hover { box-shadow: 0 4px 15px rgba(57,255,20,0.4); }
+</style>
+
+<section class="page-404">
+  <h1>404</h1>
+  <p>Page not found</p>
+  <a href="/">Continue Shopping</a>
+</section>
+
+{% schema %}
+{
+  "name": "Main 404",
+  "tag": "section",
+  "settings": []
+}
+{% endschema %}

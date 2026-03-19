@@ -1,0 +1,101 @@
+{
+  "sections": {
+    "urgency": {
+      "type": "shell-urgency",
+      "settings": {
+        "show_viewer_count": true,
+        "show_recent_sales": true,
+        "show_countdown": false
+      }
+    },
+    "product-grid": {
+      "type": "shell-product-grid",
+      "settings": {
+        "hero_headline": "Start Your Reselling Journey Today",
+        "highlight_word": "Reselling",
+        "products_per_row": 4,
+        "max_products": 12,
+        "primary_button_text": "buy now",
+        "primary_button_action": "checkout",
+        "sale_badge_text": "SALE",
+        "sale_badge_position": "bottom-right",
+        "show_background_gradient": true
+      }
+    },
+    "testimonials": {
+      "type": "shell-testimonials",
+      "settings": {
+        "headline": "What Our Customers Say",
+        "animation_speed": 20,
+        "max_width": 900,
+        "image_height": 250
+      }
+    },
+    "chat": {
+      "type": "shell-chat",
+      "settings": {
+        "chat_name": "Reselling Assistant",
+        "greeting": "Hey! Got questions? I'm here to help you decide.",
+        "position": "bottom-right",
+        "show_pulse": true
+      }
+    },
+    "shell_reviews": {
+      "type": "shell-reviews",
+      "settings": {
+        "title": "Customer Reviews",
+        "subtitle": "See what our customers are saying",
+        "show_write_review": true,
+        "reviews_per_page": 10,
+        "sort_by": "newest",
+        "show_photos": true,
+        "show_rating_distribution": true,
+        "allow_photos": true
+      }
+    },
+    "live-sales": {
+      "type": "shell-live-sales",
+      "settings": {
+        "enabled": true,
+        "display_duration": 7,
+        "min_delay": 8,
+        "max_delay": 20,
+        "initial_delay": 5,
+        "name_color": "#cc3d3d",
+        "position": "bottom-left"
+      }
+    },
+    "shell_faq": {
+      "type": "shell-faq",
+      "blocks": {
+        "faq-1": {
+          "type": "question",
+          "settings": {
+            "question": "Is this legit?",
+            "answer": "<p>Yes! I personally use these suppliers and have made over $50,000 with them. You'll see real screenshots and testimonials from other customers.</p>"
+          }
+        },
+        "faq-2": {
+          "type": "question",
+          "settings": {
+            "question": "How will I receive the vendors?",
+            "answer": "<p>Once you purchase, the vendor links are INSTANTLY sent through email</p>"
+          }
+        }
+      },
+      "block_order": ["faq-1", "faq-2"],
+      "settings": {
+        "heading": "Frequently Asked Questions"
+      }
+    }
+  },
+  "order": [
+    "urgency",
+    "product-grid",
+    "testimonials",
+    "chat",
+    "shell_reviews",
+    "live-sales",
+    "shell_faq"
+  ]
+}

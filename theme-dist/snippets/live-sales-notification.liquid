@@ -1,0 +1,67 @@
+{%- if settings.live_sales_enabled and template.name == 'index' -%}
+<style>
+  .live-sales-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    background: {{ settings.live_sales_bg | default: 'rgba(99,99,99,0.25)' }};
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 14px 18px;
+    max-width: 320px;
+    z-index: 150;
+    transform: translateY(120%);
+    opacity: 0;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    font-size: 14px;
+    color: {{ settings.live_sales_text_color | default: '#ffffff' }};
+  }
+  .live-sales-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .live-sales-toast .buyer-name { color: {{ settings.live_sales_name_color | default: '#cc3d3d' }}; font-weight: 700; }
+  .live-sales-toast .product-name { font-weight: 700; }
+  @media (max-width: 768px) {
+    .live-sales-toast {
+      bottom: 80px;
+      left: 16px;
+      right: 16px;
+      max-width: none;
+    }
+  }
+</style>
+
+<div class="live-sales-toast" id="live-sales-toast">
+  <span class="buyer-name" id="ls-name"></span> just purchased the <span class="product-name" id="ls-product"></span>!
+</div>
+
+<script>
+  (function() {
+    var names = {{ settings.live_sales_names | default: 'Alex,Jordan,Sarah,Mike,Emily,Chris,Taylor,Sam,Morgan,Casey' | split: ',' | json }};
+    var products = {{ settings.live_sales_products | default: 'Elite Vendor Bundle,Premium Supplier List,Starter Pack,Ultimate Bundle' | split: ',' | json }};
+    var delay = {{ settings.live_sales_delay | default: 5 }} * 1000;
+    var duration = {{ settings.live_sales_duration | default: 7 }} * 1000;
+    var minInterval = {{ settings.live_sales_min_interval | default: 8 }};
+    var maxInterval = {{ settings.live_sales_max_interval | default: 20 }};
+    var toast = document.getElementById('live-sales-toast');
+    var nameEl = document.getElementById('ls-name');
+    var productEl = document.getElementById('ls-product');
+
+    function showNotification() {
+      nameEl.textContent = names[Math.floor(Math.random() * names.length)];
+      productEl.textContent = products[Math.floor(Math.random() * products.length)];
+      toast.classList.add('show');
+      setTimeout(function() {
+        toast.classList.remove('show');
+        var next = (Math.random() * (maxInterval - minInterval) + minInterval) * 1000;
+        setTimeout(showNotification, next);
+      }, duration);
+    }
+
+    setTimeout(showNotification, delay);
+  })();
+</script>
+{%- endif -%}

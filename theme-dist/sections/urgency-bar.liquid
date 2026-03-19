@@ -1,0 +1,248 @@
+{%- unless template.name == 'index' or section.settings.show_on_all_pages -%}
+  {%- style -%}.urgency-bar { display: none !important; }{%- endstyle -%}
+{%- endunless -%}
+
+{%- liquid
+  assign bg_color = section.settings.bg_color | default: '#000000'
+  assign text_color = section.settings.text_color | default: '#ffffff'
+  assign accent = section.settings.accent_color | default: settings.color_accent | default: '#39ff14'
+  assign speed = section.settings.scroll_speed | default: 30
+  assign bar_height = section.settings.bar_height | default: 36
+  assign font_size = section.settings.font_size | default: 13
+  assign dot_color = section.settings.dot_color | default: '#39ff14'
+  assign min_viewers = section.settings.min_viewers | default: 10
+  assign max_viewers = section.settings.max_viewers | default: 100
+  assign icon_color = section.settings.icon_color | default: accent
+-%}
+
+<style>
+  .urgency-bar {
+    background: {{ bg_color }};
+    color: {{ text_color }};
+    height: {{ bar_height }}px;
+    overflow: hidden;
+    position: relative;
+    border-bottom: 1px solid {{ section.settings.border_color | default: '#1a1a1a' }};
+    z-index: 100;
+  }
+  .urgency-bar:hover .urgency-track { animation-play-state: paused; }
+  .urgency-track {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    white-space: nowrap;
+    animation: urgencyScroll {{ speed }}s linear infinite;
+    width: max-content;
+  }
+  .urgency-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 24px;
+    font-size: {{ font_size }}px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .urgency-item .accent { color: {{ accent }}; font-weight: 700; }
+  .urgency-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .urgency-icon svg {
+    width: 14px;
+    height: 14px;
+    stroke: {{ icon_color }};
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .urgency-icon--filled svg {
+    fill: {{ icon_color }};
+    stroke: {{ icon_color }};
+  }
+  .urgency-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: {{ dot_color }};
+    animation: pulseDot 1.5s ease-in-out infinite;
+  }
+  .urgency-divider {
+    display: inline-block;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: {{ section.settings.divider_color | default: '#333' }};
+    margin: 0 4px;
+    flex-shrink: 0;
+  }
+  @keyframes urgencyScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+</style>
+
+<div class="urgency-bar" role="marquee" aria-label="Store announcements">
+  <div class="urgency-track">
+    {%- for i in (1..2) -%}
+      {%- if section.settings.show_verified -%}
+        <span class="urgency-item">
+          <span class="urgency-icon"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg></span>
+          {{ section.settings.verified_text | default: 'Fully verified' }}
+        </span>
+        <span class="urgency-divider"></span>
+      {%- endif -%}
+
+      {%- if section.settings.show_countdown -%}
+        <span class="urgency-item">
+          <span class="urgency-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+          {{ section.settings.countdown_prefix | default: 'Price goes up in' }}
+          <span class="accent" id="urgency-countdown{% if i == 2 %}-dup{% endif %}">0h 00m</span>
+        </span>
+        <span class="urgency-divider"></span>
+      {%- endif -%}
+
+      {%- if section.settings.show_rating -%}
+        <span class="urgency-item">
+          <span class="urgency-icon urgency-icon--filled"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+          Rated <span class="accent">{{ section.settings.rating_value | default: '4.96/5' }}</span>
+          by <span class="accent">{{ section.settings.rating_count | default: '2,400+' }}</span> resellers
+        </span>
+        <span class="urgency-divider"></span>
+      {%- endif -%}
+
+      {%- if section.settings.show_viewers -%}
+        <span class="urgency-item">
+          <span class="urgency-dot"></span>
+          <span class="accent" id="urgency-viewers{% if i == 2 %}-dup{% endif %}">{{ min_viewers }}</span>
+          {{ section.settings.viewers_text | default: 'people viewing right now' }}
+        </span>
+        <span class="urgency-divider"></span>
+      {%- endif -%}
+
+      {%- if section.settings.show_private -%}
+        <span class="urgency-item">
+          <span class="urgency-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
+          {{ section.settings.private_text | default: 'Private suppliers not found anywhere else' }}
+        </span>
+        <span class="urgency-divider"></span>
+      {%- endif -%}
+
+      {%- if section.settings.show_personally_verified -%}
+        <span class="urgency-item">
+          <span class="urgency-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+          {{ section.settings.personally_verified_text | default: 'All suppliers personally verified' }}
+        </span>
+        <span class="urgency-divider"></span>
+      {%- endif -%}
+
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'custom_item' -%}
+          <span class="urgency-item" {{ block.shopify_attributes }}>{{ block.settings.text }}</span>
+          <span class="urgency-divider"></span>
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endfor -%}
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Countdown to midnight — formatted as "Xh Xm"
+    function updateCountdown() {
+      var now = new Date();
+      var midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      var diff = midnight - now;
+      var h = Math.floor(diff / 3600000);
+      var m = Math.floor((diff % 3600000) / 60000);
+      var str = h + 'h ' + String(m).padStart(2,'0') + 'm';
+      var el1 = document.getElementById('urgency-countdown');
+      var el2 = document.getElementById('urgency-countdown-dup');
+      if (el1) el1.textContent = str;
+      if (el2) el2.textContent = str;
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 60000);
+
+    // Realistic viewer count — drifts ±2-3 every 1-3 minutes
+    var min = {{ min_viewers }};
+    var max = {{ max_viewers }};
+    var currentViewers = Math.floor(Math.random() * (max - min + 1)) + min;
+    function setViewerText(count) {
+      var el1 = document.getElementById('urgency-viewers');
+      var el2 = document.getElementById('urgency-viewers-dup');
+      if (el1) el1.textContent = count;
+      if (el2) el2.textContent = count;
+    }
+    setViewerText(currentViewers);
+    function driftViewers() {
+      var change = Math.floor(Math.random() * 4) - 1; // -1 to +2 drift
+      if (Math.random() < 0.3) change = -Math.abs(change); // 30% chance down
+      currentViewers = Math.max(min, Math.min(max, currentViewers + change));
+      setViewerText(currentViewers);
+      var nextUpdate = (60 + Math.floor(Math.random() * 120)) * 1000; // 1-3 minutes
+      setTimeout(driftViewers, nextUpdate);
+    }
+    setTimeout(driftViewers, (60 + Math.floor(Math.random() * 120)) * 1000);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Urgency Bar",
+  "tag": "section",
+  "class": "urgency-bar-section",
+  "settings": [
+    { "type": "header", "content": "Visibility" },
+    { "type": "checkbox", "id": "show_on_all_pages", "label": "Show on all pages (not just homepage)", "default": false },
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "bg_color", "label": "Background color", "default": "#000000" },
+    { "type": "color", "id": "text_color", "label": "Text color", "default": "#ffffff" },
+    { "type": "color", "id": "accent_color", "label": "Accent color", "default": "#39ff14" },
+    { "type": "color", "id": "icon_color", "label": "Icon color", "default": "#39ff14" },
+    { "type": "color", "id": "dot_color", "label": "Pulsing dot color", "default": "#39ff14" },
+    { "type": "color", "id": "divider_color", "label": "Divider dot color", "default": "#333333" },
+    { "type": "color", "id": "border_color", "label": "Bottom border color", "default": "#1a1a1a" },
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "bar_height", "label": "Bar height (px)", "min": 24, "max": 60, "step": 2, "default": 36 },
+    { "type": "range", "id": "font_size", "label": "Font size (px)", "min": 10, "max": 18, "step": 1, "default": 13 },
+    { "type": "range", "id": "scroll_speed", "label": "Scroll speed (seconds)", "min": 10, "max": 80, "step": 5, "default": 30 },
+    { "type": "header", "content": "Viewer Count" },
+    { "type": "range", "id": "min_viewers", "label": "Min viewers", "min": 1, "max": 50, "step": 1, "default": 10 },
+    { "type": "range", "id": "max_viewers", "label": "Max viewers", "min": 20, "max": 100, "step": 5, "default": 100 },
+    { "type": "header", "content": "Toggle Items" },
+    { "type": "checkbox", "id": "show_verified", "label": "Show 'Fully verified'", "default": true },
+    { "type": "checkbox", "id": "show_countdown", "label": "Show countdown timer", "default": true },
+    { "type": "checkbox", "id": "show_rating", "label": "Show rating", "default": true },
+    { "type": "checkbox", "id": "show_viewers", "label": "Show live viewers", "default": true },
+    { "type": "checkbox", "id": "show_private", "label": "Show 'Private suppliers'", "default": true },
+    { "type": "checkbox", "id": "show_personally_verified", "label": "Show 'Personally verified'", "default": true },
+    { "type": "header", "content": "Custom Text" },
+    { "type": "text", "id": "verified_text", "label": "Verified text", "default": "Fully verified" },
+    { "type": "text", "id": "countdown_prefix", "label": "Countdown prefix", "default": "Price goes up in" },
+    { "type": "text", "id": "rating_value", "label": "Rating value", "default": "4.96/5" },
+    { "type": "text", "id": "rating_count", "label": "Rating count", "default": "2,400+" },
+    { "type": "text", "id": "viewers_text", "label": "Viewers suffix", "default": "people viewing right now" },
+    { "type": "text", "id": "private_text", "label": "Private text", "default": "Private suppliers not found anywhere else" },
+    { "type": "text", "id": "personally_verified_text", "label": "Personally verified text", "default": "All suppliers personally verified" }
+  ],
+  "blocks": [
+    {
+      "type": "custom_item",
+      "name": "Custom Item",
+      "settings": [
+        { "type": "text", "id": "text", "label": "Text", "default": "Custom announcement text" }
+      ]
+    }
+  ],
+  "presets": [
+    { "name": "Urgency Bar" }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,128 @@
+{%- liquid
+  assign collection = section.settings.collection | default: collections.all
+  assign max_products = section.settings.max_products | default: 12
+-%}
+
+<section id="scaled-product-grid" class="scaled-shell scaled-shell--loading" data-scaled-section="product-grid" aria-label="Products">
+  <div class="scaled-editor-preview">
+    <div class="scaled-editor-preview__hero">
+      <h1 class="scaled-editor-preview__headline">{{ section.settings.hero_headline | default: 'Start Your Reselling Journey Today' }}</h1>
+      {%- if section.settings.hero_image != blank -%}
+        <img src="{{ section.settings.hero_image | image_url: width: 450 }}" alt="" class="scaled-editor-preview__image">
+      {%- endif -%}
+    </div>
+    <p class="scaled-editor-preview__note">Product grid loads on live site</p>
+  </div>
+
+  <noscript>
+    <div class="scaled-shell__noscript">
+      <p>Enable JavaScript to view products.</p>
+    </div>
+  </noscript>
+</section>
+
+<style>
+  .scaled-editor-preview { text-align: center; padding: 48px 16px; }
+  .scaled-editor-preview__headline {
+    font-family: 'Anton', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    color: var(--color-text, #fff);
+    margin: 0;
+  }
+  .scaled-editor-preview__image {
+    display: block;
+    max-width: 250px;
+    width: 100%;
+    height: auto;
+    margin: 24px auto 0;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  @media (min-width: 768px) {
+    .scaled-editor-preview__image { max-width: 450px; }
+  }
+  .scaled-editor-preview__note {
+    margin-top: 32px;
+    color: var(--color-text-muted, #9ca3af);
+    font-size: 14px;
+  }
+  .scaled-shell:not(.scaled-shell--loading) .scaled-editor-preview { display: none; }
+</style>
+
+<script type="application/json" data-scaled-section-settings="product-grid">
+{
+  "hero_headline": {{ section.settings.hero_headline | default: "Start Your Reselling Journey Today" | json }},
+  "highlight_word": {{ section.settings.highlight_word | default: "Reselling" | json }},
+  "hero_image": {% if section.settings.hero_image != blank %}{{ section.settings.hero_image | image_url: width: 1200 | json }}{% else %}null{% endif %},
+  "products_per_row": {{ section.settings.products_per_row | default: 4 }},
+  "primary_button_text": {{ section.settings.primary_button_text | default: "buy now" | json }},
+  "primary_button_action": {{ section.settings.primary_button_action | default: "checkout" | json }},
+  "primary_button_custom_url": {{ section.settings.primary_button_custom_url | json }},
+  "sale_badge_text": {{ section.settings.sale_badge_text | default: "SALE" | json }},
+  "sale_badge_position": {{ section.settings.sale_badge_position | default: "bottom-right" | json }},
+  "show_background_gradient": {{ section.settings.show_background_gradient | default: true }}
+}
+</script>
+
+<script type="application/json" data-scaled-products="product-grid">
+[
+  {%- for product in collection.products limit: max_products -%}
+    {%- unless forloop.first -%},{%- endunless -%}
+    {
+      "id": {{ product.id }},
+      "variantId": {{ product.first_available_variant.id }},
+      "title": {{ product.title | json }},
+      "handle": {{ product.handle | json }},
+      "url": {{ product.url | json }},
+      "price": {{ product.price }},
+      "comparePrice": {{ product.compare_at_price_max | default: 0 }},
+      "available": {{ product.available }},
+      "image": {% if product.featured_image %}{{ product.featured_image | image_url: width: 500 | json }}{% else %}null{% endif %},
+      "imageAlt": {{ product.featured_image.alt | default: product.title | json }}
+    }
+  {%- endfor -%}
+]
+</script>
+
+{% schema %}
+{
+  "name": "Product Grid",
+  "class": "scaled-product-grid-wrapper",
+  "settings": [
+    { "type": "header", "content": "Hero" },
+    { "type": "text", "id": "hero_headline", "label": "Hero headline", "default": "Start Your Reselling Journey Today" },
+    { "type": "text", "id": "highlight_word", "label": "Highlight word (accent color)", "default": "Reselling" },
+    { "type": "image_picker", "id": "hero_image", "label": "Hero image" },
+    { "type": "header", "content": "Grid" },
+    { "type": "collection", "id": "collection", "label": "Collection" },
+    { "type": "range", "id": "max_products", "label": "Max products", "min": 2, "max": 20, "step": 1, "default": 12 },
+    { "type": "range", "id": "products_per_row", "label": "Products per row", "min": 2, "max": 6, "step": 1, "default": 4 },
+    { "type": "header", "content": "Button" },
+    { "type": "text", "id": "primary_button_text", "label": "Button text", "default": "buy now" },
+    { "type": "select", "id": "primary_button_action", "label": "Button action", "default": "checkout", "options": [
+      { "value": "checkout", "label": "Direct checkout" },
+      { "value": "add_to_cart", "label": "Add to cart" },
+      { "value": "product_page", "label": "Go to product page" },
+      { "value": "custom_url", "label": "Custom URL" }
+    ]},
+    { "type": "url", "id": "primary_button_custom_url", "label": "Custom URL (if selected above)" },
+    { "type": "header", "content": "Sale Badge" },
+    { "type": "text", "id": "sale_badge_text", "label": "Badge text", "default": "SALE" },
+    { "type": "select", "id": "sale_badge_position", "label": "Badge position", "default": "bottom-right", "options": [
+      { "value": "top-left", "label": "Top left" },
+      { "value": "top-right", "label": "Top right" },
+      { "value": "bottom-left", "label": "Bottom left" },
+      { "value": "bottom-right", "label": "Bottom right" }
+    ]},
+    { "type": "header", "content": "Effects" },
+    { "type": "checkbox", "id": "show_background_gradient", "label": "Show background gradient", "default": true }
+  ],
+  "presets": [
+    { "name": "Product Grid" }
+  ]
+}
+{% endschema %}

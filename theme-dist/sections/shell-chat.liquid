@@ -1,0 +1,30 @@
+<div id="scaled-chat" class="scaled-chat-shell" data-scaled-section="chat" aria-label="Chat Support">
+</div>
+
+<script type="application/json" data-scaled-section-settings="chat">
+{
+  "name": {{ section.settings.chat_name | default: "Reselling Assistant" | json }},
+  "greeting": {{ section.settings.greeting | default: "Hey! Got questions? I'm here to help you decide." | json }},
+  "position": {{ section.settings.position | default: "bottom-right" | json }},
+  "showPulse": {{ section.settings.show_pulse | default: true }}
+}
+</script>
+
+{% schema %}
+{
+  "name": "Chat Widget",
+  "class": "scaled-chat-wrapper",
+  "settings": [
+    { "type": "text", "id": "chat_name", "label": "Bot name", "default": "Reselling Assistant" },
+    { "type": "textarea", "id": "greeting", "label": "Greeting message", "default": "Hey! Got questions? I'm here to help you decide." },
+    { "type": "select", "id": "position", "label": "Position", "default": "bottom-right", "options": [
+      { "value": "bottom-right", "label": "Bottom right" },
+      { "value": "bottom-left", "label": "Bottom left" }
+    ]},
+    { "type": "checkbox", "id": "show_pulse", "label": "Show pulse animation", "default": true }
+  ],
+  "presets": [
+    { "name": "Chat Widget" }
+  ]
+}
+{% endschema %}

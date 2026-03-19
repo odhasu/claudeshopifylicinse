@@ -1,0 +1,75 @@
+<div id="scaled-testimonials" class="scaled-testimonials-shell" data-scaled-section="testimonials" aria-label="Customer Testimonials">
+</div>
+
+<script type="application/json" data-scaled-section-settings="testimonials">
+{
+  "headline": {{ section.settings.headline | default: "What Our Customers Say" | json }},
+  "animationSpeed": {{ section.settings.animation_speed | default: 20 }},
+  "maxWidth": {{ section.settings.max_width | default: 900 }},
+  "imageHeight": {{ section.settings.image_height | default: 250 }},
+  "images": [
+    {%- for i in (1..20) -%}
+      {%- capture img_id -%}image_{{ i }}{%- endcapture -%}
+      {%- assign img = section.settings[img_id] -%}
+      {%- if img != blank -%}
+        {%- unless forloop.first -%}
+          {%- assign has_prev = false -%}
+          {%- for j in (1..20) -%}
+            {%- if j < i -%}
+              {%- capture prev_id -%}image_{{ j }}{%- endcapture -%}
+              {%- if section.settings[prev_id] != blank -%}
+                {%- assign has_prev = true -%}
+              {%- endif -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {%- if has_prev -%},{%- endif -%}
+        {%- endunless -%}
+        {
+          "url": {{ img | image_url: height: 500 | json }},
+          "alt": {{ img.alt | default: "" | json }},
+          "width": {{ img.width }},
+          "height": {{ img.height }},
+          "aspectRatio": {{ img.width | times: 1.0 | divided_by: img.height }}
+        }
+      {%- endif -%}
+    {%- endfor -%}
+  ]
+}
+</script>
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "class": "scaled-testimonials-wrapper",
+  "settings": [
+    { "type": "text", "id": "headline", "label": "Headline", "default": "What Our Customers Say" },
+    { "type": "range", "id": "animation_speed", "label": "Scroll speed (seconds)", "min": 10, "max": 60, "step": 5, "default": 20 },
+    { "type": "range", "id": "max_width", "label": "Max width (px)", "min": 600, "max": 1400, "step": 50, "default": 900 },
+    { "type": "range", "id": "image_height", "label": "Image height (px)", "min": 150, "max": 500, "step": 25, "default": 250 },
+    { "type": "header", "content": "Images" },
+    { "type": "image_picker", "id": "image_1", "label": "Image 1" },
+    { "type": "image_picker", "id": "image_2", "label": "Image 2" },
+    { "type": "image_picker", "id": "image_3", "label": "Image 3" },
+    { "type": "image_picker", "id": "image_4", "label": "Image 4" },
+    { "type": "image_picker", "id": "image_5", "label": "Image 5" },
+    { "type": "image_picker", "id": "image_6", "label": "Image 6" },
+    { "type": "image_picker", "id": "image_7", "label": "Image 7" },
+    { "type": "image_picker", "id": "image_8", "label": "Image 8" },
+    { "type": "image_picker", "id": "image_9", "label": "Image 9" },
+    { "type": "image_picker", "id": "image_10", "label": "Image 10" },
+    { "type": "image_picker", "id": "image_11", "label": "Image 11" },
+    { "type": "image_picker", "id": "image_12", "label": "Image 12" },
+    { "type": "image_picker", "id": "image_13", "label": "Image 13" },
+    { "type": "image_picker", "id": "image_14", "label": "Image 14" },
+    { "type": "image_picker", "id": "image_15", "label": "Image 15" },
+    { "type": "image_picker", "id": "image_16", "label": "Image 16" },
+    { "type": "image_picker", "id": "image_17", "label": "Image 17" },
+    { "type": "image_picker", "id": "image_18", "label": "Image 18" },
+    { "type": "image_picker", "id": "image_19", "label": "Image 19" },
+    { "type": "image_picker", "id": "image_20", "label": "Image 20" }
+  ],
+  "presets": [
+    { "name": "Testimonials" }
+  ]
+}
+{% endschema %}

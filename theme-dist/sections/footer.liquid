@@ -1,0 +1,130 @@
+{%- liquid
+  assign bg = section.settings.bg_color | default: '#0a0a0a'
+  assign border_top = section.settings.border_color | default: '#1a1a1a'
+  assign brand_color = section.settings.brand_color | default: '#ffffff'
+  assign link_color = section.settings.link_color | default: '#6b7280'
+  assign link_hover = section.settings.link_hover_color | default: '#ffffff'
+  assign copyright_color = section.settings.copyright_color | default: '#6b7280'
+  assign cta_bg = section.settings.cta_bg | default: '#39ff14'
+  assign cta_text = section.settings.cta_text_color | default: '#000000'
+-%}
+
+<style>
+  .site-footer {
+    background: {{ bg }};
+    border-top: 1px solid {{ border_top }};
+    padding: {{ section.settings.padding_top | default: 40 }}px 20px {{ section.settings.padding_bottom | default: 40 }}px;
+    text-align: center;
+  }
+  .footer-brand {
+    font-family: var(--font-heading);
+    font-size: {{ section.settings.brand_font_size | default: 24 }}px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: {{ brand_color }};
+    margin-bottom: 20px;
+  }
+  .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: {{ section.settings.link_gap | default: 24 }}px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .footer-links a {
+    color: {{ link_color }};
+    font-size: 13px;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: {{ link_hover }}; }
+  .footer-copyright {
+    color: {{ copyright_color }};
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+  .footer-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    border-radius: 999px;
+    background: {{ cta_bg }};
+    color: {{ cta_text }};
+    font-weight: 700;
+    font-size: 13px;
+    transition: box-shadow 0.3s, transform 0.2s;
+  }
+  .footer-cta:hover { box-shadow: 0 4px 15px rgba(57,255,20,0.4); transform: translateY(-1px); }
+</style>
+
+<footer class="site-footer">
+  {%- if section.settings.logo != blank -%}
+    <div style="margin-bottom: 20px;">
+      <img src="{{ section.settings.logo | image_url: height: 50 }}" alt="{{ shop.name }}" style="height: {{ section.settings.logo_height | default: 40 }}px; margin: 0 auto;">
+    </div>
+  {%- else -%}
+    <div class="footer-brand">{{ section.settings.brand_text | default: shop.name }}</div>
+  {%- endif -%}
+
+  <div class="footer-links">
+    {%- for link in section.settings.menu.links -%}
+      <a href="{{ link.url }}">{{ link.title }}</a>
+    {%- endfor -%}
+    {%- if section.settings.menu == blank -%}
+      <a href="/policies/refund-policy">Refund Policy</a>
+      <a href="/policies/privacy-policy">Privacy Policy</a>
+      <a href="/policies/terms-of-service">Terms of Service</a>
+    {%- endif -%}
+  </div>
+
+  {%- if section.settings.show_copyright -%}
+    <div class="footer-copyright">
+      &copy; {{ 'now' | date: '%Y' }} {{ shop.name }}. All rights reserved.
+    </div>
+  {%- endif -%}
+
+  {%- if section.settings.show_cta -%}
+    <a href="{{ section.settings.cta_url | default: '#' }}" class="footer-cta" target="_blank" rel="noopener">
+      {{ section.settings.cta_text | default: 'Get this store design' }} ↗
+    </a>
+  {%- endif -%}
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "tag": "footer",
+  "settings": [
+    { "type": "header", "content": "Brand" },
+    { "type": "image_picker", "id": "logo", "label": "Logo image" },
+    { "type": "range", "id": "logo_height", "label": "Logo height (px)", "min": 20, "max": 80, "step": 5, "default": 40 },
+    { "type": "text", "id": "brand_text", "label": "Brand text (if no logo)", "default": "OGVENDORS" },
+    { "type": "range", "id": "brand_font_size", "label": "Brand font size (px)", "min": 16, "max": 40, "step": 2, "default": 24 },
+    { "type": "header", "content": "Navigation" },
+    { "type": "link_list", "id": "menu", "label": "Footer menu", "default": "footer" },
+    { "type": "range", "id": "link_gap", "label": "Link spacing (px)", "min": 12, "max": 40, "step": 4, "default": 24 },
+    { "type": "header", "content": "Copyright" },
+    { "type": "checkbox", "id": "show_copyright", "label": "Show copyright", "default": true },
+    { "type": "header", "content": "CTA Button" },
+    { "type": "checkbox", "id": "show_cta", "label": "Show 'Get this store design' button", "default": true },
+    { "type": "text", "id": "cta_text", "label": "CTA text", "default": "Get this store design" },
+    { "type": "url", "id": "cta_url", "label": "CTA link" },
+    { "type": "color", "id": "cta_bg", "label": "CTA background", "default": "#39ff14" },
+    { "type": "color", "id": "cta_text_color", "label": "CTA text color", "default": "#000000" },
+    { "type": "header", "content": "Colors" },
+    { "type": "color", "id": "bg_color", "label": "Background", "default": "#0a0a0a" },
+    { "type": "color", "id": "border_color", "label": "Top border", "default": "#1a1a1a" },
+    { "type": "color", "id": "brand_color", "label": "Brand color", "default": "#ffffff" },
+    { "type": "color", "id": "link_color", "label": "Link color", "default": "#6b7280" },
+    { "type": "color", "id": "link_hover_color", "label": "Link hover color", "default": "#ffffff" },
+    { "type": "color", "id": "copyright_color", "label": "Copyright color", "default": "#6b7280" },
+    { "type": "header", "content": "Spacing" },
+    { "type": "range", "id": "padding_top", "label": "Top padding (px)", "min": 20, "max": 80, "step": 10, "default": 40 },
+    { "type": "range", "id": "padding_bottom", "label": "Bottom padding (px)", "min": 20, "max": 80, "step": 10, "default": 40 }
+  ],
+  "presets": [
+    { "name": "Footer" }
+  ]
+}
+{% endschema %}

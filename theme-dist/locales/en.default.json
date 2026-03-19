@@ -1,0 +1,53 @@
+{
+  "general": {
+    "continue_shopping": "Continue shopping",
+    "search": "Search"
+  },
+  "products": {
+    "product": {
+      "add_to_cart": "Add to cart",
+      "buy_now": "Buy now",
+      "sold_out": "Sold out",
+      "sale": "Sale"
+    }
+  },
+  "cart": {
+    "general": {
+      "title": "Cart",
+      "empty": "Your cart is empty",
+      "continue_shopping": "Continue shopping"
+    }
+  },
+  "gift_cards": {
+    "issued": {
+      "title": "Gift Card"
+    }
+  },
+  "customer": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "password": "Password",
+      "sign_in": "Sign In",
+      "forgot_password": "Forgot your password?"
+    },
+    "register": {
+      "title": "Create Account",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Create"
+    },
+    "account": {
+      "title": "My Account"
+    },
+    "orders": {
+      "title": "Order History"
+    },
+    "reset_password": {
+      "title": "Reset Password",
+      "submit": "Reset"
+    }
+  }
+}

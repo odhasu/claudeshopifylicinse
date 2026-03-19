@@ -1,0 +1,49 @@
+<footer id="scaled-footer" class="scaled-shell scaled-shell--footer" data-scaled-section="footer" role="contentinfo">
+  <div class="scaled-shell__loading">
+    <span class="scaled-shell__spinner"></span>
+  </div>
+</footer>
+
+<script type="application/json" data-scaled-section-settings="footer">
+{
+  "brandName": {{ shop.name | json }},
+  "logoUrl": {% if settings.logo %}{{ settings.logo | image_url: width: 200 | json }}{% else %}null{% endif %},
+  "instagramUrl": {{ settings.social_instagram | default: "" | json }},
+  "tiktokUrl": {{ settings.social_tiktok | default: "" | json }},
+  "discordUrl": {{ settings.social_discord | default: "" | json }},
+  "accentColor": {{ settings.color_accent | default: "#39ff14" | json }},
+  "shopDomain": {{ request.host | json }},
+  "shopName": {{ shop.name | json }},
+  "year": "{{ 'now' | date: '%Y' }}"
+}
+</script>
+
+<style>
+  .scaled-shell--footer { min-height: 120px; }
+  .scaled-shell--footer .scaled-shell__loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-2xl, 48px) 0;
+  }
+  .scaled-shell--footer.scaled-shell--loaded .scaled-shell__loading { display: none; }
+  .scaled-shell__spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--color-border, #e5e5e5);
+    border-top-color: var(--color-accent, #944aff);
+    border-radius: 50%;
+    animation: scaled-spin 0.8s linear infinite;
+  }
+  @keyframes scaled-spin { to { transform: rotate(360deg); } }
+</style>
+
+{% schema %}
+{
+  "name": "Footer",
+  "class": "scaled-footer-wrapper",
+  "settings": [
+    { "type": "paragraph", "content": "Footer content is rendered remotely. Configure social links and branding in Theme Settings." }
+  ]
+}
+{% endschema %}

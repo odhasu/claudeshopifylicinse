@@ -1,0 +1,187 @@
+{%- liquid
+  assign title_before = section.settings.title_before | default: 'START YOUR'
+  assign title_highlight = section.settings.title_highlight | default: 'RESELLING'
+  assign title_after = section.settings.title_after | default: 'JOURNEY TODAY'
+  assign highlight_color = section.settings.highlight_color | default: settings.color_accent | default: '#39ff14'
+  assign title_color = section.settings.title_color | default: '#ffffff'
+  assign title_size_desktop = section.settings.title_size_desktop | default: 48
+  assign title_size_mobile = section.settings.title_size_mobile | default: 28
+  assign trust_prefix = section.settings.trust_prefix | default: 'Trusted By'
+  assign trust_count = section.settings.trust_count | default: '10,000+'
+  assign trust_suffix = section.settings.trust_suffix | default: 'Resellers'
+  assign trust_count_color = section.settings.trust_count_color | default: '#fbbf24'
+  assign trust_text_color = section.settings.trust_text_color | default: '#9ca3af'
+  assign show_avatars = section.settings.show_avatars
+  assign show_glow = section.settings.show_glow
+  assign glow_color = section.settings.glow_color | default: '#39ff14'
+  assign padding_top = section.settings.padding_top | default: 80
+  assign padding_bottom = section.settings.padding_bottom | default: 60
+-%}
+
+<style>
+  .hero-section {
+    text-align: center;
+    padding: {{ padding_top }}px 20px {{ padding_bottom }}px;
+    position: relative;
+    overflow: hidden;
+  }
+  {%- if show_glow -%}
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 600px; height: 600px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse, {{ glow_color }}15 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  @media (max-width: 768px) {
+    .hero-section::before {
+      width: 300px; height: 300px;
+      background: radial-gradient(ellipse, {{ glow_color }}10 0%, transparent 70%);
+    }
+  }
+  {%- endif -%}
+  .hero-content { position: relative; z-index: 1; }
+  .hero-title {
+    font-family: '{{ section.settings.hero_font | default: 'Satoshi' }}', var(--font-heading);
+    font-size: clamp({{ title_size_mobile }}px, 6vw, {{ title_size_desktop }}px);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    color: {{ title_color }};
+    margin-bottom: 24px;
+  }
+  .hero-title .highlight {
+    background: linear-gradient(135deg, {{ highlight_color }}, {{ highlight_color }}cc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-trust {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: {{ section.settings.trust_font_size | default: 15 }}px;
+    color: {{ trust_text_color }};
+  }
+  .hero-trust .count {
+    color: {{ trust_count_color }};
+    font-weight: 800;
+  }
+  .hero-avatars {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  .hero-avatar {
+    width: {{ section.settings.avatar_size | default: 36 }}px;
+    height: {{ section.settings.avatar_size | default: 36 }}px;
+    border-radius: 50%;
+    border: 2px solid #000;
+    margin-left: -10px;
+    background: var(--color-card-elevated);
+    overflow: hidden;
+    object-fit: cover;
+  }
+  .hero-avatar:first-child { margin-left: 0; }
+  .hero-avatar-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    background: linear-gradient(135deg, var(--color-accent), #22c55e);
+    color: #000;
+  }
+</style>
+
+<section class="hero-section">
+  <div class="hero-content container">
+    <h1 class="hero-title">
+      {{ title_before }} <span class="highlight">{{ title_highlight }}</span> {{ title_after }}
+    </h1>
+    <div class="hero-trust">
+      <span>{{ trust_prefix }}</span>
+      <span class="count">{{ trust_count }}</span>
+      <span>{{ trust_suffix }}</span>
+    </div>
+    {%- if show_avatars -%}
+      <div class="hero-avatars">
+        {%- for i in (1..10) -%}
+          {%- assign avatar_key = 'avatar_' | append: i -%}
+          {%- if section.settings[avatar_key] != blank -%}
+            <img class="hero-avatar" src="{{ section.settings[avatar_key] | image_url: width: 72 }}" alt="Customer" loading="lazy">
+          {%- else -%}
+            <div class="hero-avatar">
+              <div class="hero-avatar-placeholder">{{ i }}</div>
+            </div>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Hero",
+  "tag": "section",
+  "settings": [
+    { "type": "header", "content": "Font" },
+    { "type": "select", "id": "hero_font", "label": "Hero font", "default": "Satoshi", "options": [
+      { "value": "Satoshi", "label": "Satoshi (like Luke's Vendors)" },
+      { "value": "Anton", "label": "Anton" },
+      { "value": "Inter", "label": "Inter" },
+      { "value": "Bebas Neue", "label": "Bebas Neue" },
+      { "value": "Poppins", "label": "Poppins" },
+      { "value": "Montserrat", "label": "Montserrat" },
+      { "value": "Oswald", "label": "Oswald" },
+      { "value": "Outfit", "label": "Outfit" },
+      { "value": "Space Grotesk", "label": "Space Grotesk" },
+      { "value": "DM Sans", "label": "DM Sans" },
+      { "value": "Rubik", "label": "Rubik" },
+      { "value": "Raleway", "label": "Raleway" }
+    ]},
+    { "type": "header", "content": "Headline" },
+    { "type": "text", "id": "title_before", "label": "Text before highlight", "default": "START YOUR" },
+    { "type": "text", "id": "title_highlight", "label": "Highlighted word(s)", "default": "RESELLING" },
+    { "type": "text", "id": "title_after", "label": "Text after highlight", "default": "JOURNEY TODAY" },
+    { "type": "color", "id": "title_color", "label": "Title color", "default": "#ffffff" },
+    { "type": "color", "id": "highlight_color", "label": "Highlight color", "default": "#39ff14" },
+    { "type": "range", "id": "title_size_desktop", "label": "Title size desktop (px)", "min": 24, "max": 80, "step": 2, "default": 48 },
+    { "type": "range", "id": "title_size_mobile", "label": "Title size mobile (px)", "min": 18, "max": 48, "step": 2, "default": 28 },
+    { "type": "header", "content": "Trust Line" },
+    { "type": "text", "id": "trust_prefix", "label": "Trust prefix", "default": "Trusted By" },
+    { "type": "text", "id": "trust_count", "label": "Trust count", "default": "10,000+" },
+    { "type": "text", "id": "trust_suffix", "label": "Trust suffix", "default": "Resellers" },
+    { "type": "color", "id": "trust_count_color", "label": "Count color", "default": "#fbbf24" },
+    { "type": "color", "id": "trust_text_color", "label": "Trust text color", "default": "#9ca3af" },
+    { "type": "range", "id": "trust_font_size", "label": "Trust font size (px)", "min": 12, "max": 22, "step": 1, "default": 15 },
+    { "type": "header", "content": "Avatars" },
+    { "type": "checkbox", "id": "show_avatars", "label": "Show avatar stack", "default": true },
+    { "type": "range", "id": "avatar_size", "label": "Avatar size (px)", "min": 24, "max": 56, "step": 2, "default": 36 },
+    { "type": "image_picker", "id": "avatar_1", "label": "Avatar 1" },
+    { "type": "image_picker", "id": "avatar_2", "label": "Avatar 2" },
+    { "type": "image_picker", "id": "avatar_3", "label": "Avatar 3" },
+    { "type": "image_picker", "id": "avatar_4", "label": "Avatar 4" },
+    { "type": "image_picker", "id": "avatar_5", "label": "Avatar 5" },
+    { "type": "image_picker", "id": "avatar_6", "label": "Avatar 6" },
+    { "type": "image_picker", "id": "avatar_7", "label": "Avatar 7" },
+    { "type": "image_picker", "id": "avatar_8", "label": "Avatar 8" },
+    { "type": "image_picker", "id": "avatar_9", "label": "Avatar 9" },
+    { "type": "image_picker", "id": "avatar_10", "label": "Avatar 10" },
+    { "type": "header", "content": "Glow Effect" },
+    { "type": "checkbox", "id": "show_glow", "label": "Show green glow", "default": true },
+    { "type": "color", "id": "glow_color", "label": "Glow color", "default": "#39ff14" },
+    { "type": "header", "content": "Spacing" },
+    { "type": "range", "id": "padding_top", "label": "Top padding (px)", "min": 20, "max": 160, "step": 10, "default": 80 },
+    { "type": "range", "id": "padding_bottom", "label": "Bottom padding (px)", "min": 20, "max": 160, "step": 10, "default": 60 }
+  ],
+  "presets": [
+    { "name": "Hero" }
+  ]
+}
+{% endschema %}

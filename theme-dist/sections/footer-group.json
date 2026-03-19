@@ -1,0 +1,13 @@
+{
+  "type": "footer",
+  "name": "Footer Group",
+  "sections": {
+    "footer": {
+      "type": "shell-footer",
+      "settings": {}
+    }
+  },
+  "order": [
+    "footer"
+  ]
+}

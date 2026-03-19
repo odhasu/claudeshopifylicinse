@@ -1,0 +1,32 @@
+/* OGVendors Theme - Global Styles */
+/* Most styles are in section-level <style> tags for theme editor preview */
+/* This file contains minimal global utilities and overrides */
+
+/* Scroll reveal animation */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Selection color */
+::selection {
+  background: var(--color-accent, #39ff14);
+  color: #000;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Focus visible */
+*:focus-visible {
+  outline: 2px solid var(--color-accent, #39ff14);
+  outline-offset: 2px;
+}

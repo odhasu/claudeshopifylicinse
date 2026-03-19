@@ -1,0 +1,39 @@
+<div id="scaled-reviews" class="scaled-reviews-shell" data-scaled-section="reviews" aria-label="Customer Reviews">
+</div>
+
+<script type="application/json" data-scaled-section-settings="reviews">
+{
+  "title": {{ section.settings.title | default: "Customer Reviews" | json }},
+  "subtitle": {{ section.settings.subtitle | default: "See what our customers are saying" | json }},
+  "showWriteReview": {{ section.settings.show_write_review | default: true }},
+  "reviewsPerPage": {{ section.settings.reviews_per_page | default: 10 }},
+  "sortBy": {{ section.settings.sort_by | default: "newest" | json }},
+  "showPhotos": {{ section.settings.show_photos | default: true }},
+  "showRatingDistribution": {{ section.settings.show_rating_distribution | default: true }},
+  "allowPhotos": {{ section.settings.allow_photos | default: true }}
+}
+</script>
+
+{% schema %}
+{
+  "name": "Reviews",
+  "class": "scaled-reviews-wrapper",
+  "settings": [
+    { "type": "text", "id": "title", "label": "Title", "default": "Customer Reviews" },
+    { "type": "text", "id": "subtitle", "label": "Subtitle", "default": "See what our customers are saying" },
+    { "type": "checkbox", "id": "show_write_review", "label": "Show write review button", "default": true },
+    { "type": "range", "id": "reviews_per_page", "label": "Reviews per page", "min": 5, "max": 25, "step": 5, "default": 10 },
+    { "type": "select", "id": "sort_by", "label": "Sort by", "default": "newest", "options": [
+      { "value": "newest", "label": "Newest" },
+      { "value": "highest", "label": "Highest rated" },
+      { "value": "lowest", "label": "Lowest rated" }
+    ]},
+    { "type": "checkbox", "id": "show_photos", "label": "Show photos", "default": true },
+    { "type": "checkbox", "id": "show_rating_distribution", "label": "Show rating distribution", "default": true },
+    { "type": "checkbox", "id": "allow_photos", "label": "Allow photo uploads", "default": true }
+  ],
+  "presets": [
+    { "name": "Reviews" }
+  ]
+}
+{% endschema %}
