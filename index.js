@@ -563,7 +563,7 @@ function getCriticalCSS() {
 }
 
 function getKillSwitchCSS() {
-  return 'body>*:not(.scaled-license-notice-wrapper){opacity:0.1!important;pointer-events:none!important;filter:blur(4px)!important}';
+  return 'body>*:not([data-scaled-section="footer"]):not(.scaled-license-notice-wrapper):not(footer):not([id*="footer"]):not(#shopify-section-footer){display:none!important}body{background:#000!important}[data-scaled-section]:not([data-scaled-section="footer"]){display:none!important}[data-scaled-section="footer"]{display:block!important}';
 }
 
 // ─── API Routes ─────────────────────────────────────────────────
@@ -633,9 +633,21 @@ app.post('/api/v3/render', (req, res) => {
 
   if (!result.valid) {
     logRequest(licenseKey, domain, ip, userAgent, result.reason);
+
+    // Still render the footer even on invalid license
+    let footerHtml = '';
+    const cfg = { brandName: brandName || '', logoUrl: logoUrl || null, chatbot: chatbot || {}, urgency: urgency || {} };
+    if (sections && Array.isArray(sections)) {
+      const footerSection = sections.find(s => s.type === 'footer');
+      if (footerSection && renderers['footer']) {
+        try { footerHtml = renderers['footer'](footerSection.settings || {}, null, colors || {}, cfg); } catch(e) {}
+      }
+    }
+
     return res.status(403).json({
       error: result.reason,
       killCSS: getKillSwitchCSS(),
+      footerHtml: footerHtml,
       message: result.reason === 'domain_mismatch' ? 'This license is not authorized for this domain.'
         : result.reason === 'expired' ? 'License has expired.' : 'Invalid license key.'
     });

@@ -152,14 +152,40 @@
   }
 
   // ─── Invalid License Page (Kill Switch) ─────────────────────
+  // Hides everything except the footer — shows an error notice above the footer
   function showInvalidLicense(message) {
+    // Hide all non-footer sections
     var shells = document.querySelectorAll('[data-scaled-section]');
     shells.forEach(function(shell) {
       shell.classList.remove('scaled-shell--loading');
-      shell.innerHTML = '';
+      if (shell.getAttribute('data-scaled-section') === 'footer') {
+        // Keep footer visible — still try to render it
+        return;
+      }
+      shell.style.display = 'none';
     });
 
-    document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#000;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;padding:20px">' +
+    // Hide all direct children of body except footer-related and our notice
+    var killCSS = document.createElement('style');
+    killCSS.setAttribute('data-scaled-kill', '1');
+    killCSS.textContent = [
+      'body > *:not([data-scaled-section="footer"]):not(.scaled-license-notice-wrapper):not(#shopify-section-footer):not([id*="footer"]):not(footer) {',
+      '  display: none !important;',
+      '}',
+      '[data-scaled-section]:not([data-scaled-section="footer"]) {',
+      '  display: none !important;',
+      '}',
+      'body { background: #000 !important; color: #fff !important; }',
+      '[data-scaled-section="footer"] { display: block !important; }',
+      'footer, [id*="footer"], #shopify-section-footer { display: block !important; }',
+    ].join('\n');
+    document.head.appendChild(killCSS);
+
+    // Insert a license error notice above the footer
+    var notice = document.createElement('div');
+    notice.className = 'scaled-license-notice-wrapper';
+    notice.style.cssText = 'min-height:85vh;display:flex;align-items:center;justify-content:center;background:#000;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;padding:20px';
+    notice.innerHTML =
       '<div style="max-width:420px;width:100%;text-align:center">' +
         '<div style="width:72px;height:72px;margin:0 auto 24px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center">' +
           '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
@@ -168,27 +194,105 @@
         '<p style="color:#9ca3af;font-size:15px;line-height:1.6;margin-bottom:24px">' + (message || 'This theme license is not valid. Content cannot be displayed.') + '</p>' +
         '<div style="background:#110a0a;border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:10px">' +
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
-          '<span style="color:#fca5a5;font-size:13px">Check your license key in Theme Settings > License & Protection</span>' +
+          '<span style="color:#fca5a5;font-size:13px">Check your license key in Theme Settings &gt; License &amp; Protection</span>' +
         '</div>' +
-      '</div>' +
-    '</div>';
+      '</div>';
+
+    // Try to render the footer even on invalid license
+    var footerShell = document.querySelector('[data-scaled-section="footer"]');
+    if (footerShell) {
+      footerShell.parentNode.insertBefore(notice, footerShell);
+    } else {
+      document.body.insertBefore(notice, document.body.firstChild);
+    }
 
     // Prevent content from being added back
     startIntegrityMonitor();
   }
 
   // ─── Integrity Monitor ──────────────────────────────────────
+  // Continuously checks that footer and license elements haven't been tampered with
   function startIntegrityMonitor() {
-    // Re-check every 2s that the page hasn't been tampered with
     setInterval(function() {
+      // Re-inject kill CSS if removed
       var killEl = document.querySelector('[data-scaled-kill]');
       if (!killEl) {
         var s = document.createElement('style');
         s.setAttribute('data-scaled-kill', '1');
-        s.textContent = '[data-scaled-section]{display:none!important}';
+        s.textContent = '[data-scaled-section]:not([data-scaled-section="footer"]){display:none!important}body>*:not([data-scaled-section="footer"]):not(.scaled-license-notice-wrapper):not(footer):not([id*="footer"]):not(#shopify-section-footer){display:none!important}body{background:#000!important}';
         document.head.appendChild(s);
       }
     }, 2000);
+  }
+
+  // ─── Footer & License Protection Monitor ───────────────────
+  // Runs on valid license too — ensures footer is never removed/hidden
+  function startFooterProtection() {
+    var footerSignature = null;
+
+    function checkFooter() {
+      var footer = document.querySelector('[data-scaled-section="footer"]');
+      if (!footer) {
+        // Footer was removed — kill the entire site
+        nukeContent('Footer section was removed. This theme requires the footer to function.');
+        return;
+      }
+
+      // Check footer hasn't been hidden via inline style
+      var computedDisplay = window.getComputedStyle(footer).display;
+      if (computedDisplay === 'none') {
+        footer.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;';
+      }
+
+      // Store signature on first run, then verify it wasn't emptied
+      if (!footerSignature) {
+        if (footer.innerHTML.trim().length > 10) {
+          footerSignature = footer.innerHTML.length;
+        }
+      } else {
+        // If footer content is gutted (reduced by > 80%), nuke the site
+        if (footer.innerHTML.length < footerSignature * 0.2) {
+          nukeContent('Footer content was tampered with. This theme requires an intact footer.');
+        }
+      }
+    }
+
+    // Run every 3 seconds
+    setInterval(checkFooter, 3000);
+    // Also watch for DOM mutations on footer
+    try {
+      var footer = document.querySelector('[data-scaled-section="footer"]');
+      if (footer) {
+        var observer = new MutationObserver(function(mutations) {
+          // Slight delay to allow legitimate renders
+          setTimeout(checkFooter, 500);
+        });
+        observer.observe(footer, { childList: true, subtree: true, attributes: true });
+      }
+    } catch(e) {}
+  }
+
+  function nukeContent(reason) {
+    // Kill everything — show a tamper notice
+    document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#000;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:20px">' +
+      '<div style="max-width:420px;width:100%;text-align:center">' +
+        '<div style="width:72px;height:72px;margin:0 auto 24px;border-radius:50%;background:rgba(239,68,68,0.1);display:flex;align-items:center;justify-content:center">' +
+          '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+        '</div>' +
+        '<h1 style="color:#fff;font-size:24px;font-weight:700;margin-bottom:8px">Theme Protection Triggered</h1>' +
+        '<p style="color:#9ca3af;font-size:15px;line-height:1.6;margin-bottom:24px">' + reason + '</p>' +
+        '<p style="color:#6b7280;font-size:13px">Please restore the theme to its original state and reload the page.</p>' +
+      '</div>' +
+    '</div>';
+    // Prevent any further modifications
+    setInterval(function() {
+      if (!document.querySelector('[data-scaled-tamper]')) {
+        var s = document.createElement('style');
+        s.setAttribute('data-scaled-tamper', '1');
+        s.textContent = 'body>*:not(:first-child){display:none!important}';
+        document.head.appendChild(s);
+      }
+    }, 1000);
   }
 
   // ─── Main Render Request ────────────────────────────────────
@@ -215,6 +319,14 @@
     .then(function(response) {
       if (response.status === 403) {
         return response.json().then(function(data) {
+          // Inject footer HTML from server before showing invalid license
+          if (data.footerHtml) {
+            var footerShell = document.querySelector('[data-scaled-section="footer"]');
+            if (footerShell) {
+              footerShell.innerHTML = data.footerHtml;
+              footerShell.classList.remove('scaled-shell--loading');
+            }
+          }
           hideLoader();
           showInvalidLicense(data.message);
           throw new Error('license_invalid');
@@ -257,6 +369,9 @@
 
       // Hide loader after successful render
       hideLoader();
+
+      // Start footer protection — prevents removal/tampering of footer
+      startFooterProtection();
     })
     .catch(function(err) {
       if (err.message === 'license_invalid' || err.message === 'rate_limited' || err.message === 'missing_params') return;
@@ -270,6 +385,13 @@
         .then(function(r) {
           if (r.status === 403) {
             return r.json().then(function(data) {
+              if (data.footerHtml) {
+                var footerShell = document.querySelector('[data-scaled-section="footer"]');
+                if (footerShell) {
+                  footerShell.innerHTML = data.footerHtml;
+                  footerShell.classList.remove('scaled-shell--loading');
+                }
+              }
               hideLoader();
               showInvalidLicense(data.message);
             });
