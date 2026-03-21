@@ -9,36 +9,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #09090b;
-      --bg-card: #111113;
-      --bg-elevated: #18181b;
-      --bg-hover: #1f1f23;
-      --bg-input: #0f0f11;
-      --border: #27272a;
-      --border-light: #3f3f46;
-      --accent: #39ff14;
-      --accent-dim: rgba(57,255,20,0.12);
-      --accent-glow: rgba(57,255,20,0.25);
+      --bg: #f8f9fb;
+      --bg-card: #ffffff;
+      --bg-elevated: #f1f3f5;
+      --bg-hover: #eef0f3;
+      --bg-input: #ffffff;
+      --border: #e2e5ea;
+      --border-light: #d0d4da;
+      --accent: #000000;
+      --accent-dim: rgba(0,0,0,0.06);
+      --accent-glow: rgba(0,0,0,0.12);
       --red: #ef4444;
-      --red-dim: rgba(239,68,68,0.12);
+      --red-dim: rgba(239,68,68,0.08);
       --orange: #f97316;
-      --orange-dim: rgba(249,115,22,0.12);
-      --yellow: #fbbf24;
-      --yellow-dim: rgba(251,191,36,0.12);
+      --orange-dim: rgba(249,115,22,0.08);
+      --yellow: #d97706;
+      --yellow-dim: rgba(217,119,6,0.08);
       --blue: #3b82f6;
-      --blue-dim: rgba(59,130,246,0.12);
-      --purple: #a855f7;
-      --purple-dim: rgba(168,85,247,0.12);
-      --text: #fafafa;
-      --text-muted: #a1a1aa;
-      --text-subtle: #71717a;
+      --blue-dim: rgba(59,130,246,0.08);
+      --purple: #7c3aed;
+      --purple-dim: rgba(124,58,237,0.08);
+      --text: #111318;
+      --text-muted: #5f6368;
+      --text-subtle: #9aa0a6;
       --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       --mono: 'JetBrains Mono', monospace;
       --radius: 12px;
       --radius-sm: 8px;
       --radius-xs: 6px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
-      --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,19 +47,19 @@
     a { color: var(--accent); text-decoration: none; }
     button { font-family: inherit; cursor: pointer; border: none; background: none; }
     input, select, textarea { font-family: inherit; }
-    ::selection { background: var(--accent); color: #000; }
+    ::selection { background: var(--accent); color: #fff; }
 
     /* ═══ Scrollbar ═══ */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
     /* ═══ Login ═══ */
     .login-screen {
       display: flex; align-items: center; justify-content: center;
       min-height: 100vh; padding: 20px;
-      background: radial-gradient(ellipse at 50% 0%, rgba(57,255,20,0.04) 0%, transparent 60%);
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.02) 0%, transparent 60%);
     }
     .login-card {
       width: 100%; max-width: 400px;
@@ -85,7 +85,7 @@
     .login-input:focus { border-color: var(--accent); }
     .login-btn {
       width: 100%; padding: 12px; margin-top: 16px;
-      background: var(--accent); color: #000;
+      background: var(--accent); color: #fff;
       font-weight: 700; font-size: 14px; letter-spacing: 0.02em;
       border: none; border-radius: var(--radius-sm);
       transition: opacity 0.2s, transform 0.1s;
@@ -160,7 +160,7 @@
       font-size: 13px; font-weight: 600; transition: all 0.15s;
       border: 1px solid transparent;
     }
-    .btn-primary { background: var(--accent); color: #000; }
+    .btn-primary { background: var(--accent); color: #fff; }
     .btn-primary:hover { opacity: 0.9; box-shadow: 0 0 20px var(--accent-glow); }
     .btn-secondary { background: var(--bg-elevated); color: var(--text); border-color: var(--border); }
     .btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-light); }
@@ -291,7 +291,7 @@
     /* Modal */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);
       display: none; align-items: center; justify-content: center;
       padding: 20px;
     }
