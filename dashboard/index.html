@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scaled — Theme License Manager</title>
+  <title>Vexel — Theme License Manager</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -427,7 +427,7 @@
   <!-- ═══ LOGIN ═══ -->
   <div class="login-screen" id="login-screen">
     <div class="login-card">
-      <div class="login-logo">Scaled<span>.</span></div>
+      <div class="login-logo">Vexel<span>.</span></div>
       <p class="login-subtitle">Theme License Manager</p>
       <input type="password" class="login-input" id="login-key" placeholder="Enter admin key" autocomplete="off" autofocus>
       <button class="login-btn" id="login-btn" onclick="login()">Sign In</button>
@@ -440,7 +440,7 @@
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="sidebar-brand">
-        <h1>Scaled<span>.</span></h1>
+        <h1>Vexel<span>.</span></h1>
         <p>License Manager</p>
       </div>
       <div class="sidebar-nav">
@@ -586,6 +586,7 @@
               <table>
                 <thead>
                   <tr>
+                    <th>Username</th>
                     <th>Store / Domain</th>
                     <th>License Key</th>
                     <th>Plan</th>
@@ -596,7 +597,7 @@
                   </tr>
                 </thead>
                 <tbody id="licenses-tbody">
-                  <tr><td colspan="7" class="table-empty">Loading...</td></tr>
+                  <tr><td colspan="8" class="table-empty">Loading...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -812,7 +813,7 @@
       </div>
       <div class="modal-body">
         <div class="created-license">
-          <p style="color:var(--text-muted);font-size:13px;">License key for <strong id="key-modal-domain"></strong></p>
+          <p style="color:var(--text-muted);font-size:13px;">License for <strong id="key-modal-username" style="color:var(--accent);"></strong> — <strong id="key-modal-domain"></strong></p>
           <div class="created-license__key" id="key-modal-key" onclick="copyText(this.textContent)">—</div>
           <p style="color:var(--text-subtle);font-size:12px;">Click to copy. Share this key with the store owner.</p>
         </div>
@@ -957,7 +958,7 @@
     function renderLicenses(licenses) {
       const tbody = document.getElementById('licenses-tbody');
       if (!licenses.length) {
-        tbody.innerHTML = `<tr><td colspan="7">
+        tbody.innerHTML = `<tr><td colspan="8">
           <div class="empty-state">
             <div class="empty-state__icon">🔑</div>
             <div class="empty-state__title">No licenses yet</div>
@@ -981,6 +982,14 @@
         const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 
         return `<tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:30px;height:30px;border-radius:50%;background:var(--accent-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;">${(l.username || '?').charAt(0).toUpperCase()}</div>
+              <div>
+                <div style="font-weight:600;font-size:13px;">${escapeHtml(l.username || '—')}</div>
+              </div>
+            </div>
+          </td>
           <td>
             <div class="domain-pill">
               <img src="${favicon}" alt="" onerror="this.style.display='none'">
@@ -1023,7 +1032,8 @@
         filtered = filtered.filter(l =>
           (l.domain || '').toLowerCase().includes(search) ||
           (l.license_key || '').toLowerCase().includes(search) ||
-          (l.store_name || '').toLowerCase().includes(search)
+          (l.store_name || '').toLowerCase().includes(search) ||
+          (l.username || '').toLowerCase().includes(search)
         );
       }
       if (filter === 'active') filtered = filtered.filter(l => l.active === 1);
@@ -1034,6 +1044,11 @@
 
     function openCreateModal() {
       document.getElementById('create-modal-body').innerHTML = `
+        <div class="input-group">
+          <label>Username / Reseller Name *</label>
+          <input type="text" id="new-username" placeholder="e.g. Alex, LukeResells" autofocus>
+          <div class="hint">Name or username of the person buying the theme</div>
+        </div>
         <div class="input-group">
           <label>Shopify Store Domain *</label>
           <input type="text" id="new-domain" placeholder="mystore.myshopify.com or mystore.com">
@@ -1070,10 +1085,13 @@
     }
 
     function createLicense() {
+      const username = document.getElementById('new-username').value.trim();
       const domain = document.getElementById('new-domain').value.trim();
+      if (!username) { toast('Please enter a username', 'error'); return; }
       if (!domain) { toast('Please enter a domain', 'error'); return; }
 
       const body = {
+        username: username,
         domain: domain,
         permanent_domain: document.getElementById('new-permanent-domain').value.trim(),
         store_name: document.getElementById('new-store-name').value.trim(),
@@ -1085,6 +1103,7 @@
         .then(data => {
           if (data.error) { toast(data.error, 'error'); return; }
           closeModal('create-modal');
+          document.getElementById('key-modal-username').textContent = username;
           document.getElementById('key-modal-domain').textContent = domain;
           document.getElementById('key-modal-key').textContent = data.license_key;
           openModal('key-modal');

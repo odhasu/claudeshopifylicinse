@@ -709,12 +709,13 @@ function requireAdmin(req, res, next) {
 }
 
 app.post('/api/admin/licenses', requireAdmin, (req, res) => {
-  const { domain, permanent_domain, store_name, plan, expires_at } = req.body;
+  const { username, domain, permanent_domain, store_name, plan, expires_at } = req.body;
   if (!domain) return res.status(400).json({ error: 'domain is required' });
   const licenseKey = generateLicenseKey();
   const license = {
     id: store._nextId++,
     license_key: licenseKey,
+    username: username || '',
     domain,
     permanent_domain: permanent_domain || '',
     store_name: store_name || '',
