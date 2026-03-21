@@ -37,10 +37,22 @@ db.exec(`
 
 function generateLicenseKey() {
   const segments = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     segments.push(crypto.randomBytes(2).toString('hex').toUpperCase());
   }
+  const checksum = vxChecksum(segments[0], segments[1], segments[2]);
+  segments.push(checksum);
   return segments.join('-');
+}
+
+function vxChecksum(a, b, c) {
+  const combined = a + b + c + 'VXL9';
+  let hash = 5381;
+  for (let i = 0; i < combined.length; i++) {
+    hash = ((hash << 5) + hash) + combined.charCodeAt(i);
+    hash = hash & 0xFFFF;
+  }
+  return hash.toString(16).toUpperCase().padStart(4, '0');
 }
 
 // ─── Your Stores ────────────────────────────────────────────────

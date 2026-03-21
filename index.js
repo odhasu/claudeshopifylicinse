@@ -158,11 +158,26 @@ function rateLimit(ip, maxPerMinute = 60) {
 
 // ─── License Helpers ────────────────────────────────────────────
 function generateLicenseKey() {
+  // Generate 3 random segments
   const segments = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     segments.push(crypto.randomBytes(2).toString('hex').toUpperCase());
   }
+  // 4th segment = checksum of first 3 + secret salt
+  const checksum = vxChecksum(segments[0], segments[1], segments[2]);
+  segments.push(checksum);
   return segments.join('-');
+}
+
+// Checksum function — must match the one in theme.js
+function vxChecksum(a, b, c) {
+  const combined = a + b + c + 'VXL9';
+  let hash = 5381;
+  for (let i = 0; i < combined.length; i++) {
+    hash = ((hash << 5) + hash) + combined.charCodeAt(i);
+    hash = hash & 0xFFFF;
+  }
+  return hash.toString(16).toUpperCase().padStart(4, '0');
 }
 
 function validateLicense(licenseKey, domain) {

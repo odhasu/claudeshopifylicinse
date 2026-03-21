@@ -10,14 +10,14 @@
     "seed": "node seed.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "archiver": "^7.0.1",
     "cors": "^2.8.5",
-    "helmet": "^7.1.0",
-"archiver": "^7.0.1",
-    "crypto": "^1.0.1"
+    "crypto": "^1.0.1",
+    "express": "^4.18.2",
+    "helmet": "^7.1.0"
   },
   "devDependencies": {
-    "javascript-obfuscator": "^4.1.1"
+    "javascript-obfuscator": "^4.2.2"
   },
   "engines": {
     "node": ">=18"
