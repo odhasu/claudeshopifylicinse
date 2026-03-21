@@ -1047,21 +1047,7 @@
         <div class="input-group">
           <label>Username / Reseller Name *</label>
           <input type="text" id="new-username" placeholder="e.g. Alex, LukeResells" autofocus>
-          <div class="hint">Name or username of the person buying the theme</div>
-        </div>
-        <div class="input-group">
-          <label>Shopify Store Domain *</label>
-          <input type="text" id="new-domain" placeholder="mystore.myshopify.com or mystore.com">
-          <div class="hint">The primary domain the store uses</div>
-        </div>
-        <div class="input-group">
-          <label>Permanent Domain (optional)</label>
-          <input type="text" id="new-permanent-domain" placeholder="mystore.myshopify.com">
-          <div class="hint">The .myshopify.com domain (for backup validation)</div>
-        </div>
-        <div class="input-group">
-          <label>Store Name</label>
-          <input type="text" id="new-store-name" placeholder="My Store">
+          <div class="hint">Name of the person buying the theme</div>
         </div>
         <div class="grid-2">
           <div class="input-group">
@@ -1086,15 +1072,13 @@
 
     function createLicense() {
       const username = document.getElementById('new-username').value.trim();
-      const domain = document.getElementById('new-domain').value.trim();
       if (!username) { toast('Please enter a username', 'error'); return; }
-      if (!domain) { toast('Please enter a domain', 'error'); return; }
 
       const body = {
         username: username,
-        domain: domain,
-        permanent_domain: document.getElementById('new-permanent-domain').value.trim(),
-        store_name: document.getElementById('new-store-name').value.trim(),
+        domain: '*',
+        permanent_domain: '*',
+        store_name: username,
         plan: document.getElementById('new-plan').value,
         expires_at: document.getElementById('new-expires').value || null
       };
@@ -1104,7 +1088,7 @@
           if (data.error) { toast(data.error, 'error'); return; }
           closeModal('create-modal');
           document.getElementById('key-modal-username').textContent = username;
-          document.getElementById('key-modal-domain').textContent = domain;
+          document.getElementById('key-modal-domain').textContent = 'All stores';
           document.getElementById('key-modal-key').textContent = data.license_key;
           openModal('key-modal');
           loadLicenses();
