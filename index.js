@@ -187,18 +187,25 @@ function validateLicense(licenseKey, domain) {
     return { valid: false, reason: 'expired' };
   }
 
-  // Wildcard domain = works on any store
-  if (license.domain === '*' || license.permanent_domain === '*') {
-    return { valid: true, license };
-  }
-
   const norm = d => (d || '').replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '').toLowerCase();
-  const normalizedDomain = norm(domain);
-  const licenseDomain = norm(license.domain);
-  const permanentDomain = norm(license.permanent_domain);
+  
+  // Auto-bind wildcard keys to the first domain that uses them
+  if (license.domain === '*') {
+    if (domain && norm(domain) !== '') {
+      license.domain = norm(domain);
+      license.permanent_domain = norm(domain);
+      // It passes validation and locks to this domain
+    } else {
+      // If no domain was provided in the request, still allow but don't bind yet
+    }
+  } else {
+    const normalizedDomain = norm(domain);
+    const licenseDomain = norm(license.domain);
+    const permanentDomain = norm(license.permanent_domain);
 
-  if (normalizedDomain !== licenseDomain && normalizedDomain !== permanentDomain) {
-    return { valid: false, reason: 'domain_mismatch', expected: licenseDomain };
+    if (normalizedDomain !== licenseDomain && normalizedDomain !== permanentDomain) {
+      return { valid: false, reason: 'domain_mismatch', expected: licenseDomain };
+    }
   }
 
   license.last_verified_at = new Date().toISOString();
