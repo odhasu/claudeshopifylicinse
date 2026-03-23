@@ -82,7 +82,24 @@ app.use(express.json({ limit: '1mb' }));
 
 // ─── Serve Next.js static site from /site ───────────────────────
 const siteDir = path.join(__dirname, 'site');
+
+// Next.js exports e.g. /theme as theme.html but also creates a /theme directory for subpages.
+// Express static favors directories, causing 404s when it looks for /theme/index.html.
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  if (req.path === '/') return next(); // Let static handle index.html
+
+  const cleanPath = req.path.replace(/\/$/, ''); // Remove trailing slash
+  const htmlPath = path.join(siteDir, cleanPath + '.html');
+  
+  if (fs.existsSync(htmlPath)) {
+    return res.sendFile(htmlPath);
+  }
+  next();
+});
+
 app.use(express.static(siteDir, { extensions: ['html'] }));
+
 
 // Admin dashboard (old)
 function serveDashboardPage(filename) {
@@ -765,6 +782,17 @@ app.get('/api/admin/download-theme', requireAdmin, (req, res) => {
   } catch(e) {
     res.status(500).json({ error: 'archiver not installed — run npm install' });
   }
+});
+
+// ─── Fallback 404 ────────────────────────────────────────────────
+app.use((req, res) => {
+  if (req.method === 'GET') {
+    const notFoundPath = path.join(siteDir, '404.html');
+    if (fs.existsSync(notFoundPath)) {
+      return res.status(404).sendFile(notFoundPath);
+    }
+  }
+  res.status(404).json({ error: 'not_found' });
 });
 
 // ─── Start Server ───────────────────────────────────────────────
