@@ -1,0 +1,55 @@
+name: Shopify Theme
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'Shopify-theme/**'
+      - '.github/workflows/shopify-theme.yml'
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if Shopify theme changed
+        id: check_changes
+        run: |
+          if git diff HEAD~1 HEAD --quiet -- Shopify-theme/; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create zip of Shopify theme
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          cd Shopify-theme
+          zip -r ../shopify-theme.zip . -x "*.DS_Store"
+          cd ..
+          ls -lh shopify-theme.zip
+
+      - name: Create Release with zip
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: shopify-theme.zip
+          tag_name: "theme-${{ github.run_number }}"
+          name: "Shopify Theme #${{ github.run_number }}"
+          body: |
+            Automatic upload of Shopify theme
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+            Date: ${{ github.event.head_commit.timestamp }}
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

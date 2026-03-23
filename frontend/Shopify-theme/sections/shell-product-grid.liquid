@@ -1,0 +1,385 @@
+
+<section
+  id="scaled-product-grid"
+  class="scaled-shell"
+  data-scaled-section="product-grid"
+  aria-label="Products"
+>
+    <div class="scaled-editor-preview">
+    <div class="scaled-editor-preview__hero">
+      <h1 class="scaled-editor-preview__headline">{{ section.settings.hero_headline | default: "Start Your Reselling Journey Today" }}</h1>
+      {%- if section.settings.hero_image -%}
+        {{
+          section.settings.hero_image
+          | image_url: width: 450
+          | image_tag: class: 'scaled-editor-preview__image', alt: ''
+        }}
+      {%- endif -%}
+    </div>
+    <p class="scaled-editor-preview__note">Featured products</p>
+  </div>
+</section>
+
+<style>
+  .scaled-editor-preview {
+    text-align: center;
+    padding: 48px 16px;
+  }
+  .scaled-editor-preview__headline {
+    font-family: 'Anton', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    color: var(--color-text, #fff);
+    margin: 0;
+  }
+  .scaled-editor-preview__image {
+    display: block;
+    max-width: 250px;
+    width: 100%;
+    height: auto;
+    margin: 24px auto 0;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  @media (min-width: 768px) {
+    .scaled-editor-preview__image {
+      max-width: 450px;
+    }
+  }
+  .scaled-editor-preview__note {
+    margin-top: 32px;
+    color: var(--color-text-muted, #9ca3af);
+    font-size: 14px;
+  }
+  .scaled-product-grid-list {
+    width: min(1200px, 92vw);
+    margin: 0 auto 48px;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .scaled-product-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-bg-card);
+  }
+  .scaled-product-card__media {
+    position: relative;
+    background: color-mix(in srgb, var(--color-bg-card) 80%, #000);
+  }
+  .scaled-product-card__image {
+    width: 100%;
+    height: auto;
+  }
+  .scaled-product-card__body {
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+  }
+  .scaled-product-card__title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+  .scaled-product-card__price {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 14px;
+  }
+  .scaled-product-card__price--compare {
+    opacity: 0.7;
+    text-decoration: line-through;
+  }
+  .scaled-product-card__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 42px;
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .scaled-product-card__badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 9px;
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  @media (min-width: 768px) {
+    .scaled-product-grid-list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .scaled-product-grid-list {
+      grid-template-columns: repeat({{ section.settings.products_per_row | default: 4 }}, minmax(0, 1fr));
+    }
+  }
+</style>
+
+<script type="application/json" data-scaled-section-settings="product-grid">
+{
+  "hero_headline": {{ section.settings.hero_headline | default: "Start Your Reselling Journey Today" | json }},
+  "highlight_word": {{ section.settings.highlight_word | default: "Reselling" | json }},
+  "hero_image": {% if section.settings.hero_image %}{{ section.settings.hero_image | image_url: width: 1200 | json }}{% else %}null{% endif %},
+  "products_per_row": {{ section.settings.products_per_row | default: 4 }},
+  "primary_button_text": {{ section.settings.primary_button_text | default: "VIEW PRODUCT" | json }},
+  "primary_button_action": {{ section.settings.primary_button_action | default: "product" | json }},
+  "primary_button_custom_url": {{ section.settings.primary_button_custom_url | json }},
+  "sale_badge_text": {{ section.settings.sale_badge_text | default: "SALE" | json }},
+  "sale_badge_position": {{ section.settings.sale_badge_position | default: "top-right" | json }},
+  "show_background_gradient": {{ section.settings.show_background_gradient | json }}
+}
+</script>
+
+{%- assign has_product_blocks = false -%}
+{%- for block in section.blocks -%}
+  {%- if block.type == 'product' and block.settings.product != blank -%}
+    {%- assign has_product_blocks = true -%}
+    {%- break -%}
+  {%- endif -%}
+{%- endfor -%}
+
+<div class="scaled-product-grid-list" role="list">
+  {%- assign rendered_count = 0 -%}
+  {%- if has_product_blocks -%}
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'product' and block.settings.product != blank and rendered_count < 12 -%}
+        {%- assign product = block.settings.product -%}
+        {%- if product.available -%}
+          <article class="scaled-product-card" role="listitem" {{ block.shopify_attributes }}>
+            <a href="{{ product.url }}" class="scaled-product-card__media" aria-label="{{ product.title | escape }}">
+              {%- if product.compare_at_price > product.price -%}
+                <span class="scaled-product-card__badge">{{ section.settings.sale_badge_text | default: 'SALE' }}</span>
+              {%- endif -%}
+              {%- if product.featured_image -%}
+                {{ product.featured_image | image_url: width: 600 | image_tag: class: 'scaled-product-card__image', alt: product.featured_image.alt | default: product.title }}
+              {%- endif -%}
+            </a>
+            <div class="scaled-product-card__body">
+              <h3 class="scaled-product-card__title">{{ product.title }}</h3>
+              <div class="scaled-product-card__price">
+                <span>{{ product.price | money }}</span>
+                {%- if product.compare_at_price > product.price -%}
+                  <span class="scaled-product-card__price--compare">{{ product.compare_at_price | money }}</span>
+                {%- endif -%}
+              </div>
+              <a href="{{ product.url }}" class="scaled-product-card__btn">{{ section.settings.primary_button_text | default: 'VIEW PRODUCT' }}</a>
+            </div>
+          </article>
+          {%- assign rendered_count = rendered_count | plus: 1 -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- else -%}
+    {%- for product in collections.all.products limit: 12 -%}
+      {%- if product.available -%}
+        <article class="scaled-product-card" role="listitem">
+          <a href="{{ product.url }}" class="scaled-product-card__media" aria-label="{{ product.title | escape }}">
+            {%- if product.compare_at_price > product.price -%}
+              <span class="scaled-product-card__badge">{{ section.settings.sale_badge_text | default: 'SALE' }}</span>
+            {%- endif -%}
+            {%- if product.featured_image -%}
+              {{ product.featured_image | image_url: width: 600 | image_tag: class: 'scaled-product-card__image', alt: product.featured_image.alt | default: product.title }}
+            {%- endif -%}
+          </a>
+          <div class="scaled-product-card__body">
+            <h3 class="scaled-product-card__title">{{ product.title }}</h3>
+            <div class="scaled-product-card__price">
+              <span>{{ product.price | money }}</span>
+              {%- if product.compare_at_price > product.price -%}
+                <span class="scaled-product-card__price--compare">{{ product.compare_at_price | money }}</span>
+              {%- endif -%}
+            </div>
+            <a href="{{ product.url }}" class="scaled-product-card__btn">{{ section.settings.primary_button_text | default: 'VIEW PRODUCT' }}</a>
+          </div>
+        </article>
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+</div>
+
+<script type="application/json" data-scaled-products="product-grid">
+[
+  {%- assign product_count = 0 -%}
+  {%- if has_product_blocks -%}
+        {%- for block in section.blocks -%}
+      {%- if block.type == 'product' and block.settings.product != blank -%}
+        {%- assign product = block.settings.product -%}
+        {%- if product.available -%}
+          {%- if product_count > 0 -%},{%- endif -%}
+          {
+            "id": {{ product.id | json }},
+            "variantId": {{ product.selected_or_first_available_variant.id | json }},
+            "title": {{ product.title | json }},
+            "handle": {{ product.handle | json }},
+            "url": {{ product.url | json }},
+            "price": {{ product.price }},
+            "comparePrice": {{ product.compare_at_price | default: 'null' }},
+            "available": {{ product.available | json }},
+            "image": {% if product.featured_image %}{{ product.featured_image | image_url: width: 500 | json }}{% else %}null{% endif %},
+            "imageAlt": {{ product.featured_image.alt | default: product.title | json }}
+          }
+          {%- assign product_count = product_count | plus: 1 -%}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- else -%}
+        {%- for product in collections.all.products limit: 50 -%}
+      {%- if product.available -%}
+        {%- if product_count > 0 -%},{%- endif -%}
+        {
+          "id": {{ product.id | json }},
+          "variantId": {{ product.selected_or_first_available_variant.id | json }},
+          "title": {{ product.title | json }},
+          "handle": {{ product.handle | json }},
+          "url": {{ product.url | json }},
+          "price": {{ product.price }},
+          "comparePrice": {{ product.compare_at_price | default: 'null' }},
+          "available": {{ product.available | json }},
+          "image": {% if product.featured_image %}{{ product.featured_image | image_url: width: 500 | json }}{% else %}null{% endif %},
+          "imageAlt": {{ product.featured_image.alt | default: product.title | json }}
+        }
+        {%- assign product_count = product_count | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+]
+</script>
+
+{% schema %}
+{
+  "name": "Product Grid",
+  "tag": "section",
+  "class": "scaled-product-grid-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Hero Settings"
+    },
+    {
+      "type": "text",
+      "id": "hero_headline",
+      "label": "Hero Headline",
+      "default": "Start Your Reselling Journey Today"
+    },
+    {
+      "type": "text",
+      "id": "highlight_word",
+      "label": "Highlight Word",
+      "info": "Single word to highlight with accent color",
+      "default": "Reselling"
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Hero Image (Optional)"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_background_gradient",
+      "label": "Show Background Gradient",
+      "info": "Adds a subtle gradient glow using Accent Color 1",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Product Grid Settings"
+    },
+    {
+      "type": "range",
+      "id": "products_per_row",
+      "label": "Products Per Row (Desktop)",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Primary Button"
+    },
+    {
+      "type": "text",
+      "id": "primary_button_text",
+      "label": "Primary Button Text",
+      "default": "VIEW PRODUCT"
+    },
+    {
+      "type": "select",
+      "id": "primary_button_action",
+      "label": "Primary Button Action",
+      "options": [
+        { "value": "product", "label": "Go to Product Page" },
+        { "value": "checkout", "label": "Direct to Checkout" },
+        { "value": "custom", "label": "Custom Link" }
+      ],
+      "default": "product"
+    },
+    {
+      "type": "url",
+      "id": "primary_button_custom_url",
+      "label": "Primary Custom URL",
+      "info": "Only used when 'Custom Link' is selected"
+    },
+    {
+      "type": "header",
+      "content": "Sale Badge"
+    },
+    {
+      "type": "text",
+      "id": "sale_badge_text",
+      "label": "Sale Badge Text",
+      "default": "SALE"
+    },
+    {
+      "type": "select",
+      "id": "sale_badge_position",
+      "label": "Sale Badge Position",
+      "options": [
+        { "value": "top-left", "label": "Top Left" },
+        { "value": "top-right", "label": "Top Right" },
+        { "value": "bottom-left", "label": "Bottom Left" },
+        { "value": "bottom-right", "label": "Bottom Right" }
+      ],
+      "default": "top-right"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Grid"
+    }
+  ]
+}
+{% endschema %}

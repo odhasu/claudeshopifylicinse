@@ -1,0 +1,135 @@
+
+<div class="cart-page container py-3xl">
+  <h1 class="heading-lg mb-xl">{{ 'cart.general.title' | t }}</h1>
+
+  {%- if cart.item_count > 0 -%}
+    <form action="{{ routes.cart_url }}" method="post" id="cart-form">
+      <div class="cart-items">
+        {%- for item in cart.items -%}
+          <div class="cart-item card mb-md">
+            <div class="cart-item__inner">
+              <div class="cart-item__image">
+                {%- if item.image -%}
+                  <img
+                    src="{{ item.image | image_url: width: 120 }}"
+                    alt="{{ item.title | escape }}"
+                    width="60"
+                    height="60"
+                    loading="lazy"
+                  >
+                {%- endif -%}
+              </div>
+
+              <div class="cart-item__details">
+                <h3 class="cart-item__title">{{ item.product.title }}</h3>
+                {%- if item.variant.title != 'Default Title' -%}
+                  <p class="cart-item__variant text-muted">{{ item.variant.title }}</p>
+                {%- endif -%}
+                <p class="cart-item__price">{{ item.final_line_price | money }}</p>
+              </div>
+
+              <div class="cart-item__actions">
+                <a
+                  href="{{ item.url_to_remove }}"
+                  class="cart-item__remove text-subtle"
+                  aria-label="{{ 'cart.general.remove' | t }}"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        {%- endfor -%}
+      </div>
+
+      <div class="cart-summary card card--glow mt-xl">
+        <div class="cart-summary__row">
+          <span>{{ 'cart.general.subtotal' | t }}</span>
+          <span class="cart-summary__total">{{ cart.total_price | money }}</span>
+        </div>
+
+        <button type="submit" name="checkout" class="btn btn--primary btn--large btn--full mt-lg">
+          {{ 'cart.general.checkout' | t }}
+        </button>
+      </div>
+    </form>
+  {%- else -%}
+    <div class="cart-empty text-center py-3xl">
+      <p class="text-muted mb-lg">{{ 'cart.general.empty' | t }}</p>
+      <a href="{{ routes.root_url }}" class="btn btn--primary">{{ 'cart.general.continue_shopping' | t }}</a>
+    </div>
+  {%- endif -%}
+</div>
+
+<style>
+  .cart-page {
+    max-width: 600px;
+  }
+
+  .cart-item__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .cart-item__image img {
+    border-radius: var(--radius-sm);
+  }
+
+  .cart-item__details {
+    flex: 1;
+  }
+
+  .cart-item__title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .cart-item__variant {
+    font-size: 12px;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .cart-item__price {
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .cart-item__remove {
+    padding: var(--spacing-sm);
+    transition: color 0.2s;
+  }
+
+  .cart-item__remove:hover {
+    color: var(--color-error);
+  }
+
+  .cart-summary__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+  }
+
+  .cart-summary__total {
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .cart-empty {
+    color: var(--color-text-muted);
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Cart",
+  "tag": "section",
+  "class": "cart-section",
+  "settings": []
+}
+{% endschema %}

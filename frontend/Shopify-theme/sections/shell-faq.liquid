@@ -1,0 +1,114 @@
+
+<section
+  id="scaled-faq"
+  class="scaled-shell"
+  data-scaled-section="faq"
+  aria-label="Frequently Asked Questions"
+>
+  <div class="container scaled-faq-local">
+    <h2 class="scaled-faq-local__heading">{{ section.settings.heading | default: 'Frequently Asked Questions' }}</h2>
+    {%- if section.blocks.size > 0 -%}
+      <div class="scaled-faq-local__list">
+        {%- for block in section.blocks -%}
+          <details class="scaled-faq-local__item" {{ block.shopify_attributes }}>
+            <summary>{{ block.settings.question }}</summary>
+            <div class="scaled-faq-local__answer">{{ block.settings.answer }}</div>
+          </details>
+        {%- endfor -%}
+      </div>
+    {%- else -%}
+      <p class="scaled-faq-local__empty">Add FAQ blocks in the Theme Editor to show questions and answers.</p>
+    {%- endif -%}
+  </div>
+</section>
+
+<style>
+  .scaled-faq-local {
+    padding: 36px 0;
+  }
+  .scaled-faq-local__heading {
+    margin: 0 0 16px;
+    font-size: clamp(1.5rem, 3.5vw, 2rem);
+  }
+  .scaled-faq-local__list {
+    display: grid;
+    gap: 10px;
+  }
+  .scaled-faq-local__item {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-bg-card);
+    padding: 12px 14px;
+  }
+  .scaled-faq-local__item summary {
+    cursor: pointer;
+    font-weight: 700;
+  }
+  .scaled-faq-local__answer {
+    margin-top: 8px;
+    color: var(--color-text-muted);
+  }
+  .scaled-faq-local__empty {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+</style>
+
+<script type="application/json" data-scaled-section-settings="faq">
+{
+  "heading": {{ section.settings.heading | json }},
+  "faqs": [
+    {%- for block in section.blocks -%}
+      {
+        "question": {{ block.settings.question | json }},
+        "answer": {{ block.settings.answer | json }}
+      }{% unless forloop.last %},{% endunless %}
+    {%- endfor -%}
+  ]
+}
+</script>
+
+{% schema %}
+{
+  "name": "FAQ",
+  "tag": "section",
+  "class": "scaled-faq-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "FAQ Settings"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section Heading",
+      "default": "Frequently Asked Questions"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "question",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "Is this legit?"
+        },
+        {
+          "type": "textarea",
+          "id": "answer",
+          "label": "Answer",
+          "default": "Yes! I personally use these suppliers and have made over $50,000 with them. You'll see real screenshots and testimonials from other customers."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "FAQ"
+    }
+  ]
+}
+{% endschema %}

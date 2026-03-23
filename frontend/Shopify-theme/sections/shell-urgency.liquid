@@ -1,0 +1,77 @@
+{%- if section.settings.enabled -%}
+  {%- assign urgency_count = 23 -%}
+  <div
+    id="scaled-urgency"
+    class="scaled-urgency-shell"
+    data-scaled-section="urgency"
+    aria-live="polite"
+  >
+    <p class="scaled-urgency-shell__text">{{ section.settings.message | default: '🔥 {count} people are viewing this right now' | replace: '{count}', urgency_count }}</p>
+  </div>
+
+  <style>
+    .scaled-urgency-shell {
+      position: {% if section.settings.position == 'bottom' %}fixed{% else %}sticky{% endif %};
+      {% if section.settings.position == 'bottom' %}
+        bottom: 0;
+      {% else %}
+        top: 0;
+      {% endif %}
+      left: 0;
+      right: 0;
+      z-index: 1001;
+      padding: 8px 12px;
+      text-align: center;
+      color: #fff;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 75%, #000), color-mix(in srgb, var(--color-secondary) 75%, #000));
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+    .scaled-urgency-shell__text {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+  </style>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Urgency Bar",
+  "tag": "div",
+  "class": "scaled-urgency-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Urgency Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable Urgency Bar",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Position",
+      "default": "top",
+      "options": [
+        { "value": "top", "label": "Top of page" },
+        { "value": "bottom", "label": "Bottom (sticky)" }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "message",
+      "label": "Urgency Message",
+      "default": "🔥 {count} people are viewing this right now"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Urgency Bar"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,30 @@
+<section id="scaled-bundle-builder" class="scaled-shell scaled-shell--loading" data-scaled-section="bundle-builder" aria-label="Bundle Builder">
+<div class="scaled-editor-preview">
+<h2 class="scaled-editor-preview__title">{{ section.settings.section_title | default: "Build Your Bundle" }}</h2>
+<p class="scaled-editor-preview__subtitle">{{ section.settings.section_subtitle | default: "Select 2 or more products to unlock bundle discounts" }}</p>
+<div class="scaled-editor-preview__tiers">
+<span class="scaled-editor-preview__tier">2 products: {{ section.settings.tier_2_discount | default: 10 }}% off</span>
+<span class="scaled-editor-preview__tier">3+ products: {{ section.settings.tier_3_discount | default: 15 }}% off</span>
+</div>
+<p class="scaled-editor-preview__note">Bundle builder loads on live site</p>
+</div>
+<noscript><div class="scaled-shell__noscript"><p>Enable JavaScript to use the bundle builder.</p></div></noscript>
+</section>
+<style>
+.scaled-editor-preview{text-align:center;padding:48px 16px}
+.scaled-editor-preview__title{font-family:'Anton',-apple-system,BlinkMacSystemFont,sans-serif;font-size:clamp(1.75rem,5vw,2.5rem);font-weight:400;text-transform:uppercase;letter-spacing:1px;line-height:1.1;color:var(--color-text,#fff);margin:0 0 12px}
+.scaled-editor-preview__subtitle{color:var(--color-text-muted,#9ca3af);font-size:16px;margin:0 0 24px}
+.scaled-editor-preview__tiers{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:32px}
+.scaled-editor-preview__tier{background:rgba(148,74,255,0.15);border:1px solid rgba(148,74,255,0.3);padding:8px 16px;border-radius:20px;font-size:14px;color:var(--color-text,#fff)}
+.scaled-editor-preview__note{color:var(--color-text-muted,#9ca3af);font-size:14px;margin:0}
+.scaled-shell:not(.scaled-shell--loading) .scaled-editor-preview{display:none}
+</style>
+<script type="application/json" data-scaled-section-settings="bundle-builder">
+{"section_title":{{ section.settings.section_title | default: "Build Your Bundle" | json }},"section_subtitle":{{ section.settings.section_subtitle | default: "Select 2 or more products to unlock bundle discounts" | json }},"min_products":{{ section.settings.min_products | default: 2 }},"tier_2_discount":{{ section.settings.tier_2_discount | default: 10 }},"tier_3_discount":{{ section.settings.tier_3_discount | default: 15 }},"show_savings":{{ section.settings.show_savings | default: true | json }},"show_original_prices":{{ section.settings.show_original_prices | default: true | json }},"cta_button_text":{{ section.settings.cta_button_text | default: "Checkout Bundle" | json }},"empty_selection_text":{{ section.settings.empty_selection_text | default: "Select at least 2 products" | json }},"tier_2_discount_code":{{ section.settings.tier_2_discount_code | json }},"tier_3_discount_code":{{ section.settings.tier_3_discount_code | json }}}
+</script>
+<script type="application/json" data-scaled-products="bundle-builder">
+[{%- assign product_count = 0 -%}{%- for block in section.blocks -%}{%- if block.type == 'product' and block.settings.product != blank -%}{%- assign product = block.settings.product -%}{%- if product.available -%}{%- if product_count > 0 -%},{%- endif -%}{"id":{{ product.id | json }},"variantId":{{ product.selected_or_first_available_variant.id | json }},"title":{{ product.title | json }},"handle":{{ product.handle | json }},"url":{{ product.url | json }},"price":{{ product.price }},"comparePrice":{{ product.compare_at_price | default: 'null' }},"available":{{ product.available | json }},"image":{% if product.featured_image %}{{ product.featured_image | image_url: width: 400 | json }}{% else %}null{% endif %},"imageAlt":{{ product.featured_image.alt | default: product.title | json }},"description":{{ product.description | strip_html | truncate: 100 | json }}}{%- assign product_count = product_count | plus: 1 -%}{%- endif -%}{%- endif -%}{%- endfor -%}]
+</script>
+{% schema %}
+{"name":"Bundle Builder","tag":"section","class":"scaled-bundle-builder-wrapper","settings":[{"type":"header","content":"Section Content"},{"type":"text","id":"section_title","label":"Section Title","default":"Build Your Bundle"},{"type":"textarea","id":"section_subtitle","label":"Section Subtitle","default":"Select 2 or more products to unlock bundle discounts"},{"type":"header","content":"Discount Tiers"},{"type":"paragraph","content":"Create discount codes in Shopify Admin → Discounts → Create discount. Use 'Percentage' type and set the same % as below."},{"type":"range","id":"tier_2_discount","label":"2 Products Discount (%)","min":0,"max":50,"step":5,"default":10,"unit":"%"},{"type":"text","id":"tier_2_discount_code","label":"2 Products Discount Code","info":"Enter the exact code you created in Shopify Discounts (e.g., BUNDLE10)","placeholder":"BUNDLE10"},{"type":"range","id":"tier_3_discount","label":"3+ Products Discount (%)","min":0,"max":50,"step":5,"default":15,"unit":"%"},{"type":"text","id":"tier_3_discount_code","label":"3+ Products Discount Code","info":"Enter the exact code you created in Shopify Discounts (e.g., BUNDLE15)","placeholder":"BUNDLE15"},{"type":"header","content":"Display Options"},{"type":"checkbox","id":"show_savings","label":"Show Savings Amount","default":true},{"type":"checkbox","id":"show_original_prices","label":"Show Original Prices","info":"Display strikethrough prices on products","default":true},{"type":"header","content":"Button Text"},{"type":"text","id":"cta_button_text","label":"Checkout Button Text","default":"Checkout Bundle"},{"type":"text","id":"empty_selection_text","label":"Empty Selection Text","default":"Select at least 2 products"}],"blocks":[{"type":"product","name":"Bundle Product","settings":[{"type":"product","id":"product","label":"Select Product"}]}],"presets":[{"name":"Bundle Builder"}]}
+{% endschema %}

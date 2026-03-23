@@ -1,0 +1,38 @@
+
+<div class="page-404 container py-3xl text-center">
+  <div class="page-404__content">
+    <div class="page-404__code">404</div>
+    <h1 class="heading-lg mb-md">{{ '404.title' | t }}</h1>
+    <p class="text-muted mb-xl">{{ '404.subtext' | t }}</p>
+    <a href="{{ routes.root_url }}" class="btn btn--primary">{{ '404.link' | t }}</a>
+  </div>
+</div>
+
+<style>
+  .page-404 {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .page-404__code {
+    font-size: clamp(80px, 20vw, 150px);
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--spacing-lg);
+  }
+</style>
+
+{% schema %}
+{
+  "name": "404 Page",
+  "tag": "section",
+  "class": "page-404-section",
+  "settings": []
+}
+{% endschema %}

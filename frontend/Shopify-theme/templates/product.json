@@ -1,0 +1,80 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "settings": {
+        "media_size": "medium",
+        "media_position": "media-left",
+        "gallery_layout": "thumbnail_slider",
+        "mobile_thumbnails": "show",
+        "image_zoom": "hover",
+        "enable_sticky_info": true,
+        "padding_top": 36,
+        "padding_bottom": 36
+      },
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {
+            "title_centered": true
+          }
+        },
+        "price": {
+          "type": "price",
+          "settings": {
+            "price_centered": true
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button",
+            "swatch_shape": "circle"
+          }
+        },
+        "quantity": {
+          "type": "quantity_selector",
+          "settings": {}
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": true,
+            "show_pickup_availability": false
+          }
+        },
+        "description": {
+          "type": "description",
+          "settings": {}
+        },
+        "shipping_tab": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "Shipping & Returns",
+            "icon": "truck",
+            "content": "<p>Free shipping on orders over $50. Returns accepted within 30 days of purchase.</p>"
+          }
+        },
+        "details_tab": {
+          "type": "collapsible_tab",
+          "settings": {
+            "heading": "Product Details",
+            "icon": "box",
+            "content": "<p>High-quality product with premium materials and craftsmanship.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "title",
+        "price",
+        "variant_picker",
+        "quantity",
+        "buy_buttons",
+        "description",
+        "shipping_tab",
+        "details_tab"
+      ]
+    }
+  },
+  "order": ["main"]
+}

@@ -1,0 +1,77 @@
+{
+  "general": {
+    "accessibility": {
+      "skip_to_content": "Skip to content",
+      "close": "Close"
+    },
+    "meta": {
+      "page": "Page {{ page }}"
+    }
+  },
+  "products": {
+    "product": {
+      "add_to_cart": "Add to Cart",
+      "buy_now": "Buy Now",
+      "sold_out": "Sold Out",
+      "on_sale": "Sale",
+      "quantity": "Quantity",
+      "price": "Price",
+      "compare_at_price": "Compare at price",
+      "sku": "SKU",
+      "include_taxes": "Tax included.",
+      "shipping_policy_html": "<a href=\"{{ link }}\">Shipping</a> calculated at checkout.",
+      "product_variants": "Product variants",
+      "media": {
+        "play_video": "Play video",
+        "view_3d": "View 3D model",
+        "load_image": "Load image {{ index }}"
+      },
+      "quantity_label": "Quantity",
+      "price_regular": "Regular price",
+      "price_sale": "Sale price",
+      "inventory_in_stock": "In stock",
+      "inventory_low_stock": "Low stock",
+      "inventory_out_of_stock": "Out of stock",
+      "inventory_in_stock_show_count": "{{ quantity }} in stock",
+      "inventory_low_stock_show_count": "Only {{ quantity }} left",
+      "inventory_out_of_stock_continue_selling": "In stock, ships soon"
+    }
+  },
+  "cart": {
+    "general": {
+      "title": "Cart",
+      "empty": "Your cart is empty",
+      "continue_shopping": "Continue Shopping",
+      "checkout": "Checkout",
+      "subtotal": "Subtotal",
+      "remove": "Remove"
+    }
+  },
+  "customer": {
+    "account": {
+      "title": "Account"
+    }
+  },
+  "404": {
+    "title": "Page Not Found",
+    "subtext": "The page you were looking for doesn't exist.",
+    "link": "Continue Shopping"
+  },
+  "accessibility": {
+    "star_reviews_info": "{{ rating_value }} out of {{ rating_max }} stars",
+    "total_reviews": "total reviews",
+    "complementary_products": "Complementary products"
+  },
+  "scaled": {
+    "chat": {
+      "greeting": "Hey! Got questions? I'm here to help",
+      "placeholder": "Type your question...",
+      "send": "Send",
+      "typing": "Typing..."
+    },
+    "urgency": {
+      "viewing": "{{ count }} people viewing now",
+      "sold": "{{ count }} sold in last 24 hours"
+    }
+  }
+}

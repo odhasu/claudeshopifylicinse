@@ -1,0 +1,69 @@
+{%- if section.settings.enabled -%}
+<div
+  id="scaled-slot-5-{{ section.id }}"
+  class="scaled-shell scaled-shell--slot"
+  data-scaled-section="slot-5"
+  data-slot-id="5"
+>
+</div>
+<script type="application/json" data-scaled-section-settings="slot-5">
+{
+  "sectionId": {{ section.id | json }},
+  "paddingTop": {{ section.settings.padding_top | default: 0 }},
+  "paddingBottom": {{ section.settings.padding_bottom | default: 0 }},
+  "fullWidth": {{ section.settings.full_width | default: false | json }}
+}
+</script>
+{%- endif -%}
+{% schema %}
+{
+  "name": "Remote Section Slot 5",
+  "tag": "section",
+  "class": "scaled-slot-wrapper",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable Section",
+      "default": true,
+      "info": "This section is remotely managed by Scaled. Content is automatically delivered."
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding Top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding Bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "label": "Full Width",
+      "default": false,
+      "info": "Ignore container max-width and stretch edge to edge"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Remote Section Slot 5"
+    }
+  ]
+}
+{% endschema %}

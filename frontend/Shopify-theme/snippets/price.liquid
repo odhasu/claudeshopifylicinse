@@ -1,0 +1,81 @@
+
+{%- liquid
+  if use_variant
+    assign target = product.selected_or_first_available_variant
+  else
+    assign target = product
+  endif
+
+  assign compare_at_price = target.compare_at_price
+  assign price = target.price
+  assign available = target.available
+
+  if compare_at_price > price
+    assign on_sale = true
+  else
+    assign on_sale = false
+  endif
+-%}
+
+<div class="price
+  {%- if on_sale %} price--on-sale{% endif -%}
+  {%- unless available %} price--sold-out{% endunless -%}
+  {%- if price_class %} {{ price_class }}{% endif -%}
+" data-price>
+  <div class="price__container">
+    {%- if on_sale -%}
+            <span class="visually-hidden">Regular price</span>
+      <s class="price-item price-item--regular">
+        {{ compare_at_price | money }}
+      </s>
+
+            <span class="visually-hidden">Sale price</span>
+      <span class="price-item price-item--sale">
+        {{ price | money }}
+      </span>
+    {%- else -%}
+            <span class="visually-hidden">Regular price</span>
+      <span class="price-item price-item--regular">
+        {{ price | money }}
+      </span>
+    {%- endif -%}
+  </div>
+
+  {%- if show_badges -%}
+    {%- if on_sale -%}
+      {%- liquid
+        assign savings = compare_at_price | minus: price
+        assign savings_percent = savings | times: 100.0 | divided_by: compare_at_price | round
+      -%}
+      <span class="price__badge">
+        <span class="price__badge-text">
+          Sale -{{ savings_percent }}%
+        </span>
+      </span>
+    {%- endif -%}
+
+    {%- unless available -%}
+      <span class="price__badge price__badge--sold-out">
+        <span class="price__badge-text">
+          Sold out
+        </span>
+      </span>
+    {%- endunless -%}
+  {%- endif -%}
+
+  {%- if target.unit_price_measurement -%}
+    <div class="unit-price">
+      <span class="visually-hidden">Unit price</span>
+      <span class="unit-price__container">
+        <span>{{ target.unit_price | money }}</span>
+        <span class="unit-price__separator">/</span>
+        <span>
+          {%- if target.unit_price_measurement.reference_value != 1 -%}
+            {{ target.unit_price_measurement.reference_value }}
+          {%- endif -%}
+          {{ target.unit_price_measurement.reference_unit }}
+        </span>
+      </span>
+    </div>
+  {%- endif -%}
+</div>

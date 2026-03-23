@@ -1,0 +1,239 @@
+
+{%- liquid
+  assign image_list = ''
+  if section.settings.image_1 != blank
+    assign image_list = image_list | append: '1,'
+  endif
+  if section.settings.image_2 != blank
+    assign image_list = image_list | append: '2,'
+  endif
+  if section.settings.image_3 != blank
+    assign image_list = image_list | append: '3,'
+  endif
+  if section.settings.image_4 != blank
+    assign image_list = image_list | append: '4,'
+  endif
+  if section.settings.image_5 != blank
+    assign image_list = image_list | append: '5,'
+  endif
+  if section.settings.image_6 != blank
+    assign image_list = image_list | append: '6,'
+  endif
+  if section.settings.image_7 != blank
+    assign image_list = image_list | append: '7,'
+  endif
+  if section.settings.image_8 != blank
+    assign image_list = image_list | append: '8,'
+  endif
+  if section.settings.image_9 != blank
+    assign image_list = image_list | append: '9,'
+  endif
+  if section.settings.image_10 != blank
+    assign image_list = image_list | append: '10,'
+  endif
+  if section.settings.image_11 != blank
+    assign image_list = image_list | append: '11,'
+  endif
+  if section.settings.image_12 != blank
+    assign image_list = image_list | append: '12,'
+  endif
+  if section.settings.image_13 != blank
+    assign image_list = image_list | append: '13,'
+  endif
+  if section.settings.image_14 != blank
+    assign image_list = image_list | append: '14,'
+  endif
+  if section.settings.image_15 != blank
+    assign image_list = image_list | append: '15,'
+  endif
+  if section.settings.image_16 != blank
+    assign image_list = image_list | append: '16,'
+  endif
+  if section.settings.image_17 != blank
+    assign image_list = image_list | append: '17,'
+  endif
+  if section.settings.image_18 != blank
+    assign image_list = image_list | append: '18,'
+  endif
+  if section.settings.image_19 != blank
+    assign image_list = image_list | append: '19,'
+  endif
+  if section.settings.image_20 != blank
+    assign image_list = image_list | append: '20,'
+  endif
+  assign image_indices = image_list | split: ','
+-%}
+
+<section
+  id="scaled-testimonials"
+  class="scaled-testimonials-shell"
+  data-scaled-section="testimonials"
+  aria-label="Customer Testimonials"
+>
+  <div class="container scaled-testimonials-local" style="--tm-height: {{ section.settings.image_height | default: 250 }}px; --tm-max-width: {{ section.settings.max_width | default: 900 }}px;">
+    <h2 class="scaled-testimonials-local__headline">{{ section.settings.headline | default: 'What Our Customers Say' }}</h2>
+    <div class="scaled-testimonials-local__grid">
+      {%- assign rendered_testimonials = 0 -%}
+      {%- for index in image_indices -%}
+        {%- if index != blank -%}
+          {%- assign img_key = 'image_' | append: index -%}
+          {%- assign current_image = section.settings[img_key] -%}
+          {%- if current_image != blank and rendered_testimonials < 12 -%}
+            <figure class="scaled-testimonials-local__item">
+              {{ current_image | image_url: height: 500 | image_tag: alt: current_image.alt | default: 'Customer review', class: 'scaled-testimonials-local__image' }}
+            </figure>
+            {%- assign rendered_testimonials = rendered_testimonials | plus: 1 -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if rendered_testimonials == 0 -%}
+        <p class="scaled-testimonials-local__empty">Add testimonial images in the Theme Editor to display social proof.</p>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+<style>
+  .scaled-testimonials-local {
+    padding: 40px 0;
+    width: min(100%, var(--tm-max-width));
+  }
+  .scaled-testimonials-local__headline {
+    margin: 0 0 14px;
+    text-align: center;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+  }
+  .scaled-testimonials-local__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .scaled-testimonials-local__item {
+    margin: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-card);
+  }
+  .scaled-testimonials-local__image {
+    width: 100%;
+    height: var(--tm-height);
+    object-fit: cover;
+  }
+  .scaled-testimonials-local__empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+  @media (min-width: 900px) {
+    .scaled-testimonials-local__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>
+
+<script type="application/json" data-scaled-section-settings="testimonials">
+{
+  "headline": {{ section.settings.headline | default: "What Our Customers Say" | json }},
+  "animationSpeed": {{ section.settings.animation_speed | default: 20 | json }},
+  "maxWidth": {{ section.settings.max_width | default: 900 | json }},
+  "imageHeight": {{ section.settings.image_height | default: 250 | json }},
+  "images": [
+    {%- for index in image_indices -%}
+      {%- if index != blank -%}
+        {%- assign img_key = 'image_' | append: index -%}
+        {%- assign current_image = section.settings[img_key] -%}
+        {%- if current_image != blank -%}
+          {
+            "url": {{ current_image | image_url: height: 500 | json }},
+            "alt": {{ current_image.alt | default: '' | json }},
+            "width": {{ current_image.width | json }},
+            "height": {{ current_image.height | json }},
+            "aspectRatio": {{ current_image.aspect_ratio | json }}
+          }{% unless forloop.last %},{% endunless %}
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+  ]
+}
+</script>
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "tag": "section",
+  "class": "scaled-testimonials-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Settings"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Section Headline",
+      "default": "What Our Customers Say"
+    },
+    {
+      "type": "range",
+      "id": "animation_speed",
+      "label": "Scroll Speed (seconds)",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "default": 20,
+      "unit": "s"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Content Max Width",
+      "min": 600,
+      "max": 1400,
+      "step": 100,
+      "default": 900,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "image_height",
+      "label": "Image Height",
+      "min": 150,
+      "max": 400,
+      "step": 25,
+      "default": 250,
+      "unit": "px"
+    },
+    {
+      "type": "header",
+      "content": "Testimonial Images"
+    },
+    { "type": "image_picker", "id": "image_1", "label": "Image 1" },
+    { "type": "image_picker", "id": "image_2", "label": "Image 2" },
+    { "type": "image_picker", "id": "image_3", "label": "Image 3" },
+    { "type": "image_picker", "id": "image_4", "label": "Image 4" },
+    { "type": "image_picker", "id": "image_5", "label": "Image 5" },
+    { "type": "image_picker", "id": "image_6", "label": "Image 6" },
+    { "type": "image_picker", "id": "image_7", "label": "Image 7" },
+    { "type": "image_picker", "id": "image_8", "label": "Image 8" },
+    { "type": "image_picker", "id": "image_9", "label": "Image 9" },
+    { "type": "image_picker", "id": "image_10", "label": "Image 10" },
+    { "type": "image_picker", "id": "image_11", "label": "Image 11" },
+    { "type": "image_picker", "id": "image_12", "label": "Image 12" },
+    { "type": "image_picker", "id": "image_13", "label": "Image 13" },
+    { "type": "image_picker", "id": "image_14", "label": "Image 14" },
+    { "type": "image_picker", "id": "image_15", "label": "Image 15" },
+    { "type": "image_picker", "id": "image_16", "label": "Image 16" },
+    { "type": "image_picker", "id": "image_17", "label": "Image 17" },
+    { "type": "image_picker", "id": "image_18", "label": "Image 18" },
+    { "type": "image_picker", "id": "image_19", "label": "Image 19" },
+    { "type": "image_picker", "id": "image_20", "label": "Image 20" }
+  ],
+  "presets": [
+    {
+      "name": "Testimonials"
+    }
+  ]
+}
+{% endschema %}

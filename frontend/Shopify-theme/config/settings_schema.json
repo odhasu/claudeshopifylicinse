@@ -1,0 +1,215 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Kenso Theme V2",
+    "theme_version": "2.0.0",
+    "theme_author": "Kenso",
+    "theme_documentation_url": "https://usekenso.com/docs",
+    "theme_support_url": "https://usekenso.com/support"
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Brannd Colors"
+      },
+      {
+        "type": "color",
+        "id": "color_accent_1",
+        "label": "Accent Color 1 (Primary)",
+        "default": "#944aff",
+        "info": "Main color for buttons, links, and highlights"
+      },
+      {
+        "type": "color",
+        "id": "color_accent_2",
+        "label": "Accent Color 2 (Secondary)",
+        "default": "#ec4899",
+        "info": "Used for gradients and hover states"
+      },
+      {
+        "type": "header",
+        "content": "Base Colors"
+      },
+      {
+        "type": "color",
+        "id": "color_background",
+        "label": "Background Color",
+        "default": "#000000",
+        "info": "Main page background"
+      },
+      {
+        "type": "color",
+        "id": "color_text",
+        "label": "Text Color",
+        "default": "#ffffff",
+        "info": "Main text color"
+      },
+      {
+        "type": "color",
+        "id": "color_text_muted",
+        "label": "Muted Text Color",
+        "default": "#9ca3af",
+        "info": "Secondary/subtle text"
+      },
+      {
+        "type": "color",
+        "id": "color_card_bg",
+        "label": "Card Background",
+        "default": "#111111",
+        "info": "Background for cards and elevated surfaces"
+      },
+      {
+        "type": "color",
+        "id": "color_border",
+        "label": "Border Color",
+        "default": "#333333",
+        "info": "Color for borders and dividers"
+      }
+    ]
+  },
+  {
+    "name": "Branding",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Your Brand"
+      },
+      {
+        "type": "text",
+        "id": "brand_name",
+        "label": "Brand Name",
+        "default": "Your Brand",
+        "info": "Displayed in header and chatbot"
+      },
+      {
+        "type": "image_picker",
+        "id": "logo",
+        "label": "Logo"
+      },
+      {
+        "type": "image_picker",
+        "id": "influencer_photo",
+        "label": "Your Photo",
+        "info": "Shown in hero section and chatbot"
+      }
+    ]
+  },
+  {
+    "name": "Social Links",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Social Media"
+      },
+      {
+        "type": "text",
+        "id": "instagram_url",
+        "label": "Instagram URL"
+      },
+      {
+        "type": "text",
+        "id": "tiktok_url",
+        "label": "TikTok URL"
+      },
+      {
+        "type": "text",
+        "id": "discord_url",
+        "label": "Discord URL",
+        "info": "For support escalation"
+      }
+    ]
+  },
+  {
+    "name": "Chatbot",
+    "settings": [
+      {
+        "type": "header",
+        "content": "AI Chatbot Settings"
+      },
+      {
+        "type": "checkbox",
+        "id": "chatbot_enabled",
+        "label": "Enable AI Chatbot",
+        "default": true
+      },
+      {
+        "type": "text",
+        "id": "chatbot_name",
+        "label": "Chatbot Name",
+        "default": "Support",
+        "info": "Name shown in chat header"
+      },
+      {
+        "type": "textarea",
+        "id": "chatbot_context",
+        "label": "Custom Context",
+        "info": "Tell the chatbot about your product, guarantees, and common questions",
+        "placeholder": "Example: I sell a supplier list with 50+ verified dropshipping suppliers. We offer a 30-day money back guarantee. Most customers see their first sale within 2 weeks."
+      },
+      {
+        "type": "textarea",
+        "id": "chatbot_selling_points",
+        "label": "Key Selling Points",
+        "info": "Bullet points the chatbot should emphasize",
+        "placeholder": "- 50+ verified suppliers\n- Updated monthly\n- 30-day guarantee\n- Includes tutorial videos"
+      }
+    ]
+  },
+  {
+    "name": "Reviews",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Customer Reviews"
+      },
+      {
+        "type": "checkbox",
+        "id": "reviews_enabled",
+        "label": "Enable Reviews Section",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "reviews_allow_photos",
+        "label": "Allow photo uploads",
+        "default": true,
+        "info": "Let customers attach photos to their reviews"
+      }
+    ]
+  },
+  {
+    "name": "Urgency",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Urgency Elements"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_viewer_count",
+        "label": "Show 'X people viewing'",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "show_recent_sales",
+        "label": "Show recent sales notifications",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "show_countdown",
+        "label": "Show countdown timer",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "countdown_end_date",
+        "label": "Countdown End Date",
+        "info": "Format: YYYY-MM-DD HH:MM"
+      }
+    ]
+  }
+]

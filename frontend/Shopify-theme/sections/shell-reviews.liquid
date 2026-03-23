@@ -1,0 +1,103 @@
+
+{%- if settings.reviews_enabled -%}
+<div
+  id="scaled-reviews"
+  class="scaled-reviews-shell"
+  data-scaled-section="reviews"
+  aria-label="Customer Reviews"
+>
+  </div>
+
+<script type="application/json" data-scaled-section-settings="reviews">
+{
+  "title": {{ section.settings.title | default: "Customer Reviews" | json }},
+  "subtitle": {{ section.settings.subtitle | default: "See what our customers are saying" | json }},
+  "showWriteReview": {{ section.settings.show_write_review | default: true | json }},
+  "reviewsPerPage": {{ section.settings.reviews_per_page | default: 10 | json }},
+  "sortBy": {{ section.settings.sort_by | default: "newest" | json }},
+  "showPhotos": {{ section.settings.show_photos | default: true | json }},
+  "showRatingDistribution": {{ section.settings.show_rating_distribution | default: true | json }},
+  "allowPhotos": {{ settings.reviews_allow_photos | default: true | json }}
+}
+</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Customer Reviews",
+  "tag": "section",
+  "class": "scaled-reviews-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "Customer Reviews",
+      "info": "Main heading for the reviews section"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Section Subtitle",
+      "default": "See what our customers are saying",
+      "info": "Subheading displayed below the title"
+    },
+    {
+      "type": "header",
+      "content": "Review Display"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_write_review",
+      "label": "Show 'Write a Review' button",
+      "default": true,
+      "info": "Allow customers to submit reviews"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_photos",
+      "label": "Show review photos",
+      "default": true,
+      "info": "Display photos attached to reviews"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating_distribution",
+      "label": "Show rating breakdown",
+      "default": true,
+      "info": "Display the star rating distribution chart"
+    },
+    {
+      "type": "range",
+      "id": "reviews_per_page",
+      "label": "Reviews per page",
+      "min": 5,
+      "max": 25,
+      "step": 5,
+      "default": 10,
+      "info": "Number of reviews to show before pagination"
+    },
+    {
+      "type": "select",
+      "id": "sort_by",
+      "label": "Default sort order",
+      "default": "newest",
+      "options": [
+        { "value": "newest", "label": "Newest first" },
+        { "value": "oldest", "label": "Oldest first" },
+        { "value": "highest", "label": "Highest rated" },
+        { "value": "lowest", "label": "Lowest rated" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Customer Reviews"
+    }
+  ]
+}
+{% endschema %}

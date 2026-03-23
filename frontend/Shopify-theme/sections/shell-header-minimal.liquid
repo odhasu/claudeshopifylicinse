@@ -1,0 +1,191 @@
+
+<header
+  id="scaled-header-minimal"
+  class="scaled-shell scaled-shell--header-minimal"
+  data-scaled-section="header-minimal"
+  aria-label="Header"
+>
+  <div class="scaled-header-minimal__inner container">
+    <a href="{{ routes.root_url }}" class="scaled-header-minimal__brand" aria-label="{{ shop.name | escape }}">
+      {%- if section.settings.logo != blank -%}
+        {{ section.settings.logo | image_url: width: 220 | image_tag: alt: shop.name, class: 'scaled-header-minimal__logo' }}
+      {%- else -%}
+        <span class="scaled-header-minimal__brand-text">{{ settings.brand_name | default: shop.name }}</span>
+      {%- endif -%}
+    </a>
+
+    <nav class="scaled-header-minimal__nav" aria-label="Primary">
+      {%- if section.settings.nav_link_1_text != blank -%}<a href="{{ section.settings.nav_link_1_url | default: routes.root_url }}">{{ section.settings.nav_link_1_text }}</a>{%- endif -%}
+      {%- if section.settings.nav_link_2_text != blank -%}<a href="{{ section.settings.nav_link_2_url | default: routes.all_products_collection_url }}">{{ section.settings.nav_link_2_text }}</a>{%- endif -%}
+      {%- if section.settings.nav_link_3_text != blank -%}<a href="{{ section.settings.nav_link_3_url | default: routes.root_url }}">{{ section.settings.nav_link_3_text }}</a>{%- endif -%}
+      {%- if section.settings.nav_link_4_text != blank -%}<a href="{{ section.settings.nav_link_4_url | default: routes.root_url }}">{{ section.settings.nav_link_4_text }}</a>{%- endif -%}
+      {%- if section.settings.nav_link_5_text != blank -%}<a href="{{ section.settings.nav_link_5_url | default: routes.root_url }}">{{ section.settings.nav_link_5_text }}</a>{%- endif -%}
+      {%- if section.settings.nav_link_6_text != blank -%}<a href="{{ section.settings.nav_link_6_url | default: routes.root_url }}">{{ section.settings.nav_link_6_text }}</a>{%- endif -%}
+    </nav>
+  </div>
+</header>
+
+<style>
+  .scaled-header-minimal__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding-top: 10px;
+    padding-bottom: 10px;
+    backdrop-filter: blur(6px);
+  }
+  .scaled-header-minimal__logo {
+    width: auto;
+    max-height: 42px;
+  }
+  .scaled-header-minimal__brand-text {
+    color: var(--color-text);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .scaled-header-minimal__nav {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .scaled-header-minimal__nav a {
+    color: var(--color-text);
+    font-size: 14px;
+    opacity: 0.92;
+  }
+  .scaled-header-minimal__nav a:hover {
+    opacity: 1;
+  }
+  @media (max-width: 768px) {
+    .scaled-header-minimal__inner {
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    .scaled-header-minimal__nav {
+      gap: 12px;
+    }
+    .scaled-header-minimal__nav a {
+      font-size: 13px;
+    }
+  }
+</style>
+
+<script type="application/json" data-scaled-section-settings="header-minimal">
+{
+  "logo": {% if section.settings.logo %}{{ section.settings.logo | image_url: width: 400 | json }}{% else %}null{% endif %},
+  "logo_mobile": {% if section.settings.logo_mobile %}{{ section.settings.logo_mobile | image_url: width: 200 | json }}{% elsif section.settings.logo %}{{ section.settings.logo | image_url: width: 200 | json }}{% else %}null{% endif %},
+  "nav_link_1_text": {{ section.settings.nav_link_1_text | json }},
+  "nav_link_1_url": {{ section.settings.nav_link_1_url | json }},
+  "nav_link_2_text": {{ section.settings.nav_link_2_text | json }},
+  "nav_link_2_url": {{ section.settings.nav_link_2_url | json }},
+  "nav_link_3_text": {{ section.settings.nav_link_3_text | json }},
+  "nav_link_3_url": {{ section.settings.nav_link_3_url | json }},
+  "nav_link_4_text": {{ section.settings.nav_link_4_text | json }},
+  "nav_link_4_url": {{ section.settings.nav_link_4_url | json }},
+  "nav_link_5_text": {{ section.settings.nav_link_5_text | json }},
+  "nav_link_5_url": {{ section.settings.nav_link_5_url | json }},
+  "nav_link_6_text": {{ section.settings.nav_link_6_text | json }},
+  "nav_link_6_url": {{ section.settings.nav_link_6_url | json }}
+}
+</script>
+
+{% schema %}
+{
+  "name": "Header Minimal",
+  "tag": "header",
+  "class": "scaled-header-minimal-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Logo"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Desktop Logo",
+      "info": "Recommended: Max height 64px"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo_mobile",
+      "label": "Mobile Logo (Optional)",
+      "info": "Uses desktop logo if not set"
+    },
+    {
+      "type": "header",
+      "content": "Navigation Links"
+    },
+    {
+      "type": "text",
+      "id": "nav_link_1_text",
+      "label": "Link 1 Text",
+      "default": "Home"
+    },
+    {
+      "type": "url",
+      "id": "nav_link_1_url",
+      "label": "Link 1 URL",
+      "default": "/"
+    },
+    {
+      "type": "text",
+      "id": "nav_link_2_text",
+      "label": "Link 2 Text",
+      "default": "Products"
+    },
+    {
+      "type": "url",
+      "id": "nav_link_2_url",
+      "label": "Link 2 URL",
+      "default": "/collections/all"
+    },
+    {
+      "type": "text",
+      "id": "nav_link_3_text",
+      "label": "Link 3 Text"
+    },
+    {
+      "type": "url",
+      "id": "nav_link_3_url",
+      "label": "Link 3 URL"
+    },
+    {
+      "type": "text",
+      "id": "nav_link_4_text",
+      "label": "Link 4 Text"
+    },
+    {
+      "type": "url",
+      "id": "nav_link_4_url",
+      "label": "Link 4 URL"
+    },
+    {
+      "type": "text",
+      "id": "nav_link_5_text",
+      "label": "Link 5 Text"
+    },
+    {
+      "type": "url",
+      "id": "nav_link_5_url",
+      "label": "Link 5 URL"
+    },
+    {
+      "type": "text",
+      "id": "nav_link_6_text",
+      "label": "Link 6 Text"
+    },
+    {
+      "type": "url",
+      "id": "nav_link_6_url",
+      "label": "Link 6 URL"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Header Minimal"
+    }
+  ]
+}
+{% endschema %}

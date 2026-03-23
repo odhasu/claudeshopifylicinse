@@ -1,0 +1,17 @@
+{
+  "current": {
+    "brand_name": "",
+    "color_accent_1": "#944aff",
+    "color_accent_2": "#ec4899",
+    "color_background": "#000000",
+    "color_text": "#ffffff",
+    "color_text_muted": "#9ca3af",
+    "color_card_bg": "#111111",
+    "color_border": "#333333",
+    "chatbot_enabled": true,
+    "chatbot_name": "Reselling Assistant",
+    "reviews_enabled": true,
+    "reviews_allow_photos": true
+  },
+  "presets": {}
+}

@@ -1,0 +1,128 @@
+<!doctype html>
+<html class="no-js" lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+    {{ 'Satoshi-Regular.woff2' | asset_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+    {{ 'Satoshi-Bold.woff2' | asset_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+    {%- if settings.favicon != blank -%}
+      <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32, height: 32 }}">
+    {%- endif -%}
+    <title>
+      {{ page_title }}
+      {%- if current_tags %} &ndash; tagged "{{ current_tags | join: ', ' }}"{% endif -%}
+      {%- if current_page != 1 %} &ndash; Page {{ current_page }}{% endif -%}
+      {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless -%}
+    </title>
+    {% if page_description %}<meta name="description" content="{{ page_description | escape }}">{% endif %}
+    {% render 'meta-tags' %}
+    {{ content_for_header }}
+    {%- liquid
+      assign accent_1 = settings.color_accent_1 | default: '#944aff'
+      assign accent_2 = settings.color_accent_2 | default: '#ec4899'
+      assign bg_color = settings.color_background | default: '#000000'
+      assign text_color = settings.color_text | default: '#ffffff'
+      assign text_muted = settings.color_text_muted | default: '#9ca3af'
+      assign card_bg = settings.color_card_bg | default: '#111111'
+      assign border_color = settings.color_border | default: '#333333'
+    -%}
+    <style>
+      :root{--color-bg:{{ bg_color }};--color-bg-elevated:color-mix(in srgb,{{ bg_color }} 90%,white);--color-bg-card:{{ card_bg }};--color-text:{{ text_color }};--color-text-muted:{{ text_muted }};--color-text-subtle:color-mix(in srgb,{{ text_muted }} 70%,{{ bg_color }});--color-accent:{{ accent_1 }};--color-secondary:{{ accent_2 }};--color-border:{{ border_color }};--color-success:#22c55e;--color-error:#ef4444;--font-body:'Satoshi',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;--font-heading:'Satoshi',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;--font-family:'Satoshi',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;--spacing-xs:4px;--spacing-sm:8px;--spacing-md:16px;--spacing-lg:24px;--spacing-xl:32px;--spacing-2xl:48px;--spacing-3xl:64px;--spacing-4xl:96px;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-full:9999px;--shadow-sm:0 1px 2px rgba(0,0,0,0.5);--shadow-md:0 4px 12px rgba(0,0,0,0.5);--shadow-lg:0 8px 24px rgba(0,0,0,0.5);--shadow-glow:0 0 20px color-mix(in srgb,var(--color-accent) 30%,transparent)}
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      html{font-size:16px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+      body{font-family:var(--font-body);background-color:var(--color-bg);color:var(--color-text);line-height:1.5;min-height:100vh;overflow-x:hidden}
+      a{color:var(--color-accent);text-decoration:none;transition:opacity 0.2s}
+      a:hover{opacity:0.8}
+      img{max-width:100%;height:auto;display:block}
+      button{font-family:inherit;cursor:pointer;border:none;background:none}
+      .scaled-shell:empty,.scaled-reviews-shell:empty,.scaled-chat-shell:empty,.scaled-urgency-shell:empty{display:none !important}
+      .scaled-faq-wrapper:has(.scaled-shell:empty),.scaled-reviews-wrapper:has(.scaled-reviews-shell:empty),.scaled-urgency-wrapper:has(.scaled-urgency-shell:empty),.scaled-hero-wrapper:has(.scaled-shell:empty),.scaled-live-sales-wrapper:has(.scaled-shell:empty){display:none !important}
+      .scaled-shell--loading:not(:empty){min-height:auto;display:block;background:transparent;animation:none}
+      .scaled-shell--header,.scaled-shell--header-minimal{min-height:auto;position:fixed;top:var(--header-top,16px);left:0;right:0;z-index:100;background:transparent;animation:none;display:block;transition:top 0.25s ease-out}
+      .scaled-shell--header.scaled-shell--loading,.scaled-shell--header-minimal.scaled-shell--loading{background:transparent;animation:none}
+      .container{width:100%;max-width:1200px;margin:0 auto;padding:0 var(--spacing-md)}
+      .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    </style>
+    {{ 'base.css' | asset_url | stylesheet_tag }}
+    <script>
+      window.ScaledConfig={shopDomain:{{ request.host | json }},permanentDomain:{{ shop.permanent_domain | json }},apiUrl:'',colors:{accent1:{{ accent_1 | json }},accent2:{{ accent_2 | json }},background:{{ bg_color | json }},text:{{ text_color | json }},textMuted:{{ text_muted | json }},cardBg:{{ card_bg | json }},border:{{ border_color | json }}},accentColor:{{ accent_1 | json }},secondaryColor:{{ accent_2 | json }},brandName:{{ settings.brand_name | default: shop.name | json }},logoUrl:{% if settings.logo %}{{ settings.logo | image_url: width: 200 | json }}{% else %}null{% endif %},chatbot:{enabled:{{ settings.chatbot_enabled | json }},name:{{ settings.chatbot_name | default: 'Support' | json }},context:{{ settings.chatbot_context | json }},sellingPoints:{{ settings.chatbot_selling_points | json }}},urgency:{showViewerCount:{{ settings.show_viewer_count | json }},showRecentSales:{{ settings.show_recent_sales | json }},showCountdown:{{ settings.show_countdown | json }},countdownEndDate:{{ settings.countdown_end_date | json }}}};
+    </script>
+  </head>
+  <body class="template-{{ template.name | handle }}{% if template.suffix %} template-{{ template.name }}-{{ template.suffix | handle }}{% endif %}">
+    <a class="visually-hidden" href="#main-content">Skip to content</a>
+    {% section 'shell-header-minimal' %}
+    <main id="main-content" role="main">{{ content_for_layout }}</main>
+    {% sections 'footer-group' %}
+    <script>
+      window.ScaledCart = {
+        get: async function () {
+          const res = await fetch('/cart.js');
+          return res.json();
+        },
+        add: async function (variantId, quantity = 1) {
+          const res = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: variantId, quantity }),
+          });
+          return res.json();
+        },
+        update: async function (updates) {
+          const res = await fetch('/cart/update.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ updates }),
+          });
+          return res.json();
+        },
+      };
+      (function () {
+        const BASE_TOP = 16,
+          URGENCY_GAP = 8;
+        let urgencyEl = null,
+          ticking = false;
+        function getUrgencyElement() {
+          return document.querySelector('.urgency-bar') || document.getElementById('scaled-urgency');
+        }
+        function updateHeaderPosition() {
+          const scrollY = window.scrollY;
+          if (!urgencyEl) urgencyEl = getUrgencyElement();
+          if (urgencyEl && urgencyEl.offsetHeight > 0) {
+            const urgencyHeight = urgencyEl.offsetHeight;
+            const headerTop = Math.max(BASE_TOP, urgencyHeight + URGENCY_GAP - scrollY);
+            document.documentElement.style.setProperty('--header-top', headerTop + 'px');
+          } else {
+            document.documentElement.style.setProperty('--header-top', BASE_TOP + 'px');
+          }
+          ticking = false;
+        }
+        function onScroll() {
+          if (!ticking) {
+            requestAnimationFrame(updateHeaderPosition);
+            ticking = true;
+          }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        const observer = new MutationObserver(function () {
+          const el = getUrgencyElement();
+          if (el && el.offsetHeight > 0 && !urgencyEl) {
+            urgencyEl = el;
+            updateHeaderPosition();
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        let pollCount = 0;
+        const pollInterval = setInterval(function () {
+          urgencyEl = getUrgencyElement();
+          updateHeaderPosition();
+          pollCount++;
+          if ((urgencyEl && urgencyEl.offsetHeight > 0) || pollCount > 30) clearInterval(pollInterval);
+        }, 150);
+        updateHeaderPosition();
+      })();
+    </script>
+  </body>
+</html>

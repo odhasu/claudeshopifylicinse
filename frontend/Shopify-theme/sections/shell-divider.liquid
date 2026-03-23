@@ -1,0 +1,154 @@
+{%- if section.settings.enabled -%}
+  <div
+    id="scaled-divider-{{ section.id }}"
+    class="scaled-shell scaled-shell--divider"
+    data-scaled-section="divider"
+    aria-hidden="true"
+  ></div>
+  <script type="application/json" data-scaled-section-settings="divider">
+    {"sectionId":{{ section.id | json }},"style":{{ section.settings.style | json }},"colorMode":{{ section.settings.color_mode | json }},"customColor":{{ section.settings.custom_color | json }},"thickness":{{ section.settings.thickness | default: 2 }},"width":{{ section.settings.width | json }},"customWidth":{{ section.settings.custom_width | default: 50 }},"paddingTop":{{ section.settings.padding_top | default: 48 }},"paddingBottom":{{ section.settings.padding_bottom | default: 48 }},"animationSpeed":{{ section.settings.animation_speed | json }},"glowIntensity":{{ section.settings.glow_intensity | json }}}
+  </script>
+{%- endif -%}
+{% schema %}
+{
+  "name": "Section Divider",
+  "tag": "section",
+  "class": "scaled-divider-wrapper",
+  "settings": [
+    { "type": "checkbox", "id": "enabled", "label": "Enable Divider", "default": true },
+    { "type": "header", "content": "Style" },
+    {
+      "type": "select",
+      "id": "style",
+      "label": "Divider Style",
+      "options": [
+        { "value": "simple-solid", "label": "Simple Line (Solid)" },
+        { "value": "simple-dashed", "label": "Simple Line (Dashed)" },
+        { "value": "simple-dotted", "label": "Simple Line (Dotted)" },
+        { "value": "gradient", "label": "Gradient Line" },
+        { "value": "wave", "label": "Animated Wave" },
+        { "value": "glow", "label": "Gradient Glow" },
+        { "value": "sparkle", "label": "Sparkle Stars" },
+        { "value": "fade", "label": "Fade (Center Out)" },
+        { "value": "double", "label": "Double Line" },
+        { "value": "diamond", "label": "Diamond Center" }
+      ],
+      "default": "gradient"
+    },
+    { "type": "header", "content": "Colors" },
+    {
+      "type": "select",
+      "id": "color_mode",
+      "label": "Color Mode",
+      "options": [
+        { "value": "accent1", "label": "Accent Color 1" },
+        { "value": "accent2", "label": "Accent Color 2" },
+        { "value": "gradient", "label": "Accent Gradient" },
+        { "value": "muted", "label": "Muted (Border Color)" },
+        { "value": "custom", "label": "Custom Color" }
+      ],
+      "default": "gradient"
+    },
+    {
+      "type": "color",
+      "id": "custom_color",
+      "label": "Custom Color",
+      "default": "#944aff",
+      "info": "Only used when Color Mode is 'Custom Color'"
+    },
+    { "type": "header", "content": "Dimensions" },
+    {
+      "type": "range",
+      "id": "thickness",
+      "label": "Line Thickness",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "Width",
+      "options": [
+        { "value": "full", "label": "Full Width" },
+        { "value": "contained", "label": "Contained (Max 1200px)" },
+        { "value": "narrow", "label": "Narrow (Max 600px)" },
+        { "value": "custom", "label": "Custom Percentage" }
+      ],
+      "default": "narrow"
+    },
+    {
+      "type": "range",
+      "id": "custom_width",
+      "label": "Custom Width",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "default": 50,
+      "unit": "%",
+      "info": "Only used when Width is 'Custom Percentage'"
+    },
+    { "type": "header", "content": "Spacing" },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding Top",
+      "min": 0,
+      "max": 120,
+      "step": 8,
+      "default": 48,
+      "unit": "px"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding Bottom",
+      "min": 0,
+      "max": 120,
+      "step": 8,
+      "default": 48,
+      "unit": "px"
+    },
+    { "type": "header", "content": "Animation" },
+    {
+      "type": "select",
+      "id": "animation_speed",
+      "label": "Animation Speed",
+      "options": [
+        { "value": "slow", "label": "Slow" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "fast", "label": "Fast" }
+      ],
+      "default": "medium",
+      "info": "For Wave and Glow styles"
+    },
+    {
+      "type": "select",
+      "id": "glow_intensity",
+      "label": "Glow Intensity",
+      "options": [
+        { "value": "subtle", "label": "Subtle" },
+        { "value": "medium", "label": "Medium" },
+        { "value": "strong", "label": "Strong" }
+      ],
+      "default": "medium",
+      "info": "For Glow and Sparkle styles"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Section Divider",
+      "settings": {
+        "style": "gradient",
+        "color_mode": "gradient",
+        "thickness": 2,
+        "width": "narrow",
+        "padding_top": 48,
+        "padding_bottom": 48
+      }
+    }
+  ]
+}
+{% endschema %}

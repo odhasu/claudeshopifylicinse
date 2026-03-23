@@ -1,0 +1,160 @@
+
+{%- liquid
+  assign featured_media = product.selected_or_first_available_variant.featured_media | default: product.featured_media
+  assign media_count = product.media.size
+-%}
+
+<div class="product__media-gallery" data-media-gallery>
+    <div class="product__media-wrapper-inner">
+    {%- for media in product.media -%}
+      <div
+        class="product__media-item{% if media.id == featured_media.id %} product__media-item--active{% endif %}"
+        data-media-id="{{ media.id }}"
+        {% unless media.id == featured_media.id %}hidden{% endunless %}
+      >
+        {%- case media.media_type -%}
+          {%- when 'image' -%}
+            <img
+              src="{{ media | image_url: width: 800 }}"
+              alt="{{ media.alt | escape }}"
+              width="{{ media.width }}"
+              height="{{ media.height }}"
+              loading="{% if media.id == featured_media.id %}eager{% else %}lazy{% endif %}"
+              class="product__media-image"
+            >
+          {%- when 'video' -%}
+            <div class="deferred-media" data-deferred-media>
+              <button
+                class="deferred-media__poster"
+                type="button"
+                aria-label="Play video"
+              >
+                {{ media.preview_image | image_url: width: 800 | image_tag: alt: media.alt, class: 'product__media-image', loading: 'lazy' }}
+                <span class="deferred-media__poster-button">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </span>
+              </button>
+              <template>
+                {{ media | video_tag: autoplay: true, loop: true, muted: true, controls: true }}
+              </template>
+            </div>
+          {%- when 'external_video' -%}
+            <div class="deferred-media" data-deferred-media>
+              <button
+                class="deferred-media__poster"
+                type="button"
+                aria-label="Play video"
+              >
+                {{ media.preview_image | image_url: width: 800 | image_tag: alt: media.alt, class: 'product__media-image', loading: 'lazy' }}
+                <span class="deferred-media__poster-button">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </span>
+              </button>
+              <template>
+                {%- if media.host == 'youtube' -%}
+                  {{ media | external_video_url: autoplay: true, loop: true, mute: true | external_video_tag }}
+                {%- else -%}
+                  {{ media | external_video_url: autoplay: true, loop: true, muted: true | external_video_tag }}
+                {%- endif -%}
+              </template>
+            </div>
+          {%- when 'model' -%}
+            <div class="deferred-media" data-deferred-media>
+              <button
+                class="deferred-media__poster"
+                type="button"
+                aria-label="View 3D model"
+              >
+                {{ media.preview_image | image_url: width: 800 | image_tag: alt: media.alt, class: 'product__media-image', loading: 'lazy' }}
+                <span class="deferred-media__poster-button">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  </svg>
+                </span>
+              </button>
+              <template>
+                {{ media | model_viewer_tag: reveal: 'interaction', toggleable: true }}
+              </template>
+            </div>
+        {%- endcase -%}
+      </div>
+    {%- endfor -%}
+  </div>
+
+    {%- if media_count > 1 -%}
+    <div class="product__media-list product__media-list--thumbnails" data-thumbnails>
+      {%- for media in product.media -%}
+        <button
+          type="button"
+          class="product__media-thumbnail{% if media.id == featured_media.id %} product__media-thumbnail--active{% endif %}"
+          data-thumbnail
+          data-media-id="{{ media.id }}"
+          aria-label="Load image {{ forloop.index }}"
+          aria-current="{% if media.id == featured_media.id %}true{% else %}false{% endif %}"
+        >
+          <img
+            src="{{ media.preview_image | image_url: width: 150 }}"
+            alt="{{ media.alt | escape }}"
+            width="64"
+            height="64"
+            loading="lazy"
+          >
+        </button>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+</div>
+
+<script>
+  
+  document.addEventListener('DOMContentLoaded', function() {
+    const gallery = document.querySelector('[data-media-gallery]');
+    if (!gallery) return;
+
+    const thumbnails = gallery.querySelectorAll('[data-thumbnail]');
+    const mediaItems = gallery.querySelectorAll('[data-media-id]');
+
+    thumbnails.forEach(function(thumb) {
+      thumb.addEventListener('click', function() {
+        const mediaId = this.dataset.mediaId;
+
+        
+        thumbnails.forEach(function(t) {
+          t.classList.remove('product__media-thumbnail--active');
+          t.setAttribute('aria-current', 'false');
+        });
+        this.classList.add('product__media-thumbnail--active');
+        this.setAttribute('aria-current', 'true');
+
+        
+        mediaItems.forEach(function(item) {
+          if (item.dataset.mediaId === mediaId) {
+            item.hidden = false;
+            item.classList.add('product__media-item--active');
+          } else {
+            item.hidden = true;
+            item.classList.remove('product__media-item--active');
+          }
+        });
+      });
+    });
+
+    
+    const deferredMedia = gallery.querySelectorAll('[data-deferred-media]');
+    deferredMedia.forEach(function(media) {
+      const poster = media.querySelector('.deferred-media__poster');
+      if (!poster) return;
+
+      poster.addEventListener('click', function() {
+        const template = media.querySelector('template');
+        if (template) {
+          media.innerHTML = template.innerHTML;
+        }
+      });
+    });
+  });
+</script>

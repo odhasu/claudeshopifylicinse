@@ -1,0 +1,86 @@
+<footer
+  id="scaled-footer"
+  class="scaled-shell scaled-shell--footer"
+  data-scaled-section="footer"
+  role="contentinfo"
+>
+  <div class="container scaled-footer-local">
+    <div class="scaled-footer-local__brand">
+      {%- if settings.logo != blank -%}
+        {{ settings.logo | image_url: width: 180 | image_tag: alt: settings.brand_name | default: shop.name, class: 'scaled-footer-local__logo' }}
+      {%- else -%}
+        <strong>{{ settings.brand_name | default: shop.name }}</strong>
+      {%- endif -%}
+      <p class="scaled-footer-local__copy">&copy; {{ 'now' | date: '%Y' }} {{ settings.brand_name | default: shop.name }}. All rights reserved.</p>
+    </div>
+    <div class="scaled-footer-local__links">
+      {%- if settings.instagram_url != blank -%}<a href="{{ settings.instagram_url }}" target="_blank" rel="noopener">Instagram</a>{%- endif -%}
+      {%- if settings.tiktok_url != blank -%}<a href="{{ settings.tiktok_url }}" target="_blank" rel="noopener">TikTok</a>{%- endif -%}
+      {%- if settings.discord_url != blank -%}<a href="{{ settings.discord_url }}" target="_blank" rel="noopener">Discord</a>{%- endif -%}
+    </div>
+  </div>
+</footer>
+
+<script type="application/json" data-scaled-section-settings="footer">
+{
+  "brandName": {{ settings.brand_name | default: shop.name | json }},
+  "logoUrl": {% if settings.logo != blank %}{{ settings.logo | image_url: width: 150 | json }}{% else %}null{% endif %},
+  "instagramUrl": {{ settings.instagram_url | default: "" | json }},
+  "tiktokUrl": {{ settings.tiktok_url | default: "" | json }},
+  "discordUrl": {{ settings.discord_url | default: "" | json }},
+  "accentColor": {{ settings.color_accent_1 | default: "#944aff" | json }},
+  "shopDomain": {{ shop.domain | json }},
+  "shopName": {{ shop.name | json }},
+  "year": {{ 'now' | date: '%Y' | json }}
+}
+</script>
+
+<style>
+  .scaled-shell--footer {
+    min-height: 120px;
+    border-top: 1px solid var(--color-border);
+    margin-top: 36px;
+    background: color-mix(in srgb, var(--color-bg) 92%, #000);
+  }
+  .scaled-footer-local {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .scaled-footer-local__logo {
+    width: auto;
+    max-height: 40px;
+  }
+  .scaled-footer-local__copy {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+  .scaled-footer-local__links {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .scaled-footer-local__links a {
+    font-size: 13px;
+    color: var(--color-text);
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Footer",
+  "tag": "footer",
+  "class": "scaled-footer-wrapper",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Footer"
+    }
+  ]
+}
+{% endschema %}

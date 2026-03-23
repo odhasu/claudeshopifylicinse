@@ -82,48 +82,7 @@ app.use(express.json({ limit: '1mb' }));
 
 // ─── Serve Next.js static site from /site ───────────────────────
 const siteDir = path.join(__dirname, 'site');
-app.use('/_next', express.static(path.join(siteDir, '_next'), { maxAge: '365d', immutable: true }));
-app.use('/fonts', express.static(path.join(siteDir, 'fonts')));
-app.use('/images', express.static(path.join(siteDir, 'images')));
-
-function serveSitePage(pagePath) {
-  const htmlPath = path.join(siteDir, pagePath, 'index.html');
-  if (fs.existsSync(htmlPath)) return fs.readFileSync(htmlPath, 'utf8');
-  const directPath = path.join(siteDir, pagePath + '.html');
-  if (fs.existsSync(directPath)) return fs.readFileSync(directPath, 'utf8');
-  return null;
-}
-
-// Site pages
-const sitePages = ['/', '/pricing', '/login', '/dashboard', '/docs', '/support'];
-sitePages.forEach(route => {
-  const pagePath = route === '/' ? '' : route.slice(1);
-  app.get(route, (req, res) => {
-    const html = serveSitePage(pagePath) || serveSitePage('');
-    if (html) { res.setHeader('Content-Type', 'text/html'); res.send(html); }
-    else res.status(404).send('Not found');
-  });
-  // Also handle trailing slash
-  if (route !== '/') {
-    app.get(route + '/', (req, res) => {
-      const html = serveSitePage(pagePath);
-      if (html) { res.setHeader('Content-Type', 'text/html'); res.send(html); }
-      else res.redirect(route);
-    });
-  }
-});
-
-// Docs sub-pages
-app.get('/docs/:slug', (req, res) => {
-  const html = serveSitePage('docs/' + req.params.slug);
-  if (html) { res.setHeader('Content-Type', 'text/html'); res.send(html); }
-  else res.redirect('/docs');
-});
-app.get('/docs/:slug/', (req, res) => {
-  const html = serveSitePage('docs/' + req.params.slug);
-  if (html) { res.setHeader('Content-Type', 'text/html'); res.send(html); }
-  else res.redirect('/docs');
-});
+app.use(express.static(siteDir, { extensions: ['html'] }));
 
 // Admin dashboard (old)
 function serveDashboardPage(filename) {
@@ -138,12 +97,6 @@ app.get('/admin', (req, res) => {
   res.send(ADMIN_HTML);
 });
 
-// Catch-all for SPA routes
-app.get('/login', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
-app.get('/dashboard', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
-app.get('/dashboard/*', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
-app.get('/theme', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
-app.get('/pricing', (req, res) => { res.setHeader('Content-Type', 'text/html'); res.send(SITE_HTML); });
 
 // Rate limiting
 const rateLimiter = {};

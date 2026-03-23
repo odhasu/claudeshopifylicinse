@@ -1,0 +1,64 @@
+{
+  "sections": {
+    "urgency": {
+      "type": "shell-urgency",
+      "settings": {
+        "enabled": true,
+        "position": "top"
+      }
+    },
+    "product-grid": {
+      "type": "shell-product-grid",
+      "settings": {
+        "hero_headline": "Start Your Reselling Journey Today",
+        "highlight_word": "Reselling",
+        "products_per_row": 4,
+        "max_products": 8,
+        "primary_button_text": "VIEW PRODUCT",
+        "primary_button_action": "product",
+        "sale_badge_text": "SALE",
+        "sale_badge_position": "top-right"
+      }
+    },
+    "testimonials": {
+      "type": "shell-testimonials",
+      "settings": {
+        "headline": "What Our Customers Say",
+        "animation_speed": 20,
+        "max_width": 900,
+        "image_height": 250
+      }
+    },
+    "faq": {
+      "type": "shell-faq",
+      "settings": {
+        "heading": "Frequently Asked Questions"
+      }
+    },
+    "chat": {
+      "type": "shell-chat",
+      "settings": {
+        "position": "bottom-right"
+      }
+    },
+    "live-sales": {
+      "type": "shell-live-sales",
+      "settings": {
+        "enable_notifications": true,
+        "display_duration": 7,
+        "min_delay": 8,
+        "max_delay": 20,
+        "initial_delay": 5,
+        "position": "bottom-left"
+      }
+    }
+  },
+  "order": [
+    "urgency",
+    "product-grid",
+    "testimonials",
+    "faq",
+    "chat",
+    "live-sales"
+  ]
+}

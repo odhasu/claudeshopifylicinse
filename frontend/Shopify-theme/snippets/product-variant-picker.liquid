@@ -1,0 +1,157 @@
+
+{%- liquid
+  assign picker_type = block.settings.picker_type | default: 'button'
+  assign swatch_shape = block.settings.swatch_shape | default: 'circle'
+-%}
+
+{%- unless product.has_only_default_variant -%}
+  <variant-selects
+    id="variant-selects-{{ section.id }}"
+    class="no-js-hidden"
+    data-section="{{ section.id }}"
+    data-url="{{ product.url }}"
+    {{ block.shopify_attributes }}
+  >
+    {%- for option in product.options_with_values -%}
+      {%- liquid
+        assign option_index = forloop.index
+        assign option_name_downcase = option.name | downcase
+        assign is_color = false
+        if option_name_downcase contains 'color' or option_name_downcase contains 'colour'
+          assign is_color = true
+        endif
+      -%}
+
+      <div class="product-form__input product-form__input--{{ picker_type }}{% if is_color %} product-form__input--color{% endif %}">
+        <fieldset>
+          <legend class="form__label">
+            {{ option.name }}:
+            <span class="form__label-value" data-option-value>{{ option.selected_value }}</span>
+          </legend>
+
+          {%- if picker_type == 'dropdown' -%}
+                        <div class="product-form__input--dropdown">
+              <select
+                id="Option-{{ section.id }}-{{ option_index }}"
+                class="product-form__select"
+                name="options[{{ option.name | escape }}]"
+                form="{{ product_form_id }}"
+              >
+                {%- for value in option.values -%}
+                  <option
+                    value="{{ value | escape }}"
+                    {% if option.selected_value == value %}selected{% endif %}
+                  >
+                    {{ value }}
+                  </option>
+                {%- endfor -%}
+              </select>
+            </div>
+
+          {%- else -%}
+                        <div class="product-form__options">
+              {%- for value in option.values -%}
+                {%- liquid
+                  assign option_disabled = true
+                  for variant in product.variants
+                    case option_index
+                      when 1
+                        if variant.option1 == value
+                          if variant.available
+                            assign option_disabled = false
+                          endif
+                        endif
+                      when 2
+                        if variant.option2 == value
+                          if variant.available
+                            assign option_disabled = false
+                          endif
+                        endif
+                      when 3
+                        if variant.option3 == value
+                          if variant.available
+                            assign option_disabled = false
+                          endif
+                        endif
+                    endcase
+                  endfor
+                -%}
+
+                <div class="product-form__option">
+                  <input
+                    type="radio"
+                    id="Option-{{ section.id }}-{{ option_index }}-{{ forloop.index }}"
+                    name="Option-{{ option.name | handle }}"
+                    value="{{ value | escape }}"
+                    form="{{ product_form_id }}"
+                    {% if option.selected_value == value %}checked{% endif %}
+                    {% if option_disabled %}disabled{% endif %}
+                  >
+                  <label
+                    class="product-form__option-label{% if option_disabled %} product-form__option-label--unavailable{% endif %}"
+                    for="Option-{{ section.id }}-{{ option_index }}-{{ forloop.index }}"
+                  >
+                    {%- if is_color -%}
+                                            {%- liquid
+                        assign color_value = value | handle
+                        assign color_file_name = color_value | append: '.png'
+                        assign color_file = color_file_name | file_img_url: '60x60'
+                      -%}
+                      {%- if images[color_file_name] -%}
+                        <img
+                          class="product-form__color-image"
+                          src="{{ color_file }}"
+                          alt="{{ value }}"
+                          width="40"
+                          height="40"
+                        >
+                      {%- else -%}
+                        <span
+                          class="product-form__color-swatch"
+                          style="background-color: {{ value | handle | replace: '-', '' }};"
+                        ></span>
+                      {%- endif -%}
+                      <span class="visually-hidden">{{ value }}</span>
+                    {%- else -%}
+                      {{ value }}
+                    {%- endif -%}
+                  </label>
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+        </fieldset>
+      </div>
+    {%- endfor -%}
+
+    <script type="application/json" data-selected-variant>
+      {{ product.selected_or_first_available_variant | json }}
+    </script>
+  </variant-selects>
+
+    <noscript>
+    <div class="product-form__input product-form__input--dropdown">
+      <label for="Variants-{{ section.id }}" class="form__label">
+        Variant
+      </label>
+      <select
+        id="Variants-{{ section.id }}"
+        class="product-form__select"
+        name="id"
+        form="{{ product_form_id }}"
+      >
+        {%- for variant in product.variants -%}
+          <option
+            value="{{ variant.id }}"
+            {% if variant == product.selected_or_first_available_variant %}selected{% endif %}
+            {% unless variant.available %}disabled{% endunless %}
+          >
+            {{ variant.title }}
+            {%- if variant.available == false %} - Sold out{% endif %}
+            - {{ variant.price | money }}
+          </option>
+        {%- endfor -%}
+      </select>
+    </div>
+  </noscript>
+{%- endunless -%}

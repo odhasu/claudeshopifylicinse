@@ -1,0 +1,188 @@
+
+{%- liquid
+  assign show_dynamic_checkout = block.settings.show_dynamic_checkout | default: true
+  assign current_variant = product.selected_or_first_available_variant
+-%}
+
+<div class="product-form__buttons" {{ block.shopify_attributes }}>
+    <product-form class="product-form" data-product-form>
+    <div class="product-form__error-message-wrapper" role="alert" hidden>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span class="product-form__error-message"></span>
+    </div>
+
+    {%- form 'product',
+      product,
+      id: product_form_id,
+      class: 'form',
+      novalidate: 'novalidate',
+      data-type: 'add-to-cart-form'
+    -%}
+      <input type="hidden" name="id" value="{{ current_variant.id }}" data-variant-id>
+
+      <div class="product-form__submit-wrapper">
+        <button
+          id="ProductSubmitButton-{{ section_id }}"
+          type="submit"
+          name="add"
+          class="product-form__submit btn btn--primary btn--full btn--large"
+          {% unless current_variant.available %}disabled{% endunless %}
+        >
+          <span class="product-form__submit-text">
+            {%- if current_variant.available -%}
+              Add to Cart
+            {%- else -%}
+              Sold Out
+            {%- endif -%}
+          </span>
+          <span class="product-form__submit-spinner hidden">
+            {%- render 'loading-spinner' -%}
+          </span>
+        </button>
+
+        {%- if show_dynamic_checkout -%}
+          {{ form | payment_button }}
+        {%- endif -%}
+      </div>
+    {%- endform -%}
+  </product-form>
+
+    {%- if show_pickup_availability -%}
+    {{ 'component-pickup-availability.css' | asset_url | stylesheet_tag }}
+    <pickup-availability
+      class="product__pickup-availability"
+      data-root-url="{{ routes.root_url }}"
+      data-variant-id="{{ current_variant.id }}"
+      data-has-only-default-variant="{{ product.has_only_default_variant }}"
+    >
+      <template>
+        <pickup-availability-preview class="pickup-availability-preview">
+          {%- render 'loading-spinner' -%}
+        </pickup-availability-preview>
+      </template>
+    </pickup-availability>
+  {%- endif -%}
+</div>
+
+<style>
+    .product-form__submit {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    width: 100%;
+    min-height: 56px;
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    color: var(--color-accent);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow:
+      0 8px 32px 0 rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .product-form__submit:hover:not(:disabled) {
+    background: var(--color-accent);
+    color: #fff;
+    box-shadow:
+      0 8px 32px 0 rgba(0, 0, 0, 0.4),
+      0 0 30px rgba(148, 74, 255, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .product-form__submit:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .product-form__submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: var(--color-border);
+    color: var(--color-text-muted);
+  }
+
+    .product-form__submit-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+    .product-form__submit-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-form__submit-spinner.hidden {
+    display: none;
+  }
+
+    .product-form__submit.loading .product-form__submit-text {
+    visibility: hidden;
+  }
+
+  .product-form__submit.loading .product-form__submit-spinner {
+    position: absolute;
+    display: flex;
+  }
+
+    .shopify-payment-button {
+    margin-top: var(--spacing-sm);
+  }
+
+  .shopify-payment-button__button {
+    min-height: 56px !important;
+    border-radius: var(--radius-md) !important;
+    font-weight: 600 !important;
+    background: var(--color-accent) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 2px solid rgba(0, 0, 0, 0.5) !important;
+    box-shadow:
+      0 8px 32px 0 rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .shopify-payment-button__button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow:
+      0 12px 40px 0 rgba(0, 0, 0, 0.4),
+      0 0 30px rgba(148, 74, 255, 0.2) !important;
+  }
+
+    .product-form__error-message-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--color-error);
+    border-radius: var(--radius-sm);
+    color: var(--color-error);
+    font-size: 0.875rem;
+  }
+
+  .product-form__error-message-wrapper[hidden] {
+    display: none;
+  }
+
+  .product-form__error-message-wrapper svg {
+    flex-shrink: 0;
+  }
+</style>

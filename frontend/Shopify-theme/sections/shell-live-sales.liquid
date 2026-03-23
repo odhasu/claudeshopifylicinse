@@ -1,0 +1,170 @@
+
+{%- if section.settings.enable_notifications -%}
+<section
+  id="scaled-live-sales"
+  class="scaled-shell scaled-shell--live-sales"
+  data-scaled-section="live-sales"
+  aria-label="Live Sales"
+>
+  {%- assign featured_live_product = blank -%}
+  {%- for product in collections.all.products limit: 1 -%}
+    {%- if product.available -%}
+      {%- assign featured_live_product = product -%}
+    {%- endif -%}
+  {%- endfor -%}
+  <div class="scaled-live-sales-local scaled-live-sales-local--{{ section.settings.position | default: 'bottom-left' }}">
+    <span class="scaled-live-sales-local__dot" aria-hidden="true"></span>
+    <span>
+      Someone just purchased
+      <strong>{% if featured_live_product != blank %}{{ featured_live_product.title }}{% else %}a product{% endif %}</strong>
+    </span>
+  </div>
+</section>
+
+<style>
+  .scaled-live-sales-local {
+    position: fixed;
+    z-index: 998;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: min(360px, calc(100vw - 32px));
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 10px 14px;
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-bg-card) 90%, #000);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    font-size: 12px;
+  }
+  .scaled-live-sales-local--bottom-left { bottom: 16px; left: 16px; }
+  .scaled-live-sales-local--bottom-right { bottom: 16px; right: 16px; }
+  .scaled-live-sales-local--top-left { top: 16px; left: 16px; }
+  .scaled-live-sales-local--top-right { top: 16px; right: 16px; }
+  .scaled-live-sales-local__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+    animation: scaled-live-pulse 2s infinite;
+  }
+  @keyframes scaled-live-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45); }
+    70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+  }
+</style>
+
+<script type="application/json" data-scaled-section-settings="live-sales">
+{
+  "enabled": {{ section.settings.enable_notifications | default: true | json }},
+  "display_duration": {{ section.settings.display_duration | default: 7 }},
+  "min_delay": {{ section.settings.min_delay | default: 8 }},
+  "max_delay": {{ section.settings.max_delay | default: 20 }},
+  "initial_delay": {{ section.settings.initial_delay | default: 5 }},
+  "name_color": {{ section.settings.name_color | default: "#CC3D3D" | json }},
+  "position": {{ section.settings.position | default: "bottom-left" | json }}
+}
+</script>
+
+<script type="application/json" data-scaled-products="live-sales">
+[
+  {%- assign product_count = 0 -%}
+  {%- for product in collections.all.products limit: 50 -%}
+    {%- if product.available -%}
+      {%- if product_count > 0 -%},{%- endif -%}
+      {{ product.title | json }}
+      {%- assign product_count = product_count | plus: 1 -%}
+    {%- endif -%}
+  {%- endfor -%}
+]
+</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Live Sales",
+  "tag": "section",
+  "class": "scaled-live-sales-wrapper",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_notifications",
+      "label": "Enable Live Sales Notifications",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Timing"
+    },
+    {
+      "type": "range",
+      "id": "display_duration",
+      "label": "Display Duration (seconds)",
+      "min": 3,
+      "max": 15,
+      "step": 1,
+      "default": 7,
+      "info": "How long each notification stays visible"
+    },
+    {
+      "type": "range",
+      "id": "min_delay",
+      "label": "Minimum Delay (seconds)",
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "default": 8,
+      "info": "Minimum time between notifications"
+    },
+    {
+      "type": "range",
+      "id": "max_delay",
+      "label": "Maximum Delay (seconds)",
+      "min": 10,
+      "max": 60,
+      "step": 1,
+      "default": 20,
+      "info": "Maximum time between notifications"
+    },
+    {
+      "type": "range",
+      "id": "initial_delay",
+      "label": "Initial Delay (seconds)",
+      "min": 1,
+      "max": 15,
+      "step": 1,
+      "default": 5,
+      "info": "Delay before first notification appears"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "name_color",
+      "label": "Customer Name Color",
+      "default": "#CC3D3D",
+      "info": "Color for the customer name highlight"
+    },
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Position",
+      "options": [
+        { "value": "bottom-left", "label": "Bottom Left" },
+        { "value": "bottom-right", "label": "Bottom Right" },
+        { "value": "top-left", "label": "Top Left" },
+        { "value": "top-right", "label": "Top Right" }
+      ],
+      "default": "bottom-left"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Live Sales"
+    }
+  ]
+}
+{% endschema %}
