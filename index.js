@@ -23,20 +23,38 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 
-// ─── Vercel KV (persistent tickets storage) ─────────────────────
-// Falls back gracefully if KV env vars not set (local dev)
-let kv = null;
-const KV_ENABLED = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
-if (KV_ENABLED) {
-  try { kv = require('@vercel/kv').kv; } catch(e) { console.log('[KV] package not found, using file fallback'); }
+// ─── Upstash Redis (persistent tickets storage) ──────────────────
+// Uses REST API directly — no package needed, works with both
+// KV_REST_API_* (Vercel KV compat) and UPSTASH_REDIS_REST_* env vars
+const UPSTASH_URL   = process.env.KV_REST_API_URL          || process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.KV_REST_API_TOKEN         || process.env.UPSTASH_REDIS_REST_TOKEN;
+const KV_ENABLED    = !!(UPSTASH_URL && UPSTASH_TOKEN);
+
+async function upstashCmd(command) {
+  const res = await fetch(UPSTASH_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${UPSTASH_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(command),
+  });
+  const data = await res.json();
+  return data.result;
 }
 
 async function kvGetTickets() {
-  if (kv) { try { return (await kv.get('vexel_tickets')) || []; } catch(e) {} }
+  if (KV_ENABLED) {
+    try {
+      const raw = await upstashCmd(['GET', 'vexel_tickets']);
+      return raw ? JSON.parse(raw) : [];
+    } catch(e) { console.error('[KV] read error:', e.message); }
+  }
   return store.tickets || [];
 }
+
 async function kvSaveTickets(tickets) {
-  if (kv) { try { await kv.set('vexel_tickets', tickets); return; } catch(e) {} }
+  if (KV_ENABLED) {
+    try { await upstashCmd(['SET', 'vexel_tickets', JSON.stringify(tickets)]); return; }
+    catch(e) { console.error('[KV] write error:', e.message); }
+  }
   store.tickets = tickets;
   saveStore();
 }
