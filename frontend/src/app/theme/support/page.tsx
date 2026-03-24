@@ -3,7 +3,6 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { MessageCircle, BookOpen, MessageSquare, ChevronDown } from "lucide-react";
-import { insertSupportMessage } from "@/lib/supabase";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -109,17 +108,23 @@ export default function SupportPage() {
     setSubmitStatus(null);
 
     try {
-      await insertSupportMessage(formData.name, formData.email, formData.message);
-      setSubmitStatus({ 
-        type: 'success', 
-        message: 'Message sent! We\'ll get back to you within 24 hours.' 
+      const res = await fetch('/api/support/ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      setSubmitStatus({
+        type: 'success',
+        message: "Message sent! We'll get back to you within 24 hours."
       });
       setFormData({ name: "", email: "", message: "" });
     } catch (error) {
       console.error('Error sending message:', error);
-      setSubmitStatus({ 
-        type: 'error', 
-        message: 'Failed to send message. Please try again or email support@vexel.com directly.' 
+      setSubmitStatus({
+        type: 'error',
+        message: 'Failed to send message. Please try again.'
       });
     } finally {
       setIsSubmitting(false);

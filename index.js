@@ -33,7 +33,7 @@ const DB_FILE = path.join(DATA_DIR, 'store.json');
 
 try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch(e) {}
 
-let store = { licenses: [], request_log: [], remote_content: [], _nextId: 1 };
+let store = { licenses: [], request_log: [], remote_content: [], tickets: [], _nextId: 1 };
 
 function loadStore() {
   try {
@@ -48,6 +48,9 @@ function saveStore() {
 }
 
 loadStore();
+
+// Migrate old stores that don't have tickets array
+if (!store.tickets) { store.tickets = []; saveStore(); }
 
 // ─── Seed "og" universal license if it doesn't exist ────────────
 if (!store.licenses.find(l => l.license_key === 'og')) {
@@ -101,18 +104,7 @@ app.use((req, res, next) => {
 app.use(express.static(siteDir, { extensions: ['html'] }));
 
 
-// Admin dashboard (old)
-function serveDashboardPage(filename) {
-  const filePath = path.join(__dirname, 'dashboard', filename);
-  if (fs.existsSync(filePath)) return fs.readFileSync(filePath, 'utf8');
-  return null;
-}
-const ADMIN_HTML = serveDashboardPage('index.html');
-
-app.get('/admin', (req, res) => {
-  res.setHeader('Content-Type', 'text/html');
-  res.send(ADMIN_HTML);
-});
+// /admin is handled by Next.js static export (site/admin.html)
 
 
 // Rate limiting
@@ -691,6 +683,30 @@ app.get('/api/loader/v3/scaled-loader.js', (req, res) => {
 });
 app.get('/api/loader/scaled-loader.js', (req, res) => res.redirect(301, '/api/loader/v3/scaled-loader.js'));
 
+// ─── Support Tickets ────────────────────────────────────────────
+
+// Public: submit a support ticket
+app.post('/api/support/ticket', (req, res) => {
+  const { name, email, message } = req.body;
+  if (!name || !email || !message) return res.status(400).json({ error: 'name, email, and message are required' });
+  if (typeof email !== 'string' || !email.includes('@')) return res.status(400).json({ error: 'invalid email' });
+  if (message.length > 5000) return res.status(400).json({ error: 'message too long' });
+  const ticket = {
+    id: store._nextId++,
+    name: name.trim().slice(0, 100),
+    email: email.trim().toLowerCase().slice(0, 200),
+    message: message.trim().slice(0, 5000),
+    status: 'open',
+    read: false,
+    replies: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  store.tickets.push(ticket);
+  saveStore();
+  res.json({ success: true, ticket_id: ticket.id, message: 'Ticket submitted successfully' });
+});
+
 // ─── Admin Routes ───────────────────────────────────────────────
 const ADMIN_KEY = process.env.ADMIN_KEY || 'og';
 
@@ -764,6 +780,48 @@ app.delete('/api/admin/remote-content/:id', requireAdmin, (req, res) => {
   store.remote_content = store.remote_content.filter(r => r.id !== parseInt(req.params.id));
   saveStore();
   res.json({ message: 'Remote content deleted' });
+});
+
+// Admin: tickets
+app.get('/api/admin/tickets', requireAdmin, (req, res) => {
+  const tickets = store.tickets.slice().reverse();
+  const unread = store.tickets.filter(t => !t.read).length;
+  res.json({ tickets, unread });
+});
+
+app.put('/api/admin/tickets/:id', requireAdmin, (req, res) => {
+  const ticket = store.tickets.find(t => t.id === parseInt(req.params.id));
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+  const { status, read } = req.body;
+  if (status && ['open', 'in-progress', 'closed'].includes(status)) ticket.status = status;
+  if (typeof read === 'boolean') ticket.read = read;
+  ticket.updated_at = new Date().toISOString();
+  saveStore();
+  res.json({ ticket });
+});
+
+app.post('/api/admin/tickets/:id/reply', requireAdmin, (req, res) => {
+  const ticket = store.tickets.find(t => t.id === parseInt(req.params.id));
+  if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+  const { message } = req.body;
+  if (!message || !message.trim()) return res.status(400).json({ error: 'reply message is required' });
+  const reply = {
+    id: store._nextId++,
+    message: message.trim().slice(0, 5000),
+    sent_at: new Date().toISOString(),
+  };
+  ticket.replies.push(reply);
+  if (ticket.status === 'open') ticket.status = 'in-progress';
+  ticket.updated_at = new Date().toISOString();
+  saveStore();
+  // TODO: send email via Resend when API key is configured
+  // const resend = new Resend(process.env.RESEND_API_KEY);
+  // await resend.emails.send({ from: 'support@vexelthemes.com', to: ticket.email, subject: 'Re: Your support request', text: message });
+  res.json({ success: true, reply });
+});
+
+app.get('/api/admin/tickets/unread-count', requireAdmin, (req, res) => {
+  res.json({ unread: store.tickets.filter(t => !t.read).length });
 });
 
 // Theme ZIP download
