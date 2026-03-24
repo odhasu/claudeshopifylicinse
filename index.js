@@ -23,6 +23,24 @@ const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 
+// ─── Vercel KV (persistent tickets storage) ─────────────────────
+// Falls back gracefully if KV env vars not set (local dev)
+let kv = null;
+const KV_ENABLED = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+if (KV_ENABLED) {
+  try { kv = require('@vercel/kv').kv; } catch(e) { console.log('[KV] package not found, using file fallback'); }
+}
+
+async function kvGetTickets() {
+  if (kv) { try { return (await kv.get('vexel_tickets')) || []; } catch(e) {} }
+  return store.tickets || [];
+}
+async function kvSaveTickets(tickets) {
+  if (kv) { try { await kv.set('vexel_tickets', tickets); return; } catch(e) {} }
+  store.tickets = tickets;
+  saveStore();
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -686,13 +704,13 @@ app.get('/api/loader/scaled-loader.js', (req, res) => res.redirect(301, '/api/lo
 // ─── Support Tickets ────────────────────────────────────────────
 
 // Public: submit a support ticket
-app.post('/api/support/ticket', (req, res) => {
+app.post('/api/support/ticket', async (req, res) => {
   const { name, email, message } = req.body;
   if (!name || !email || !message) return res.status(400).json({ error: 'name, email, and message are required' });
   if (typeof email !== 'string' || !email.includes('@')) return res.status(400).json({ error: 'invalid email' });
   if (message.length > 5000) return res.status(400).json({ error: 'message too long' });
   const ticket = {
-    id: store._nextId++,
+    id: Date.now(),
     name: name.trim().slice(0, 100),
     email: email.trim().toLowerCase().slice(0, 200),
     message: message.trim().slice(0, 5000),
@@ -702,8 +720,9 @@ app.post('/api/support/ticket', (req, res) => {
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
-  store.tickets.push(ticket);
-  saveStore();
+  const tickets = await kvGetTickets();
+  tickets.push(ticket);
+  await kvSaveTickets(tickets);
   res.json({ success: true, ticket_id: ticket.id, message: 'Ticket submitted successfully' });
 });
 
@@ -783,45 +802,46 @@ app.delete('/api/admin/remote-content/:id', requireAdmin, (req, res) => {
 });
 
 // Admin: tickets
-app.get('/api/admin/tickets', requireAdmin, (req, res) => {
-  const tickets = store.tickets.slice().reverse();
-  const unread = store.tickets.filter(t => !t.read).length;
-  res.json({ tickets, unread });
+app.get('/api/admin/tickets', requireAdmin, async (req, res) => {
+  const tickets = await kvGetTickets();
+  const unread = tickets.filter(t => !t.read).length;
+  res.json({ tickets: tickets.slice().reverse(), unread });
 });
 
-app.put('/api/admin/tickets/:id', requireAdmin, (req, res) => {
-  const ticket = store.tickets.find(t => t.id === parseInt(req.params.id));
+app.put('/api/admin/tickets/:id', requireAdmin, async (req, res) => {
+  const tickets = await kvGetTickets();
+  const ticket = tickets.find(t => t.id === parseInt(req.params.id));
   if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
   const { status, read } = req.body;
   if (status && ['open', 'in-progress', 'closed'].includes(status)) ticket.status = status;
   if (typeof read === 'boolean') ticket.read = read;
   ticket.updated_at = new Date().toISOString();
-  saveStore();
+  await kvSaveTickets(tickets);
   res.json({ ticket });
 });
 
-app.post('/api/admin/tickets/:id/reply', requireAdmin, (req, res) => {
-  const ticket = store.tickets.find(t => t.id === parseInt(req.params.id));
+app.post('/api/admin/tickets/:id/reply', requireAdmin, async (req, res) => {
+  const tickets = await kvGetTickets();
+  const ticket = tickets.find(t => t.id === parseInt(req.params.id));
   if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
   const { message } = req.body;
   if (!message || !message.trim()) return res.status(400).json({ error: 'reply message is required' });
   const reply = {
-    id: store._nextId++,
+    id: Date.now(),
     message: message.trim().slice(0, 5000),
     sent_at: new Date().toISOString(),
   };
   ticket.replies.push(reply);
   if (ticket.status === 'open') ticket.status = 'in-progress';
   ticket.updated_at = new Date().toISOString();
-  saveStore();
-  // TODO: send email via Resend when API key is configured
-  // const resend = new Resend(process.env.RESEND_API_KEY);
-  // await resend.emails.send({ from: 'support@vexelthemes.com', to: ticket.email, subject: 'Re: Your support request', text: message });
+  await kvSaveTickets(tickets);
+  // TODO: wire up Resend email when API key is set
   res.json({ success: true, reply });
 });
 
-app.get('/api/admin/tickets/unread-count', requireAdmin, (req, res) => {
-  res.json({ unread: store.tickets.filter(t => !t.read).length });
+app.get('/api/admin/tickets/unread-count', requireAdmin, async (req, res) => {
+  const tickets = await kvGetTickets();
+  res.json({ unread: tickets.filter(t => !t.read).length });
 });
 
 // Theme ZIP download
