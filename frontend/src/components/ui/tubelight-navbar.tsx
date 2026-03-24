@@ -41,20 +41,6 @@ export function NavBar({ className }: NavBarProps) {
       >
         {/* Desktop: full bar — Mobile: compact bottom bar without logo & CTA */}
         <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-3 bg-background/5 border border-border backdrop-blur-lg py-1 px-1 rounded-full shadow-lg">
-          {/* Logo — desktop only */}
-          <Link
-            href="/"
-            className="flex items-center gap-1 pl-2 pr-0 sm:pr-2 py-1 rounded-full select-none shrink-0"
-          >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
-              <img
-                src="/diamond-logo.svg"
-                alt="Vexel Logo"
-                className="w-full h-full"
-              />
-            </div>
-            <span className="text-sm font-bold text-foreground tracking-tight hidden sm:inline">Vexel</span>
-          </Link>
           {NAV_ITEMS.map((item) => {
             const isActive = activeTab === item.name
             const Icon = item.icon
