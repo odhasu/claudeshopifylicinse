@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Check, Star } from "lucide-react";
+import { Check, Star, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef } from "react";
 import confetti from "canvas-confetti";
@@ -39,10 +39,26 @@ export function Pricing({
   const [isMonthly, setIsMonthly] = useState(true);
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const switchRef = useRef<HTMLButtonElement>(null);
-  const [toastMsg] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  function handlePurchaseClick(planName: 'LITE' | 'PRO') {
-    window.location.href = `/theme/checkout?plan=${planName}`;
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+
+  async function handlePurchaseClick(planName: 'LITE' | 'PRO') {
+    setLoadingPlan(planName);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planName }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setToastMsg(data.error || 'Something went wrong'); return; }
+      window.location.href = data.url;
+    } catch {
+      setToastMsg('Failed to start checkout. Please try again.');
+    } finally {
+      setLoadingPlan(null);
+    }
   }
 
   const isOneTime = plans.every((p) => p.period === "one time");
@@ -204,16 +220,23 @@ export function Pricing({
               {plan.href.includes('#purchase') ? (
                 <button
                   onClick={() => handlePurchaseClick(plan.name as 'LITE' | 'PRO')}
+                  disabled={!!loadingPlan}
                   className={cn(
                     buttonVariants({ variant: "outline" }),
                     "w-full text-base font-semibold tracking-tight transition-all duration-200",
                     "hover:ring-2 hover:ring-[#3a0ca3] hover:ring-offset-1",
                     plan.isPopular
                       ? "bg-[#3a0ca3] text-white border-[#3a0ca3] hover:bg-[#2d0980] hover:border-[#2d0980] hover:text-white"
-                      : "bg-white text-slate-900 hover:bg-[#3a0ca3] hover:text-white hover:border-[#3a0ca3]"
+                      : "bg-white text-slate-900 hover:bg-[#3a0ca3] hover:text-white hover:border-[#3a0ca3]",
+                    loadingPlan === plan.name && "opacity-70 cursor-not-allowed"
                   )}
                 >
-                  {plan.buttonText}
+                  {loadingPlan === plan.name ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Redirecting…
+                    </span>
+                  ) : plan.buttonText}
                 </button>
               ) : (
                 <Link

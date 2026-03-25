@@ -937,14 +937,44 @@ app.get('/api/stripe/payment-intent', async (req, res) => {
   }
 });
 
-// Legacy: /api/stripe/checkout — now redirects to custom checkout page
-app.post('/api/stripe/checkout', (req, res) => {
+// Stripe Checkout Session — creates a hosted Stripe checkout page
+app.post('/api/stripe/checkout', async (req, res) => {
   const { plan } = req.body;
-  if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan' });
-  res.json({ url: `/theme/checkout?plan=${plan}` });
+  if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan. Use LITE or PRO.' });
+  try {
+    const stripe = getStripe();
+    const { amount, name } = PLAN_PRICES[plan];
+    const origin = req.headers.origin || `https://${req.headers.host}` || 'https://claudecodethemeshopify.vercel.app';
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          unit_amount: amount,
+          product_data: {
+            name,
+            description: 'Lifetime license · Free updates · Instant download',
+            images: ['https://claudecodethemeshopify.vercel.app/diamond-logo.svg'],
+          },
+        },
+        quantity: 1,
+      }],
+      success_url: `${origin}/theme/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/theme/pricing`,
+      metadata: { plan },
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('[Stripe] checkout error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// Legacy: /api/stripe/session — kept for backwards compatibility
+// Retrieve Checkout Session (used by success page)
 app.get('/api/stripe/session', async (req, res) => {
   const { session_id } = req.query;
   if (!session_id) return res.status(400).json({ error: 'session_id required' });
