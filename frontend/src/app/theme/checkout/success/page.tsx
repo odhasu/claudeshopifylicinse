@@ -2,25 +2,40 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CheckCircle, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle, ArrowRight, Loader2, Copy, Check } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface SessionInfo {
   plan: string;
   planName?: string;
   email: string | null;
+  licenseKey?: string | null;
+}
+
+async function pollForLicense(sessionId: string, attempts = 4): Promise<string | null> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const r = await fetch(`/api/licenses/by-session/${sessionId}`);
+      if (r.ok) {
+        const d = await r.json();
+        if (d.license_key) return d.license_key;
+      }
+    } catch {
+      // ignore network errors during polling
+    }
+    if (i < attempts - 1) await new Promise((res) => setTimeout(res, 2000));
+  }
+  return null;
 }
 
 export default function CheckoutSuccessPage() {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-
-    // PaymentIntent-based checkout (new custom checkout page)
     const paymentIntentId = params.get("payment_intent");
-    // Legacy: Stripe hosted checkout session
     const sessionId = params.get("session_id");
 
     if (!paymentIntentId && !sessionId) {
@@ -34,15 +49,21 @@ export default function CheckoutSuccessPage() {
 
     fetch(url)
       .then((res) => res.json())
-      .then((data) => {
-        if (data.plan || data.planName) {
-          setSession({
-            plan: data.plan || data.planName || "Unknown",
-            planName: data.planName,
-            email: data.email || null,
-          });
+      .then(async (data) => {
+        const info: SessionInfo = {
+          plan: data.plan || data.planName || "Unknown",
+          planName: data.planName,
+          email: data.email || null,
+          licenseKey: null,
+        };
+
+        // Poll for the license key if we have a session_id (webhook may take a moment)
+        if (sessionId) {
+          info.licenseKey = await pollForLicense(sessionId);
         }
-        // Fire confetti on success
+
+        setSession(info);
+
         confetti({
           particleCount: 120,
           spread: 80,
@@ -57,6 +78,13 @@ export default function CheckoutSuccessPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  function copyKey(key: string) {
+    navigator.clipboard.writeText(key).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
@@ -78,8 +106,39 @@ export default function CheckoutSuccessPage() {
               Payment Successful!
             </h1>
 
+            {/* License key box */}
+            {session?.licenseKey ? (
+              <div className="my-5 rounded-xl bg-slate-50 border border-slate-200 p-4 text-left">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">
+                  Your License Key
+                </p>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-mono text-base font-bold text-[#3a0ca3] tracking-widest">
+                    {session.licenseKey}
+                  </span>
+                  <button
+                    onClick={() => copyKey(session.licenseKey!)}
+                    className="flex-shrink-0 flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-[#3a0ca3] transition-colors"
+                  >
+                    {copied ? (
+                      <><Check className="h-3.5 w-3.5 text-emerald-500" /> Copied</>
+                    ) : (
+                      <><Copy className="h-3.5 w-3.5" /> Copy</>
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-slate-400 mt-2">
+                  Also sent to your email. Enter this key in your Shopify theme settings.
+                </p>
+              </div>
+            ) : (
+              <div className="my-5 rounded-xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-500">
+                Your license key will arrive by email shortly.
+              </div>
+            )}
+
             {session ? (
-              <p className="text-slate-500 mb-6">
+              <p className="text-slate-500 mb-6 text-sm">
                 Thank you for purchasing{" "}
                 <span className="font-semibold text-slate-800">
                   {session.planName || `Vexel ${session.plan}`}
@@ -96,7 +155,7 @@ export default function CheckoutSuccessPage() {
                 )}
               </p>
             ) : (
-              <p className="text-slate-500 mb-6">
+              <p className="text-slate-500 mb-6 text-sm">
                 Your purchase was successful. You can view your license in your
                 account dashboard.
               </p>

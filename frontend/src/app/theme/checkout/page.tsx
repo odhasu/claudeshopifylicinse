@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Lock, ShieldCheck, Loader2, ArrowLeft, CreditCard } from "lucide-react";
 import { loadStripe, type Stripe, type StripeElements } from "@stripe/stripe-js";
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const PUBLISHABLE_KEY =
   "pk_live_51S2H2AB8UhzJlNR2iEnXOmNy2XxIv1LVg3n3XClYeGOGwsBou2Lltfsa7DfUSAoeYwKjJXsZv0lBn9YIBMslmqqu00g6PBe23t";
@@ -45,7 +48,6 @@ export default function CheckoutPage() {
   const elementsRef = useRef<StripeElements | null>(null);
   const initStarted = useRef(false);
 
-  // Read plan from URL client-side only (avoids SSR/hydration mismatch)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const p = (params.get("plan") || "PRO").toUpperCase() as "LITE" | "PRO";
@@ -53,7 +55,6 @@ export default function CheckoutPage() {
     setMounted(true);
   }, []);
 
-  // Init Stripe only after plan is known
   useEffect(() => {
     if (!mounted || initStarted.current) return;
     initStarted.current = true;
@@ -75,42 +76,64 @@ export default function CheckoutPage() {
         const elements = stripe.elements({
           clientSecret: data.clientSecret,
           appearance: {
-            theme: "stripe",
+            theme: "flat",
             variables: {
-              colorPrimary: "#3a0ca3",
-              colorBackground: "#ffffff",
-              colorText: "#1e293b",
-              colorTextSecondary: "#64748b",
-              colorTextPlaceholder: "#94a3b8",
-              colorDanger: "#dc2626",
+              colorPrimary: "#7c3aed",
+              colorBackground: "rgba(255,255,255,0.06)",
+              colorText: "#f1f5f9",
+              colorTextSecondary: "#94a3b8",
+              colorTextPlaceholder: "#64748b",
+              colorDanger: "#f87171",
               fontFamily: "system-ui, -apple-system, sans-serif",
               fontSizeBase: "15px",
               spacingUnit: "4px",
-              borderRadius: "8px",
+              borderRadius: "10px",
               gridRowSpacing: "16px",
             },
             rules: {
               ".Input": {
-                border: "1px solid #e2e8f0",
+                border: "1px solid rgba(255,255,255,0.12)",
                 boxShadow: "none",
                 padding: "12px 14px",
+                backgroundColor: "rgba(255,255,255,0.06)",
+                backdropFilter: "blur(8px)",
+                color: "#f1f5f9",
               },
               ".Input:focus": {
-                border: "1px solid #3a0ca3",
-                boxShadow: "0 0 0 3px rgba(58, 12, 163, 0.08)",
+                border: "1px solid rgba(124,58,237,0.6)",
+                boxShadow: "0 0 0 3px rgba(124,58,237,0.15)",
+                backgroundColor: "rgba(255,255,255,0.10)",
               },
               ".Label": {
                 fontWeight: "500",
                 fontSize: "13px",
-                color: "#374151",
+                color: "#cbd5e1",
                 marginBottom: "6px",
+              },
+              ".Tab": {
+                border: "1px solid rgba(255,255,255,0.12)",
+                backgroundColor: "rgba(255,255,255,0.06)",
+                color: "#94a3b8",
+              },
+              ".Tab:hover": {
+                backgroundColor: "rgba(255,255,255,0.10)",
+              },
+              ".Tab--selected": {
+                border: "1px solid rgba(124,58,237,0.6)",
+                backgroundColor: "rgba(124,58,237,0.15)",
+                color: "#c4b5fd",
+              },
+              ".TabIcon--selected": {
+                fill: "#c4b5fd",
+              },
+              ".TabLabel--selected": {
+                color: "#c4b5fd",
               },
             },
           },
         });
         elementsRef.current = elements;
 
-        // Mount into an always-empty div — React never renders children there
         const paymentElement = elements.create("payment", { layout: "tabs" });
         paymentElement.mount("#stripe-payment-element");
         setStatus("ready");
@@ -146,23 +169,29 @@ export default function CheckoutPage() {
   const planInfo = PLANS[plan];
   const isSubmitting = status === "submitting";
 
-  // Render nothing until client-side mount to avoid hydration mismatch
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#3a0ca3]" />
+      <main className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-[#0a0a0f] relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-violet-600/20 blur-[120px]" />
+        <div className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-indigo-600/15 blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[600px] rounded-full bg-violet-800/10 blur-[80px]" />
+      </div>
+
       {/* Header */}
-      <header className="bg-white border-b border-slate-200">
+      <header className="relative z-10 border-b border-white/5 bg-white/[0.02] backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
             href="/theme"
-            className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -174,42 +203,47 @@ export default function CheckoutPage() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-10 lg:py-16">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 py-10 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
 
-          {/* ── Order Summary ── */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="bg-[#3a0ca3] px-6 py-5">
-                <p className="text-xs font-semibold uppercase tracking-widest text-purple-300 mb-1">
+          {/* Order Summary */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="lg:col-span-2 space-y-6"
+          >
+            <Card className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md shadow-2xl">
+              <div className="bg-gradient-to-br from-violet-600 to-indigo-600 px-6 py-5">
+                <p className="text-xs font-semibold uppercase tracking-widest text-violet-200 mb-1">
                   Your order
                 </p>
                 <h2 className="text-2xl font-bold text-white">{planInfo.name}</h2>
                 <div className="flex items-baseline gap-1 mt-2">
                   <span className="text-4xl font-extrabold text-white">${planInfo.price}</span>
-                  <span className="text-purple-300 text-sm">one-time</span>
+                  <span className="text-violet-200 text-sm">one-time</span>
                 </div>
               </div>
 
               <div className="px-6 py-5 space-y-3">
                 {planInfo.features.map((f, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <div className="mt-0.5 h-4 w-4 rounded-full bg-[#3a0ca3]/10 flex items-center justify-center flex-shrink-0">
-                      <Check className="h-2.5 w-2.5 text-[#3a0ca3]" />
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="h-2.5 w-2.5 text-violet-400" />
                     </div>
-                    <span className="text-sm text-slate-600">{f}</span>
+                    <span className="text-sm text-slate-300">{f}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="px-6 pb-5 pt-1 border-t border-slate-100">
-                <div className="flex justify-between text-sm font-semibold text-slate-800">
+              <div className="px-6 pb-5 pt-1 border-t border-white/5">
+                <div className="flex justify-between text-sm font-semibold text-white">
                   <span>Total</span>
                   <span>${planInfo.price}.00 USD</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1">One-time payment · No subscription</p>
+                <p className="text-xs text-slate-500 mt-1">One-time payment · No subscription</p>
               </div>
-            </div>
+            </Card>
 
             <div className="space-y-2.5">
               {[
@@ -218,84 +252,90 @@ export default function CheckoutPage() {
                 { icon: CreditCard, text: "Visa, Mastercard, American Express" },
               ].map(({ icon: Icon, text }, i) => (
                 <div key={i} className="flex items-center gap-3 text-slate-500 text-sm">
-                  <Icon className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <Icon className="h-4 w-4 text-slate-600 flex-shrink-0" />
                   {text}
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          {/* ── Payment Form ── */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-8">
-              <h3 className="text-lg font-semibold text-slate-900 mb-6">Payment details</h3>
-
-              {status === "error" ? (
-                <div className="py-8 text-center">
-                  <p className="text-red-600 text-sm mb-4">{errorMsg}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="text-[#3a0ca3] text-sm font-medium hover:underline"
-                  >
-                    Try again
-                  </button>
+          {/* Payment Form */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-3"
+          >
+            <Card className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md shadow-2xl hover:border-violet-500/30 transition-all duration-300">
+              <div className="p-6 lg:p-8">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white">Payment Details</h3>
+                  <p className="text-sm text-slate-400 mt-1">Complete your purchase securely</p>
                 </div>
-              ) : (
-                <form onSubmit={handleSubmit}>
-                  {/* Loading overlay shown above the (empty) Stripe mount target */}
-                  {status === "loading" && (
-                    <div className="flex items-center justify-center py-12 gap-3 text-slate-400 mb-6">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <span className="text-sm">Loading payment form…</span>
-                    </div>
-                  )}
 
-                  {/*
-                    IMPORTANT: this div must always be in the DOM and always empty
-                    from React's perspective. Stripe owns its content — React must
-                    never render children here or it will conflict on unmount.
-                  */}
-                  <div
-                    id="stripe-payment-element"
-                    className="mb-6"
-                    style={{ display: status === "loading" ? "none" : "block" }}
-                  />
-
-                  {errorMsg && status === "ready" && (
-                    <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                      {errorMsg}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={status !== "ready" && status !== "submitting"}
-                    className="w-full flex items-center justify-center gap-2.5 rounded-xl bg-[#3a0ca3] text-white font-semibold py-3.5 px-6 text-base hover:bg-[#2d0980] active:scale-[0.98] transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Processing…
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="h-4 w-4" />
-                        Pay ${planInfo.price}.00
-                      </>
+                {status === "error" ? (
+                  <div className="py-8 text-center">
+                    <p className="text-red-400 text-sm mb-4">{errorMsg}</p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="text-violet-400 text-sm font-medium hover:underline"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit}>
+                    {status === "loading" && (
+                      <div className="flex items-center justify-center py-12 gap-3 text-slate-500 mb-6">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span className="text-sm">Loading payment form…</span>
+                      </div>
                     )}
-                  </button>
 
-                  <p className="mt-4 text-center text-xs text-slate-400">
-                    By completing your purchase you agree to our{" "}
-                    <Link href="/theme/docs" className="underline hover:text-slate-600">
-                      Terms of Service
-                    </Link>
-                    . No refunds on digital goods.
-                  </p>
-                </form>
-              )}
-            </div>
-          </div>
+                    <div
+                      id="stripe-payment-element"
+                      className="mb-6"
+                      style={{ display: status === "loading" ? "none" : "block" }}
+                    />
+
+                    {errorMsg && status === "ready" && (
+                      <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+                        {errorMsg}
+                      </div>
+                    )}
+
+                    <Button
+                      type="submit"
+                      disabled={status !== "ready" && status !== "submitting"}
+                      className="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-violet-600/25 hover:shadow-violet-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                    >
+                      {isSubmitting ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Processing…
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-2">
+                          <Lock className="h-4 w-4" />
+                          Pay ${planInfo.price}.00
+                        </span>
+                      )}
+                    </Button>
+
+                    <p className="mt-4 text-center text-xs text-slate-500">
+                      <Lock className="inline-block h-3 w-3 mr-1" />
+                      Payments are secure and encrypted.{" "}
+                      <Link href="/theme/docs" className="underline hover:text-slate-300">
+                        Terms apply
+                      </Link>
+                      .
+                    </p>
+                  </form>
+                )}
+              </div>
+            </Card>
+          </motion.div>
+
         </div>
       </div>
     </main>

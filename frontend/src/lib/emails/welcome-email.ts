@@ -1,6 +1,6 @@
 interface WelcomeEmailProps {
   email: string;
-  password: string;
+  licenseKey: string;
   plan: 'LITE' | 'PRO';
   loginUrl: string;
 }
@@ -33,7 +33,7 @@ const PLAN_DETAILS: Record<'LITE' | 'PRO', { name: string; features: string[] }>
   },
 };
 
-export function buildWelcomeEmailHtml({ email, password, plan, loginUrl }: WelcomeEmailProps): string {
+export function buildWelcomeEmailHtml({ email, licenseKey, plan, loginUrl }: WelcomeEmailProps): string {
   const details = PLAN_DETAILS[plan];
 
   const featuresHtml = details.features
@@ -64,38 +64,28 @@ export function buildWelcomeEmailHtml({ email, password, plan, loginUrl }: Welco
               Thank you for your purchase! Your account has been created and your license is ready to go. Here&rsquo;s everything you need to get started:
             </p>
 
-            <!-- Login credentials -->
+            <!-- License Key -->
             <div style="background:#f1f5f9;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
-              <h2 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">Your Login Details</h2>
-              <table cellpadding="0" cellspacing="0" width="100%">
-                <tr>
-                  <td style="padding:4px 0;color:#64748b;font-size:13px;width:80px;">Email:</td>
-                  <td style="padding:4px 0;color:#0f172a;font-size:13px;font-weight:600;">${email}</td>
-                </tr>
-                <tr>
-                  <td style="padding:4px 0;color:#64748b;font-size:13px;">Password:</td>
-                  <td style="padding:4px 0;color:#0f172a;font-size:13px;font-weight:600;font-family:monospace;">${password}</td>
-                </tr>
-              </table>
-              <p style="margin:12px 0 0;color:#94a3b8;font-size:11px;">We recommend changing your password after your first login.</p>
+              <h2 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">Your License Key</h2>
+              <p style="margin:0;font-family:monospace;font-size:18px;font-weight:700;color:#3a0ca3;letter-spacing:2px;">${licenseKey}</p>
+              <p style="margin:12px 0 0;color:#94a3b8;font-size:11px;">Enter this key in your Shopify theme settings to activate. Keep it safe — it's tied to your purchase.</p>
             </div>
 
-            <!-- How to log in -->
+            <!-- How to get started -->
             <div style="margin-bottom:24px;">
               <h2 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">How to Get Started</h2>
               <ol style="margin:0;padding-left:20px;color:#475569;font-size:14px;line-height:1.8;">
-                <li>Click the button below to log in to your account</li>
-                <li>Find your license key and API key on the Account page</li>
-                <li>Download and install the Vexel theme in your Shopify store</li>
-                <li>Enter your license key to activate the theme</li>
-                <li>Change your password under your profile settings</li>
+                <li>Go to your account page and download the Vexel theme ZIP</li>
+                <li>Upload the theme to your Shopify store</li>
+                <li>Enter your license key in the theme settings to activate</li>
+                <li>Customise and publish your store</li>
               </ol>
             </div>
 
             <!-- CTA Button -->
             <div style="text-align:center;margin:28px 0;">
               <a href="${loginUrl}" style="display:inline-block;background:#3a0ca3;color:#ffffff;font-size:15px;font-weight:600;padding:14px 36px;border-radius:10px;text-decoration:none;">
-                Log In to Your Account →
+                Go to My Account →
               </a>
             </div>
 
