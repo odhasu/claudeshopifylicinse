@@ -21,6 +21,7 @@ export async function POST(req: Request) {
       amount,
       currency: "usd",
       metadata: { plan },
+      automatic_payment_methods: { enabled: true },
     });
 
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });

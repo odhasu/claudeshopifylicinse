@@ -305,7 +305,7 @@ export default function CheckoutPage() {
 
                     <Button
                       type="submit"
-                      disabled={status !== "ready" && status !== "submitting"}
+                      disabled={status !== "ready"}
                       className="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-violet-600/25 hover:shadow-violet-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base"
                     >
                       {isSubmitting ? (
