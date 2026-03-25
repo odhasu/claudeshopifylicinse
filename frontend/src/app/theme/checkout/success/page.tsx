@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle, ArrowRight, Loader2 } from "lucide-react";
+import confetti from "canvas-confetti";
 
 interface SessionInfo {
   plan: string;
+  planName?: string;
   email: string | null;
 }
 
@@ -15,19 +17,42 @@ export default function CheckoutSuccessPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    // PaymentIntent-based checkout (new custom checkout page)
+    const paymentIntentId = params.get("payment_intent");
+    // Legacy: Stripe hosted checkout session
     const sessionId = params.get("session_id");
 
-    if (!sessionId) {
+    if (!paymentIntentId && !sessionId) {
       setLoading(false);
       return;
     }
 
-    fetch(`/api/stripe/session?session_id=${sessionId}`)
+    const url = paymentIntentId
+      ? `/api/stripe/payment-intent?payment_intent=${paymentIntentId}`
+      : `/api/stripe/session?session_id=${sessionId}`;
+
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        if (data.plan) {
-          setSession({ plan: data.plan, email: data.email });
+        if (data.plan || data.planName) {
+          setSession({
+            plan: data.plan || data.planName || "Unknown",
+            planName: data.planName,
+            email: data.email || null,
+          });
         }
+        // Fire confetti on success
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.55 },
+          colors: ["#3a0ca3", "#7b2ff7", "#c084fc", "#e9d5ff", "#ffffff"],
+          ticks: 250,
+          gravity: 1.1,
+          decay: 0.93,
+          startVelocity: 35,
+        });
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -57,7 +82,7 @@ export default function CheckoutSuccessPage() {
               <p className="text-slate-500 mb-6">
                 Thank you for purchasing{" "}
                 <span className="font-semibold text-slate-800">
-                  Vexel {session.plan}
+                  {session.planName || `Vexel ${session.plan}`}
                 </span>
                 .{" "}
                 {session.email && (

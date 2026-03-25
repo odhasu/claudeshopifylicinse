@@ -880,6 +880,82 @@ app.get('/api/admin/download-theme', requireAdmin, (req, res) => {
   }
 });
 
+// ─── Stripe Routes ──────────────────────────────────────────────
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+
+const PLAN_PRICES = {
+  LITE: { amount: 17900, name: 'Vexel Lite', plan: 'LITE' },
+  PRO:  { amount: 37900, name: 'Vexel Pro',  plan: 'PRO'  },
+};
+
+function getStripe() {
+  if (!STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not set');
+  const Stripe = require('stripe');
+  return new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' });
+}
+
+// Custom checkout: create a PaymentIntent and return client secret
+app.post('/api/stripe/create-payment-intent', async (req, res) => {
+  const { plan } = req.body;
+  if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan. Use LITE or PRO.' });
+  try {
+    const stripe = getStripe();
+    const { amount, name } = PLAN_PRICES[plan];
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      metadata: { plan, planName: name },
+      automatic_payment_methods: { enabled: true },
+    });
+    res.json({ clientSecret: paymentIntent.client_secret, amount, planName: name, plan });
+  } catch (err) {
+    console.error('[Stripe] create-payment-intent error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Retrieve PaymentIntent status (used by success page)
+app.get('/api/stripe/payment-intent', async (req, res) => {
+  const { payment_intent } = req.query;
+  if (!payment_intent) return res.status(400).json({ error: 'payment_intent required' });
+  try {
+    const stripe = getStripe();
+    const pi = await stripe.paymentIntents.retrieve(payment_intent);
+    res.json({
+      plan:     pi.metadata?.plan     || null,
+      planName: pi.metadata?.planName || null,
+      email:    pi.receipt_email      || null,
+      status:   pi.status,
+    });
+  } catch (err) {
+    console.error('[Stripe] payment-intent retrieve error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Legacy: /api/stripe/checkout — now redirects to custom checkout page
+app.post('/api/stripe/checkout', (req, res) => {
+  const { plan } = req.body;
+  if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan' });
+  res.json({ url: `/theme/checkout?plan=${plan}` });
+});
+
+// Legacy: /api/stripe/session — kept for backwards compatibility
+app.get('/api/stripe/session', async (req, res) => {
+  const { session_id } = req.query;
+  if (!session_id) return res.status(400).json({ error: 'session_id required' });
+  try {
+    const stripe = getStripe();
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    res.json({
+      plan:  session.metadata?.plan || 'Unknown',
+      email: session.customer_email || session.customer_details?.email || null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── Fallback 404 ────────────────────────────────────────────────
 app.use((req, res) => {
   if (req.method === 'GET') {
