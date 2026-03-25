@@ -8,8 +8,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-const PUBLISHABLE_KEY =
-  "pk_live_51S2H2AB8UhzJlNR2iEnXOmNy2XxIv1LVg3n3XClYeGOGwsBou2Lltfsa7DfUSAoeYwKjJXsZv0lBn9YIBMslmqqu00g6PBe23t";
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 
 const PLANS: Record<string, { name: string; price: number; features: string[] }> = {
   LITE: {
