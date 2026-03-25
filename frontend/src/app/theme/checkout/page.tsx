@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Lock, ShieldCheck, Loader2, ArrowLeft, CreditCard } from "lucide-react";
 import { loadStripe, type Stripe, type StripeElements } from "@stripe/stripe-js";
@@ -36,30 +35,35 @@ const PLANS: Record<string, { name: string; price: number; features: string[] }>
   },
 };
 
-function CheckoutForm() {
-  const searchParams = useSearchParams();
-  const plan = (searchParams.get("plan") || "PRO").toUpperCase() as "LITE" | "PRO";
-  const planInfo = PLANS[plan] || PLANS.PRO;
-
+export default function CheckoutPage() {
+  const [plan, setPlan] = useState<"LITE" | "PRO">("PRO");
   const [status, setStatus] = useState<"loading" | "ready" | "submitting" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const stripeRef = useRef<Stripe | null>(null);
   const elementsRef = useRef<StripeElements | null>(null);
-  const mountedRef = useRef(false);
+  const initStarted = useRef(false);
 
+  // Read plan from URL client-side only (avoids SSR/hydration mismatch)
   useEffect(() => {
-    if (mountedRef.current) return;
-    mountedRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const p = (params.get("plan") || "PRO").toUpperCase() as "LITE" | "PRO";
+    setPlan(PLANS[p] ? p : "PRO");
+    setMounted(true);
+  }, []);
+
+  // Init Stripe only after plan is known
+  useEffect(() => {
+    if (!mounted || initStarted.current) return;
+    initStarted.current = true;
 
     async function init() {
       try {
-        // 1. Load Stripe.js
         const stripe = await loadStripe(PUBLISHABLE_KEY);
         if (!stripe) throw new Error("Failed to load Stripe");
         stripeRef.current = stripe;
 
-        // 2. Create PaymentIntent on the backend
         const res = await fetch("/api/stripe/create-payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -68,7 +72,6 @@ function CheckoutForm() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Could not start checkout");
 
-        // 3. Mount Stripe Elements
         const elements = stripe.elements({
           clientSecret: data.clientSecret,
           appearance: {
@@ -107,10 +110,9 @@ function CheckoutForm() {
         });
         elementsRef.current = elements;
 
-        const paymentElement = elements.create("payment", {
-          layout: "tabs",
-        });
-        paymentElement.mount("#payment-element");
+        // Mount into an always-empty div — React never renders children there
+        const paymentElement = elements.create("payment", { layout: "tabs" });
+        paymentElement.mount("#stripe-payment-element");
         setStatus("ready");
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Failed to load checkout";
@@ -120,7 +122,7 @@ function CheckoutForm() {
     }
 
     init();
-  }, [plan]);
+  }, [mounted, plan]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -128,21 +130,30 @@ function CheckoutForm() {
     setStatus("submitting");
     setErrorMsg(null);
 
-    const returnUrl = `${window.location.origin}/theme/checkout/success`;
-
     const { error } = await stripeRef.current.confirmPayment({
       elements: elementsRef.current,
-      confirmParams: { return_url: returnUrl },
+      confirmParams: {
+        return_url: `${window.location.origin}/theme/checkout/success`,
+      },
     });
 
     if (error) {
       setErrorMsg(error.message || "Payment failed. Please try again.");
       setStatus("ready");
     }
-    // On success, Stripe redirects automatically
   }
 
+  const planInfo = PLANS[plan];
   const isSubmitting = status === "submitting";
+
+  // Render nothing until client-side mount to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#3a0ca3]" />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -168,7 +179,6 @@ function CheckoutForm() {
 
           {/* ── Order Summary ── */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Plan card */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="bg-[#3a0ca3] px-6 py-5">
                 <p className="text-xs font-semibold uppercase tracking-widest text-purple-300 mb-1">
@@ -201,7 +211,6 @@ function CheckoutForm() {
               </div>
             </div>
 
-            {/* Trust badges */}
             <div className="space-y-2.5">
               {[
                 { icon: ShieldCheck, text: "256-bit SSL encryption" },
@@ -221,35 +230,38 @@ function CheckoutForm() {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-8">
               <h3 className="text-lg font-semibold text-slate-900 mb-6">Payment details</h3>
 
-              {status === "error" && !errorMsg?.includes("loading") && (
-                <div className="mb-5 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                  {errorMsg}
-                </div>
-              )}
-
-              {status === "error" && errorMsg?.includes("loading") ? (
-                <div className="py-12 text-center">
-                  <p className="text-slate-500 text-sm">{errorMsg}</p>
+              {status === "error" ? (
+                <div className="py-8 text-center">
+                  <p className="text-red-600 text-sm mb-4">{errorMsg}</p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="mt-4 text-[#3a0ca3] text-sm font-medium hover:underline"
+                    className="text-[#3a0ca3] text-sm font-medium hover:underline"
                   >
                     Try again
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit}>
-                  {/* Stripe mounts here */}
-                  <div id="payment-element" className="mb-6">
-                    {(status === "loading") && (
-                      <div className="flex items-center justify-center py-12 gap-3 text-slate-400">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span className="text-sm">Loading payment form…</span>
-                      </div>
-                    )}
-                  </div>
+                  {/* Loading overlay shown above the (empty) Stripe mount target */}
+                  {status === "loading" && (
+                    <div className="flex items-center justify-center py-12 gap-3 text-slate-400 mb-6">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="text-sm">Loading payment form…</span>
+                    </div>
+                  )}
 
-                  {errorMsg && status !== "loading" && (
+                  {/*
+                    IMPORTANT: this div must always be in the DOM and always empty
+                    from React's perspective. Stripe owns its content — React must
+                    never render children here or it will conflict on unmount.
+                  */}
+                  <div
+                    id="stripe-payment-element"
+                    className="mb-6"
+                    style={{ display: status === "loading" ? "none" : "block" }}
+                  />
+
+                  {errorMsg && status === "ready" && (
                     <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
                       {errorMsg}
                     </div>
@@ -287,19 +299,5 @@ function CheckoutForm() {
         </div>
       </div>
     </main>
-  );
-}
-
-export default function CheckoutPage() {
-  return (
-    <Suspense
-      fallback={
-        <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#3a0ca3]" />
-        </main>
-      }
-    >
-      <CheckoutForm />
-    </Suspense>
   );
 }
