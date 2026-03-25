@@ -129,11 +129,15 @@ app.use((req, res, next) => {
   if (req.path === '/') return next(); // Let static handle index.html
 
   const cleanPath = req.path.replace(/\/$/, ''); // Remove trailing slash
+
+  // Try path.html first (Next.js default export format)
   const htmlPath = path.join(siteDir, cleanPath + '.html');
-  
-  if (fs.existsSync(htmlPath)) {
-    return res.sendFile(htmlPath);
-  }
+  if (fs.existsSync(htmlPath)) return res.sendFile(htmlPath);
+
+  // Fallback: path/index.html (alternative export format)
+  const indexPath = path.join(siteDir, cleanPath, 'index.html');
+  if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
+
   next();
 });
 
