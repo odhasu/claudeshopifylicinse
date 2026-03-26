@@ -21,6 +21,7 @@ interface License {
   id: number; license_key: string; domain: string; store_name: string;
   plan: string; active: number | boolean; created_at: string;
   last_verified_at: string | null; request_count: number;
+  username?: string; customer_name?: string; notes?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -400,7 +401,7 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
       const query = searchQuery.toLowerCase();
       const matchesKey = license.license_key.toLowerCase().includes(query);
       const matchesDomain = license.domain?.toLowerCase().includes(query);
-      const matchesCustomer = license.username?.toLowerCase().includes(query);
+      const matchesCustomer = (license.customer_name || license.username)?.toLowerCase().includes(query);
       const matchesStore = license.store_name?.toLowerCase().includes(query);
       if (!matchesKey && !matchesDomain && !matchesCustomer && !matchesStore) return false;
     }
