@@ -7,7 +7,9 @@
     "start": "node index.js",
     "dev": "node --watch index.js",
     "build": "node build.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "archiver": "^7.0.1",
@@ -26,6 +28,8 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.5.0",
     "javascript-obfuscator": "^4.2.2",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.2"
   },
