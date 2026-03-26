@@ -1,10 +1,6 @@
 const logger = require('../utils/logger');
 
 const ADMIN_KEY = process.env.ADMIN_KEY;
-if (!ADMIN_KEY && process.env.NODE_ENV === 'production') {
-  logger.fatal('ADMIN_KEY environment variable is required in production. Exiting.');
-  process.exit(1);
-}
 if (!ADMIN_KEY) {
   logger.warn('ADMIN_KEY not set — using insecure default. Set ADMIN_KEY env var before deploying.');
 }
