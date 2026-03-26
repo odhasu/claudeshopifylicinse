@@ -588,7 +588,7 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
                   </td>
                 </tr>
               ))}
-              ))}  {filteredLicenses.length === 0 && (
+              {filteredLicenses.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">
                     {searchQuery || statusFilter !== "all" || planFilter !== "all"
