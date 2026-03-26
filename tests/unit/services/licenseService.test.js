@@ -221,3 +221,32 @@ describe('validateLicense', () => {
     expect(result.valid).toBe(true);
   });
 });
+
+// ─── validateLicense — additional error scenarios ─────────────────────────────
+
+describe('validateLicense — error handling', () => {
+  test('returns valid:false with "invalid_key" when both KV and local store are empty', async () => {
+    kvGetLicenses.mockRejectedValue(new Error('KV unavailable'));
+    getStore.mockReturnValue({ licenses: [], request_log: [] });
+
+    const result = await validateLicense('VVVV-WWWW-XXXX-YYYY', 'test-store.myshopify.com');
+    expect(result.valid).toBe(false);
+    expect(result.reason).toBe('invalid_key');
+  });
+});
+
+// ─── createLicense — error handling ──────────────────────────────────────────
+
+describe('createLicense — error handling', () => {
+  test('falls back to local store when kvSaveLicenses throws (resilient write path)', async () => {
+    kvGetLicenses.mockResolvedValue([]);
+    kvSaveLicenses.mockRejectedValueOnce(new Error('KV write failed'));
+
+    // The service catches KV errors and falls back to the local store rather
+    // than propagating the error — this ensures license creation always succeeds
+    // even if Redis is temporarily unavailable.
+    const license = await createLicense({ plan: 'LITE', email: 'fail@example.com' });
+    expect(license).toMatchObject({ plan: 'LITE', email: 'fail@example.com', active: 1 });
+    expect(license.license_key).toMatch(/^[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/);
+  });
+});

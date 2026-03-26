@@ -11,6 +11,8 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -47,6 +49,8 @@ jobs:
   build-frontend:
     name: Frontend Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: frontend

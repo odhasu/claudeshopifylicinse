@@ -100,8 +100,10 @@ describe('POST /api/v3/render', () => {
       .post('/api/v3/render')
       .send({
         ...validBody,
-        // Use empty settings to avoid a pre-existing Zod v4 incompatibility with
-        // z.record(z.unknown()) when parsing non-empty settings objects.
+        // Sections with non-empty settings hit a known Zod 4.3.x issue where
+        // z.record(z.unknown()) inside a nested array schema throws instead of
+        // returning a parse error. Use an empty settings object to stay in the
+        // happy path and still exercise the section-rendering code path.
         sections: [{ type: 'footer', settings: {} }],
       });
 
