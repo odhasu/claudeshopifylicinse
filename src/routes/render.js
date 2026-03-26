@@ -8,70 +8,80 @@ const renderers = require('../renderers');
 const { getCriticalCSS, getKillSwitchCSS } = require('../renderers/css');
 const normalizeDomain = require('../utils/domainNorm');
 
-router.post('/v3/render', validate(schemas.render), (req, res) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
-  const userAgent = req.headers['user-agent'] || '';
+router.post('/v3/render', validate(schemas.render), async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+    const userAgent = req.headers['user-agent'] || '';
 
-  if (!rateLimit(ip, 'render', 60)) return res.status(429).json({ error: 'rate_limited' });
+    if (!rateLimit(ip, 'render', 60)) return res.status(429).json({ error: 'rate_limited' });
 
-  const { licenseKey, domain, permanentDomain, sections, colors, brandName, logoUrl, chatbot, urgency } = req.body;
+    const { licenseKey, domain, permanentDomain, sections, colors, brandName, logoUrl, chatbot, urgency } = req.body;
 
-  let result = validateLicense(licenseKey, domain);
-  if (!result.valid && permanentDomain) result = validateLicense(licenseKey, permanentDomain);
+    let result = await validateLicense(licenseKey, domain);
+    if (!result.valid && permanentDomain) result = await validateLicense(licenseKey, permanentDomain);
 
-  if (!result.valid) {
-    logRequest(licenseKey, domain, ip, userAgent, result.reason);
+    if (!result.valid) {
+      logRequest(licenseKey, domain, ip, userAgent, result.reason);
 
-    let footerHtml = '';
-    const cfg = { brandName: brandName || '', logoUrl: logoUrl || null, chatbot: chatbot || {}, urgency: urgency || {} };
-    if (sections && Array.isArray(sections)) {
-      const footerSection = sections.find(s => s.type === 'footer');
-      if (footerSection && renderers['footer']) {
-        try { footerHtml = renderers['footer'](footerSection.settings || {}, null, colors || {}, cfg); } catch(e) {}
+      let footerHtml = '';
+      const cfg = { brandName: brandName || '', logoUrl: logoUrl || null, chatbot: chatbot || {}, urgency: urgency || {} };
+      if (sections && Array.isArray(sections)) {
+        const footerSection = sections.find(s => s.type === 'footer');
+        if (footerSection && renderers['footer']) {
+          try { footerHtml = renderers['footer'](footerSection.settings || {}, null, colors || {}, cfg); } catch(e) {}
+        }
       }
+
+      return res.status(403).json({
+        error: result.reason,
+        killCSS: getKillSwitchCSS(),
+        footerHtml: footerHtml,
+        message: result.reason === 'domain_mismatch' ? 'This license is not authorized for this domain.'
+          : result.reason === 'expired' ? 'License has expired.' : 'Invalid license key.'
+      });
     }
 
-    return res.status(403).json({
-      error: result.reason,
-      killCSS: getKillSwitchCSS(),
-      footerHtml: footerHtml,
-      message: result.reason === 'domain_mismatch' ? 'This license is not authorized for this domain.'
-        : result.reason === 'expired' ? 'License has expired.' : 'Invalid license key.'
-    });
-  }
+    logRequest(licenseKey, domain, ip, userAgent, 'success');
 
-  logRequest(licenseKey, domain, ip, userAgent, 'success');
+    const renderedSections = [];
+    const cfg = { brandName: brandName || '', logoUrl: logoUrl || null, chatbot: chatbot || {}, urgency: urgency || {} };
 
-  const renderedSections = [];
-  const cfg = { brandName: brandName || '', logoUrl: logoUrl || null, chatbot: chatbot || {}, urgency: urgency || {} };
-
-  if (sections && Array.isArray(sections)) {
-    for (const section of sections) {
-      const renderer = renderers[section.type];
-      if (renderer) {
-        try {
-          const html = renderer(section.settings || {}, section.products || null, colors || {}, cfg);
-          renderedSections.push({ type: section.type, elementId: section.elementId, html });
-        } catch (e) {
-          renderedSections.push({ type: section.type, elementId: section.elementId, html: '' });
+    if (sections && Array.isArray(sections)) {
+      for (const section of sections) {
+        const renderer = renderers[section.type];
+        if (renderer) {
+          try {
+            const html = renderer(section.settings || {}, section.products || null, colors || {}, cfg);
+            renderedSections.push({ type: section.type, elementId: section.elementId, html });
+          } catch (e) {
+            renderedSections.push({ type: section.type, elementId: section.elementId, html: '' });
+          }
         }
       }
     }
-  }
 
-  res.json({ status: 'ok', css: getCriticalCSS(), js: '', sections: renderedSections, version: '3.0.0', plan: result.license.plan });
+    res.json({ status: 'ok', css: getCriticalCSS(), js: '', sections: renderedSections, version: '3.0.0', plan: result.license.plan });
+  } catch (error) {
+    console.error('[Render] Error:', error);
+    res.status(500).json({ error: 'Server error', killCSS: getKillSwitchCSS() });
+  }
 });
 
-router.post('/v1/load', (req, res) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
-  const userAgent = req.headers['user-agent'] || '';
-  if (!rateLimit(ip, 'render', 60)) return res.status(429).json({ error: 'rate_limited' });
-  const { licenseKey, domain, permanentDomain } = req.body;
-  if (!licenseKey || !domain) return res.status(400).json({ error: 'missing_params' });
-  let result = validateLicense(licenseKey, domain);
-  if (!result.valid && permanentDomain) result = validateLicense(licenseKey, permanentDomain);
-  if (!result.valid) return res.status(403).json({ error: result.reason, killCSS: getKillSwitchCSS() });
-  res.json({ status: 'ok', css: getCriticalCSS(), js: '', version: '3.0.0', plan: result.license.plan });
+router.post('/v1/load', async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+    const userAgent = req.headers['user-agent'] || '';
+    if (!rateLimit(ip, 'render', 60)) return res.status(429).json({ error: 'rate_limited' });
+    const { licenseKey, domain, permanentDomain } = req.body;
+    if (!licenseKey || !domain) return res.status(400).json({ error: 'missing_params' });
+    let result = await validateLicense(licenseKey, domain);
+    if (!result.valid && permanentDomain) result = await validateLicense(licenseKey, permanentDomain);
+    if (!result.valid) return res.status(403).json({ error: result.reason, killCSS: getKillSwitchCSS() });
+    res.json({ status: 'ok', css: getCriticalCSS(), js: '', version: '3.0.0', plan: result.license.plan });
+  } catch (error) {
+    console.error('[Load] Error:', error);
+    res.status(500).json({ error: 'Server error', killCSS: getKillSwitchCSS() });
+  }
 });
 
 router.get('/remote-content', (req, res) => {

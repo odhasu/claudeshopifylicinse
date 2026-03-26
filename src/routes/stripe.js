@@ -6,6 +6,7 @@ const { getStripe, STRIPE_WEBHOOK_SECRET, PLAN_PRICES } = require('../services/s
 const { getStore, saveStore } = require('../services/storeService');
 const { generateLicenseKey, createLicense } = require('../services/licenseService');
 const { sendWelcomeEmail } = require('../services/emailService');
+const { kvGetLicenses } = require('../services/kvService');
 
 // Stripe Webhook (raw body required — mounted separately in index.js)
 async function handleWebhook(req, res) {
@@ -29,7 +30,8 @@ async function handleWebhook(req, res) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
-    if (store.licenses.find(l => l.stripe_session_id === session.id)) {
+    const licenses = await kvGetLicenses();
+    if (licenses.find(l => l.stripe_session_id === session.id)) {
       console.log('[Webhook] Duplicate event — license already exists for session', session.id);
       return res.json({ received: true });
     }
@@ -38,7 +40,7 @@ async function handleWebhook(req, res) {
     const name  = session.customer_details?.name  || null;
     const plan  = session.metadata?.plan || 'LITE';
 
-    const license = createLicense({
+    const license = await createLicense({
       username: name || email || '',
       domain: '*',
       permanent_domain: '*',
@@ -56,7 +58,8 @@ async function handleWebhook(req, res) {
   if (event.type === 'payment_intent.succeeded') {
     const pi = event.data.object;
 
-    if (store.licenses.find(l => l.stripe_payment_intent_id === pi.id)) {
+    const licenses = await kvGetLicenses();
+    if (licenses.find(l => l.stripe_payment_intent_id === pi.id)) {
       console.log('[Webhook] Duplicate event — license already exists for PaymentIntent', pi.id);
       return res.json({ received: true });
     }
@@ -65,7 +68,7 @@ async function handleWebhook(req, res) {
     const name  = pi.metadata?.customer_name || null;
     const plan  = pi.metadata?.plan || 'LITE';
 
-    const license = createLicense({
+    const license = await createLicense({
       username: name || email || '',
       domain: '*',
       permanent_domain: '*',

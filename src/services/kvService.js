@@ -33,4 +33,28 @@ async function kvSaveTickets(tickets) {
   saveStore();
 }
 
-module.exports = { kvGetTickets, kvSaveTickets, KV_ENABLED };
+async function kvGetLicenses() {
+  if (KV_ENABLED) {
+    try {
+      const raw = await upstashCmd(['GET', 'vexel_licenses']);
+      return raw ? JSON.parse(raw) : [];
+    } catch(e) { 
+      console.error('[KV] licenses read error:', e.message);
+      return getStore().licenses || [];
+    }
+  }
+  return getStore().licenses || [];
+}
+
+async function kvSaveLicenses(licenses) {
+  if (KV_ENABLED) {
+    try { 
+      await upstashCmd(['SET', 'vexel_licenses', JSON.stringify(licenses)]);
+      return;
+    } catch(e) { console.error('[KV] licenses write error:', e.message); }
+  }
+  getStore().licenses = licenses;
+  saveStore();
+}
+
+module.exports = { kvGetTickets, kvSaveTickets, kvGetLicenses, kvSaveLicenses, KV_ENABLED };

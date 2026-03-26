@@ -42,6 +42,26 @@ if (!store.licenses.find(l => l.license_key === 'og')) {
   console.log('[Scaled] Seeded universal "og" license');
 }
 
+// Initialize Redis with licenses from store.json on startup
+async function initRedisLicenses() {
+  try {
+    const { kvGetLicenses, kvSaveLicenses, KV_ENABLED } = require('./kvService');
+    if (KV_ENABLED) {
+      const redisLicenses = await kvGetLicenses();
+      // If Redis is empty, seed it with store.json data
+      if (!redisLicenses || redisLicenses.length === 0) {
+        console.log('[Init] Seeding Redis with licenses from store.json');
+        await kvSaveLicenses(store.licenses);
+      }
+    }
+  } catch(e) { 
+    console.error('[Init] Error seeding Redis licenses:', e.message);
+  }
+}
+
+// Call on startup
+initRedisLicenses();
+
 function getStore() { return store; }
 
 function nextId() { return store._nextId++; }

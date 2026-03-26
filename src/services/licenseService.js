@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const vxChecksum = require('../utils/checksum');
 const normalizeDomain = require('../utils/domainNorm');
 const { getStore, saveStore, nextId } = require('./storeService');
+const { kvGetLicenses, kvSaveLicenses } = require('./kvService');
 
 function generateLicenseKey() {
   const segments = [];
@@ -13,9 +14,9 @@ function generateLicenseKey() {
   return segments.join('-');
 }
 
-function validateLicense(licenseKey, domain) {
-  const store = getStore();
-  const license = store.licenses.find(l => l.license_key === licenseKey && l.active);
+async function validateLicense(licenseKey, domain) {
+  const licenses = await kvGetLicenses();
+  const license = licenses.find(l => l.license_key === licenseKey && l.active);
   if (!license) return { valid: false, reason: 'invalid_key' };
   if (license.expires_at && new Date(license.expires_at) < new Date()) {
     return { valid: false, reason: 'expired' };
@@ -38,7 +39,14 @@ function validateLicense(licenseKey, domain) {
 
   license.last_verified_at = new Date().toISOString();
   license.request_count = (license.request_count || 0) + 1;
-  saveStore();
+  
+  // Update in persistent storage
+  const updatedIndex = licenses.findIndex(l => l.license_key === licenseKey);
+  if (updatedIndex !== -1) {
+    licenses[updatedIndex] = license;
+    await kvSaveLicenses(licenses);
+  }
+  
   return { valid: true, license };
 }
 
@@ -57,8 +65,8 @@ function logRequest(licenseKey, domain, ip, userAgent, status) {
   saveStore();
 }
 
-function createLicense(data) {
-  const store = getStore();
+async function createLicense(data) {
+  const licenses = await kvGetLicenses();
   const licenseKey = generateLicenseKey();
   const license = {
     id: nextId(),
@@ -79,8 +87,15 @@ function createLicense(data) {
     stripe_payment_intent_id: data.stripe_payment_intent_id || null,
     notes: data.notes || ''
   };
+  
+  licenses.push(license);
+  await kvSaveLicenses(licenses);
+  
+  // Also update local store for fallback
+  const store = getStore();
   store.licenses.push(license);
   saveStore();
+  
   return license;
 }
 

@@ -5,43 +5,78 @@ const router = express.Router();
 const { requireAdmin } = require('../middleware/requireAdmin');
 const { validate, schemas } = require('../middleware/validate');
 const { getStore, saveStore, nextId } = require('../services/storeService');
-const { kvGetTickets, kvSaveTickets } = require('../services/kvService');
+const { kvGetTickets, kvSaveTickets, kvGetLicenses, kvSaveLicenses } = require('../services/kvService');
 const { generateLicenseKey } = require('../services/licenseService');
 const { sendTicketReplyEmail } = require('../services/emailService');
 
 // License CRUD
-router.post('/licenses', requireAdmin, validate(schemas.createLicense), (req, res) => {
-  const { username, domain, permanent_domain, store_name, plan, expires_at } = req.body;
-  const store = getStore();
-  const licenseKey = generateLicenseKey();
-  const license = {
-    id: nextId(),
-    license_key: licenseKey,
-    username: username || '',
-    domain,
-    permanent_domain: permanent_domain || '',
-    store_name: store_name || '',
-    plan: plan || 'standard',
-    active: 1,
-    created_at: new Date().toISOString(),
-    expires_at: expires_at || null,
-    last_verified_at: null,
-    request_count: 0
-  };
-  store.licenses.push(license);
-  saveStore();
-  res.json({ license_key: licenseKey, domain, plan: plan || 'standard', message: 'License created successfully' });
+router.post('/licenses', requireAdmin, validate(schemas.createLicense), async (req, res) => {
+  try {
+    const { username, domain, permanent_domain, store_name, plan, expires_at } = req.body;
+    const licenses = await kvGetLicenses();
+    const licenseKey = generateLicenseKey();
+    const license = {
+      id: nextId(),
+      license_key: licenseKey,
+      username: username || '',
+      domain,
+      permanent_domain: permanent_domain || '',
+      store_name: store_name || '',
+      plan: plan || 'standard',
+      active: 1,
+      created_at: new Date().toISOString(),
+      expires_at: expires_at || null,
+      last_verified_at: null,
+      request_count: 0
+    };
+    licenses.push(license);
+    await kvSaveLicenses(licenses);
+    
+    // Also update local store for fallback
+    const store = getStore();
+    store.licenses.push(license);
+    saveStore();
+    
+    res.json({ license_key: licenseKey, domain, plan: plan || 'standard', message: 'License created successfully' });
+  } catch (error) {
+    console.error('[Admin] Create license error:', error);
+    res.status(500).json({ error: 'Failed to create license' });
+  }
 });
 
-router.get('/licenses', requireAdmin, (req, res) => {
-  res.json({ licenses: getStore().licenses.slice().reverse() });
+router.get('/licenses', requireAdmin, async (req, res) => {
+  try {
+    const licenses = await kvGetLicenses();
+    res.json({ licenses: licenses.slice().reverse() });
+  } catch (error) {
+    console.error('[Admin] Get licenses error:', error);
+    res.status(500).json({ error: 'Failed to fetch licenses' });
+  }
 });
 
-router.delete('/licenses/:key', requireAdmin, (req, res) => {
-  const store = getStore();
-  const license = store.licenses.find(l => l.license_key === req.params.key);
-  if (license) { license.active = 0; saveStore(); res.json({ message: 'License revoked' }); }
-  else res.status(404).json({ error: 'License not found' });
+router.delete('/licenses/:key', requireAdmin, async (req, res) => {
+  try {
+    const licenses = await kvGetLicenses();
+    const license = licenses.find(l => l.license_key === req.params.key);
+    if (license) { 
+      license.active = 0; 
+      await kvSaveLicenses(licenses);
+      
+      // Also update local store
+      const store = getStore();
+      const localLicense = store.licenses.find(l => l.license_key === req.params.key);
+      if (localLicense) {
+        localLicense.active = 0;
+        saveStore();
+      }
+      
+      res.json({ message: 'License revoked' }); 
+    }
+    else res.status(404).json({ error: 'License not found' });
+  } catch (error) {
+    console.error('[Admin] Delete license error:', error);
+    res.status(500).json({ error: 'Failed to delete license' });
+  }
 });
 
 // Logs & Stats
