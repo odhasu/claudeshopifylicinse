@@ -171,10 +171,6 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
         : t
       ));
       setReplyText(r => ({ ...r, [ticket.id]: "" }));
-      // Open email client to actually send the reply
-      const subject = encodeURIComponent("Re: Your Vexel Support Request");
-      const body = encodeURIComponent(`Hi ${ticket.name},\n\n${msg}\n\n— Vexel Support`);
-      window.open(`mailto:${ticket.email}?subject=${subject}&body=${body}`);
     } finally { setSending(null); }
   }
 
@@ -315,7 +311,7 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
                       className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3a0ca3] focus:border-transparent resize-none"
                     />
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-xs text-slate-400">Saves reply + opens your email client to send</p>
+                      <p className="text-xs text-slate-400">Automatically sends email reply</p>
                       <button
                         onClick={() => sendReply(ticket)}
                         disabled={!replyText[ticket.id]?.trim() || sending === ticket.id}
