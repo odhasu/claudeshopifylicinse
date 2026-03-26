@@ -117,6 +117,65 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'X-Admin-Key'],
 }));
 
+// ─── Stripe Webhook (raw body required — must be before express.json) ───────
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+
+  if (!STRIPE_WEBHOOK_SECRET) {
+    console.error('[Webhook] STRIPE_WEBHOOK_SECRET not set');
+    return res.status(500).json({ error: 'Webhook secret not configured' });
+  }
+
+  let event;
+  try {
+    event = getStripe().webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('[Webhook] Signature verification failed:', err.message);
+    return res.status(400).send(`Webhook error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+
+    // Idempotency guard — Stripe delivers webhooks at least once
+    if (store.licenses.find(l => l.stripe_session_id === session.id)) {
+      console.log('[Webhook] Duplicate event — license already exists for session', session.id);
+      return res.json({ received: true });
+    }
+
+    const email = session.customer_details?.email || null;
+    const name  = session.customer_details?.name  || null;
+    const plan  = session.metadata?.plan || 'LITE';
+    const key   = generateLicenseKey();
+    const now   = new Date().toISOString();
+
+    store.licenses.push({
+      id:                store._nextId++,
+      license_key:       key,
+      username:          name || email || '',
+      domain:            '*',
+      permanent_domain:  '*',
+      store_name:        '',
+      plan,
+      active:            1,
+      created_at:        now,
+      expires_at:        null,
+      last_verified_at:  null,
+      request_count:     0,
+      email,
+      customer_name:     name,
+      stripe_session_id: session.id,
+      notes:             'Auto-created via Stripe checkout',
+    });
+    saveStore();
+    console.log(`[Webhook] License created: ${key} for ${email} (${plan})`);
+
+    await sendWelcomeEmail({ email, name, licenseKey: key, plan });
+  }
+
+  res.json({ received: true });
+});
+
 app.use(express.json({ limit: '1mb' }));
 
 // ─── Serve Next.js static site from /site ───────────────────────
@@ -129,11 +188,15 @@ app.use((req, res, next) => {
   if (req.path === '/') return next(); // Let static handle index.html
 
   const cleanPath = req.path.replace(/\/$/, ''); // Remove trailing slash
+
+  // Try path.html first (Next.js default export format)
   const htmlPath = path.join(siteDir, cleanPath + '.html');
-  
-  if (fs.existsSync(htmlPath)) {
-    return res.sendFile(htmlPath);
-  }
+  if (fs.existsSync(htmlPath)) return res.sendFile(htmlPath);
+
+  // Fallback: path/index.html (alternative export format)
+  const indexPath = path.join(siteDir, cleanPath, 'index.html');
+  if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
+
   next();
 });
 
@@ -878,6 +941,234 @@ app.get('/api/admin/download-theme', requireAdmin, (req, res) => {
   } catch(e) {
     res.status(500).json({ error: 'archiver not installed — run npm install' });
   }
+});
+
+// ─── Stripe Routes ──────────────────────────────────────────────
+const STRIPE_SECRET_KEY    = process.env.STRIPE_MODE === 'live'
+  ? process.env.STRIPE_SECRET_KEY
+  : (process.env.TEST_STRIPE_KEY || process.env.STRIPE_SECRET_KEY);
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+const RESEND_API_KEY        = process.env.RESEND_API_KEY;
+const RESEND_FROM           = process.env.RESEND_FROM_EMAIL || 'noreply@vexel.app';
+const SITE_URL              = process.env.SITE_URL || 'https://claudecodethemeshopify.vercel.app';
+
+const PLAN_PRICES = {
+  LITE: { amount: 17900, name: 'Vexel Lite', plan: 'LITE' },
+  PRO:  { amount: 37900, name: 'Vexel Pro',  plan: 'PRO'  },
+};
+
+function getStripe() {
+  if (!STRIPE_SECRET_KEY) throw new Error('No Stripe key set — add TEST_STRIPE_KEY or STRIPE_SECRET_KEY to your env');
+  console.log(`[Stripe] Using ${process.env.STRIPE_MODE === 'live' ? 'LIVE' : 'TEST'} key`);
+  const Stripe = require('stripe');
+  return new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' });
+}
+
+function getResend() {
+  if (!RESEND_API_KEY) return null;
+  const { Resend } = require('resend');
+  return new Resend(RESEND_API_KEY);
+}
+
+async function sendWelcomeEmail({ email, name, licenseKey, plan }) {
+  const resend = getResend();
+  if (!resend || !email) {
+    console.log('[Email] Skipping — Resend not configured or no email address');
+    return;
+  }
+  const planKey = (plan || 'LITE').toUpperCase() === 'PRO' ? 'PRO' : 'LITE';
+  const planName = planKey === 'PRO' ? 'Vexel Pro' : 'Vexel Lite';
+  const loginUrl = `${SITE_URL}/theme/account`;
+
+  const planFeatures = planKey === 'PRO'
+    ? ['Full theme with 140+ features', '3 store licenses', '1-on-1 full store setup call',
+       'Unlimited store remakes if banned', 'Private Vexel community access', 'Priority support',
+       'Done-for-you product listings', 'Lifetime updates']
+    : ['Full theme with 140+ features', '1 store license', 'Product image generator',
+       'Product list generator', 'Built-in setup support', 'Complete documentation', 'Lifetime updates'];
+
+  const featuresHtml = planFeatures.map(f => `<li style="padding:4px 0;color:#475569;">${f}</li>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+        <tr>
+          <td style="background:#3a0ca3;padding:32px 40px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">Welcome to Vexel</h1>
+            <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:14px;">Your ${planName} purchase is confirmed</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 40px;">
+            <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 24px;">
+              ${name ? `Hi ${name},<br><br>` : ''}Thank you for your purchase! Your license is ready to use.
+            </p>
+            <div style="background:#f1f5f9;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+              <h2 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">Your License Key</h2>
+              <p style="margin:0;font-family:monospace;font-size:18px;font-weight:700;color:#3a0ca3;letter-spacing:2px;">${licenseKey}</p>
+              <p style="margin:12px 0 0;color:#94a3b8;font-size:11px;">Enter this key in your Shopify theme settings to activate. Keep it safe &mdash; it&rsquo;s tied to your purchase.</p>
+            </div>
+            <div style="margin-bottom:24px;">
+              <h2 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">How to Get Started</h2>
+              <ol style="margin:0;padding-left:20px;color:#475569;font-size:14px;line-height:1.8;">
+                <li>Go to your account page and download the Vexel theme ZIP</li>
+                <li>Upload the theme to your Shopify store</li>
+                <li>Enter your license key in the theme settings to activate</li>
+                <li>Customise and publish your store</li>
+              </ol>
+            </div>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${loginUrl}" style="display:inline-block;background:#3a0ca3;color:#ffffff;font-size:15px;font-weight:600;padding:14px 36px;border-radius:10px;text-decoration:none;">Go to My Account &rarr;</a>
+            </div>
+            <div style="background:#f8f6ff;border:1px solid #e9e5f5;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+              <h2 style="margin:0 0 12px;color:#3a0ca3;font-size:16px;font-weight:700;">What&rsquo;s Included in ${planName}</h2>
+              <ul style="margin:0;padding-left:20px;list-style:disc;font-size:13px;line-height:1.6;">${featuresHtml}</ul>
+            </div>
+            <div style="border-top:1px solid #e2e8f0;padding-top:20px;">
+              <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0;">
+                Need help? Visit our <a href="${SITE_URL}/theme/docs" style="color:#3a0ca3;font-weight:600;">documentation</a> or reach out to <a href="${SITE_URL}/theme/support" style="color:#3a0ca3;font-weight:600;">support</a>.
+              </p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 40px;text-align:center;">
+            <p style="margin:0;color:#94a3b8;font-size:11px;">Vexel &mdash; Premium Shopify Theme</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const result = await resend.emails.send({
+      from: RESEND_FROM,
+      to: email,
+      subject: `Your ${planName} License Key`,
+      html,
+    });
+    console.log(`[Email] Welcome email sent to ${email}`, result?.data?.id || '');
+  } catch (err) {
+    // Don't re-throw — email failure must not roll back license creation
+    console.error('[Email] Failed to send welcome email:', err.message);
+  }
+}
+
+// Custom checkout: create a PaymentIntent and return client secret
+app.post('/api/stripe/create-payment-intent', async (req, res) => {
+  const { plan } = req.body;
+  if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan. Use LITE or PRO.' });
+  try {
+    const stripe = getStripe();
+    const { amount, name } = PLAN_PRICES[plan];
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      metadata: { plan, planName: name },
+      automatic_payment_methods: { enabled: true },
+    });
+    res.json({ clientSecret: paymentIntent.client_secret, amount, planName: name, plan });
+  } catch (err) {
+    console.error('[Stripe] create-payment-intent error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Retrieve PaymentIntent status (used by success page)
+app.get('/api/stripe/payment-intent', async (req, res) => {
+  const { payment_intent } = req.query;
+  if (!payment_intent) return res.status(400).json({ error: 'payment_intent required' });
+  try {
+    const stripe = getStripe();
+    const pi = await stripe.paymentIntents.retrieve(payment_intent);
+    res.json({
+      plan:     pi.metadata?.plan     || null,
+      planName: pi.metadata?.planName || null,
+      email:    pi.receipt_email      || null,
+      status:   pi.status,
+    });
+  } catch (err) {
+    console.error('[Stripe] payment-intent retrieve error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Stripe Checkout Session — creates a hosted Stripe checkout page
+app.post('/api/stripe/checkout', async (req, res) => {
+  const { plan } = req.body;
+  if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan. Use LITE or PRO.' });
+  try {
+    const stripe = getStripe();
+    const { amount, name } = PLAN_PRICES[plan];
+    const origin = req.headers.origin || `https://${req.headers.host}` || 'https://claudecodethemeshopify.vercel.app';
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          unit_amount: amount,
+          product_data: {
+            name,
+            description: 'Lifetime license · Free updates · Instant download',
+            images: ['https://claudecodethemeshopify.vercel.app/diamond-logo.svg'],
+          },
+        },
+        quantity: 1,
+      }],
+      success_url: `${origin}/theme/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/theme/pricing`,
+      metadata: { plan },
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('[Stripe] checkout error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Retrieve Checkout Session (used by success page)
+app.get('/api/stripe/session', async (req, res) => {
+  const { session_id } = req.query;
+  if (!session_id) return res.status(400).json({ error: 'session_id required' });
+  try {
+    const stripe = getStripe();
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    res.json({
+      plan:  session.metadata?.plan || 'Unknown',
+      email: session.customer_email || session.customer_details?.email || null,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Look up a license by its Stripe checkout session ID (unauthenticated — session_id is the token)
+app.get('/api/licenses/by-session/:session_id', (req, res) => {
+  const { session_id } = req.params;
+  if (!session_id || !session_id.startsWith('cs_')) {
+    return res.status(400).json({ error: 'Invalid session_id' });
+  }
+  const lic = store.licenses.find(l => l.stripe_session_id === session_id);
+  if (!lic) {
+    // Webhook may not have fired yet — client should poll
+    return res.status(404).json({ error: 'License not ready yet' });
+  }
+  res.json({
+    license_key: lic.license_key,
+    plan:        lic.plan,
+    email:       lic.email || null,
+    created_at:  lic.created_at,
+  });
 });
 
 // ─── Fallback 404 ────────────────────────────────────────────────

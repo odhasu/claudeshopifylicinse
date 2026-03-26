@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build && rm -rf ../site && cp -r out ../site",
+    "build": "next build && node -e \"const fs=require('fs');const path=require('path');fs.rmSync('../site',{recursive:true,force:true});fs.cpSync('out','../site',{recursive:true});\"",
     "build:github": "node build-static.mjs",
     "start": "next start",
     "lint": "eslint",
-    "vercel-build": "next build && rm -rf ../site && cp -r out ../site"
+    "vercel-build": "next build && node -e \"const fs=require('fs');const path=require('path');fs.rmSync('../site',{recursive:true,force:true});fs.cpSync('out','../site',{recursive:true});\""
   },
   "dependencies": {
     "@number-flow/react": "^0.6.0",

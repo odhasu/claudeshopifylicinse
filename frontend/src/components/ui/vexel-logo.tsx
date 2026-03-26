@@ -8,7 +8,8 @@ export function VexelLogo() {
   // Hide on docs page (handle basePath + trailing slash)
   const isDocsPage = /\/theme\/docs\/?$/.test(pathname)
   const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/')
-  if (isDocsPage || isAdminPage) return null
+  const isCheckout = pathname.startsWith('/theme/checkout')
+  if (isDocsPage || isAdminPage || isCheckout) return null
   return (
     <Link
       href="/"
