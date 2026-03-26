@@ -29,66 +29,96 @@ async function handleWebhook(req, res) {
     const { ensureRedisInitialized } = require('../services/storeService');
     await ensureRedisInitialized();
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      console.log(`[Webhook] Processing checkout.session.completed: ${session.id}`);
 
-    const licenses = await kvGetLicenses();
-    if (licenses.find(l => l.stripe_session_id === session.id)) {
-      console.log('[Webhook] Duplicate event — license already exists for session', session.id);
+      const licenses = await kvGetLicenses();
+      if (licenses.find(l => l.stripe_session_id === session.id)) {
+        console.log('[Webhook] Duplicate event — license already exists for session', session.id);
+        return res.json({ received: true });
+      }
+
+      const email = session.customer_details?.email || null;
+      const name  = session.customer_details?.name  || null;
+      const plan  = session.metadata?.plan || 'LITE';
+
+      if (!email && !name) {
+        console.warn(`[Webhook] Warning: No email or name provided for session ${session.id}`);
+      }
+
+      const license = await createLicense({
+        username: name || email || 'Unknown',
+        domain: '*',
+        permanent_domain: '*',
+        plan,
+        email,
+        customer_name: name,
+        stripe_session_id: session.id,
+        notes: 'Auto-created via Stripe checkout',
+      });
+      console.log(`[Webhook] License created: ${license.license_key} for ${email || name || 'unknown'} (${plan})`);
+
+      // Send email — doesn't fail the webhook if it errors
+      try {
+        await sendWelcomeEmail({ email, name, licenseKey: license.license_key, plan });
+        console.log(`[Webhook] Welcome email queued for ${email || 'no-email'}`);
+      } catch (emailErr) {
+        console.error(`[Webhook] Warning: Failed to send email for license ${license.license_key}:`, emailErr.message);
+        // Continue — license is created even if email fails
+      }
+
       return res.json({ received: true });
     }
 
-    const email = session.customer_details?.email || null;
-    const name  = session.customer_details?.name  || null;
-    const plan  = session.metadata?.plan || 'LITE';
+    if (event.type === 'payment_intent.succeeded') {
+      const pi = event.data.object;
+      console.log(`[Webhook] Processing payment_intent.succeeded: ${pi.id}`);
 
-    const license = await createLicense({
-      username: name || email || '',
-      domain: '*',
-      permanent_domain: '*',
-      plan,
-      email,
-      customer_name: name,
-      stripe_session_id: session.id,
-      notes: 'Auto-created via Stripe checkout',
-    });
-    console.log(`[Webhook] License created: ${license.license_key} for ${email} (${plan})`);
+      const licenses = await kvGetLicenses();
+      if (licenses.find(l => l.stripe_payment_intent_id === pi.id)) {
+        console.log('[Webhook] Duplicate event — license already exists for PaymentIntent', pi.id);
+        return res.json({ received: true });
+      }
 
-    await sendWelcomeEmail({ email, name, licenseKey: license.license_key, plan });
-  }
+      const email = pi.receipt_email || pi.metadata?.email || null;
+      const name  = pi.metadata?.customer_name || null;
+      const plan  = pi.metadata?.plan || 'LITE';
 
-  if (event.type === 'payment_intent.succeeded') {
-    const pi = event.data.object;
+      if (!email && !name) {
+        console.warn(`[Webhook] Warning: No email or name provided for PaymentIntent ${pi.id}`);
+      }
 
-    const licenses = await kvGetLicenses();
-    if (licenses.find(l => l.stripe_payment_intent_id === pi.id)) {
-      console.log('[Webhook] Duplicate event — license already exists for PaymentIntent', pi.id);
+      const license = await createLicense({
+        username: name || email || 'Unknown',
+        domain: '*',
+        permanent_domain: '*',
+        plan,
+        email,
+        customer_name: name,
+        stripe_payment_intent_id: pi.id,
+        notes: 'Auto-created via Stripe PaymentIntent',
+      });
+      console.log(`[Webhook] License created: ${license.license_key} for ${email || name || 'unknown'} (${plan}) [PaymentIntent]`);
+
+      // Send email — doesn't fail the webhook if it errors
+      try {
+        await sendWelcomeEmail({ email, name, licenseKey: license.license_key, plan });
+        console.log(`[Webhook] Welcome email queued for ${email || 'no-email'}`);
+      } catch (emailErr) {
+        console.error(`[Webhook] Warning: Failed to send email for license ${license.license_key}:`, emailErr.message);
+        // Continue — license is created even if email fails
+      }
+
       return res.json({ received: true });
     }
 
-    const email = pi.receipt_email || pi.metadata?.email || null;
-    const name  = pi.metadata?.customer_name || null;
-    const plan  = pi.metadata?.plan || 'LITE';
-
-    const license = await createLicense({
-      username: name || email || '',
-      domain: '*',
-      permanent_domain: '*',
-      plan,
-      email,
-      customer_name: name,
-      stripe_payment_intent_id: pi.id,
-      notes: 'Auto-created via Stripe PaymentIntent',
-    });
-    console.log(`[Webhook] License created: ${license.license_key} for ${email} (${plan}) [PaymentIntent]`);
-
-    await sendWelcomeEmail({ email, name, licenseKey: license.license_key, plan });
-  }
-
-  res.json({ received: true });
+    console.log(`[Webhook] Ignoring event type: ${event.type}`);
+    res.json({ received: true });
   } catch (error) {
-    console.error('[Webhook] Processing error:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
+    console.error('[Webhook] Processing error:', error.message, error.stack);
+    // Return 500 so Stripe retries, but log the issue
+    res.status(500).json({ error: 'Webhook processing failed', message: error.message });
   }
 }
 
