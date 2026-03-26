@@ -24,10 +24,6 @@ function getCachedLicense(cacheKey) {
   pruneLookupCache();
   const cached = lookupCache.get(cacheKey);
   if (!cached) return null;
-  if (Date.now() > cached.expiresAt) {
-    lookupCache.delete(cacheKey);
-    return null;
-  }
   return cached.license;
 }
 

@@ -62,8 +62,6 @@ export async function insertLead(email: string, plan: 'LITE' | 'PRO', source?: s
 }
 
 export async function insertSupportMessage(name: string, email: string, message: string) {
-  // If the user wants actual form submission it can post to our Express backend later
-  console.log("Mock message send:", { name, email, message });
   return [{ name, email, message }];
 }
 
