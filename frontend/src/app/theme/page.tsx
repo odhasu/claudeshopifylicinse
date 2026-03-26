@@ -238,7 +238,7 @@ export default function Page() {
         <Pricing
           plans={VEXEL_PLANS}
           title="Choose Your Plan"
-          description="One-time payment. Lifetime access. No subscriptions."
+          description="One time price. Yours for life."
         />
       </section>
 
