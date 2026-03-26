@@ -130,19 +130,25 @@ export function Pricing({
                     LITE
                   </span>
 
-                  {/* Name */}
-                  <div>
-                    <h3 className="text-2xl font-extrabold text-slate-900">
-                      {plan.displayName || plan.name}
-                    </h3>
-                    {/* Price */}
-                    <div className="flex items-end gap-1 mt-2">
-                      <span className="text-5xl font-extrabold text-slate-900 tracking-tight">
-                        ${plan.price}
-                      </span>
+                  {/* Name + icon row */}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-2xl font-extrabold text-slate-900">
+                        {plan.displayName || plan.name}
+                      </h3>
+                      {/* Price */}
+                      <div className="flex items-end gap-1 mt-2">
+                        <span className="text-5xl font-extrabold text-slate-900 tracking-tight">
+                          ${plan.price}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-sm mt-1">{plan.period}</p>
+                      <p className="text-slate-400 text-sm mt-0.5">{plan.description}</p>
                     </div>
-                    <p className="text-slate-400 text-sm mt-1">{plan.period}</p>
-                    <p className="text-slate-400 text-sm mt-0.5">{plan.description}</p>
+                    {/* Store icon */}
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-3xl shadow-sm border border-slate-200/80 flex-shrink-0 mt-1">
+                      🛍️
+                    </div>
                   </div>
 
                   {/* Features */}
