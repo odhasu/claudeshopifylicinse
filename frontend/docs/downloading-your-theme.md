@@ -10,3 +10,10 @@ If you can't find the email, check your spam folder or log in to your Account da
 The theme downloads as a .zip archive. Keep this file as-is; Shopify requires the compressed format when uploading. Do not unzip or rezip the file as this may corrupt the package.
 
 If your download link has expired or you've lost access, contact support and we'll generate a fresh link for you right away.
+
+---
+
+[Back to Documentation](README.md)
+
+**Related Articles:** [Quick Start Guide](quick-start-guide.md) | [Downloading Your Theme](downloading-your-theme.md) | [Installing in Shopify](installing-in-shopify.md) | [After Your Purchase](after-your-purchase.md)
+

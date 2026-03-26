@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 const START_VALUE = 2_810_825_243
 const MIN_INCREMENT = 20
@@ -16,7 +16,6 @@ function formatSalesCount(n: number) {
 
 export function SalesBadge() {
   const [value, setValue] = useState(START_VALUE)
-  const [mounted, setMounted] = useState(false)
   const timeoutRef = useRef<number | null>(null)
   const rafRef = useRef<number | null>(null)
   
@@ -32,7 +31,11 @@ export function SalesBadge() {
   const phaseRef = useRef<'increment' | 'scheduled'>('scheduled')
   const initializedRef = useRef(false)
 
-  const safeLocalStorage = {
+  const scheduleValueUpdate = useCallback((nextValue: number) => {
+    window.setTimeout(() => setValue(nextValue), 0)
+  }, [])
+
+  const safeLocalStorage = useMemo(() => ({
     getItem(key: string): string | null {
       try { return localStorage.getItem(key) } catch { return null }
     },
@@ -42,9 +45,9 @@ export function SalesBadge() {
     removeItem(key: string): void {
       try { localStorage.removeItem(key) } catch {}
     },
-  }
+  }), [])
 
-  const resetSession = () => {
+  const resetSession = useCallback(() => {
     sessionStartRef.current = null
     sessionStartTimeRef.current = null
     incrementAnimationStartRef.current = null
@@ -54,16 +57,9 @@ export function SalesBadge() {
     setValue(START_VALUE)
     safeLocalStorage.removeItem('salesBadgeSessionStart')
     safeLocalStorage.removeItem('salesBadgeValue')
-  }
-
-  // Hydration fix
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  }, [safeLocalStorage])
 
   useEffect(() => {
-    if (!mounted) return
-    
     if (initializedRef.current) return
     initializedRef.current = true
 
@@ -78,7 +74,7 @@ export function SalesBadge() {
       if (sessionElapsed < SESSION_DURATION_MS) {
         // Session still valid, restore the saved value
         const savedValueNumber = parseInt(savedValue, 10)
-        setValue(savedValueNumber)
+        scheduleValueUpdate(savedValueNumber)
         sessionStartTimeRef.current = sessionStartTime
         incrementAnimationTargetRef.current = savedValueNumber
         incrementAnimationStartValueRef.current = savedValueNumber
@@ -89,26 +85,23 @@ export function SalesBadge() {
         safeLocalStorage.removeItem('salesBadgeValue')
         sessionStartTimeRef.current = Date.now()
         safeLocalStorage.setItem('salesBadgeSessionStart', sessionStartTimeRef.current.toString())
-        setValue(START_VALUE)
+        scheduleValueUpdate(START_VALUE)
       }
     } else {
       // First load, save the session start time
       const now = Date.now()
       sessionStartTimeRef.current = now
       safeLocalStorage.setItem('salesBadgeSessionStart', now.toString())
-      setValue(START_VALUE)
+      scheduleValueUpdate(START_VALUE)
     }
-  }, [mounted])
+  }, [safeLocalStorage, scheduleValueUpdate])
 
   // Save value to localStorage whenever it changes (after mount)
   useEffect(() => {
-    if (!mounted) return
     safeLocalStorage.setItem('salesBadgeValue', Math.floor(value).toString())
-  }, [value, mounted])
+  }, [value, safeLocalStorage])
 
   useEffect(() => {
-    if (!mounted) return
-
     const scheduleNext = () => {
       const delay = Math.floor(Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS + 1)) + MIN_DELAY_MS
       timeoutRef.current = window.setTimeout(() => {
@@ -170,7 +163,7 @@ export function SalesBadge() {
       if (rafRef.current) window.cancelAnimationFrame(rafRef.current)
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current)
     }
-  }, [mounted])
+  }, [resetSession])
 
   return (
     <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-background/5 border border-border backdrop-blur-lg shadow-lg">

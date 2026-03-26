@@ -18,6 +18,9 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
+const { randomUUID } = require('crypto');
+const logger = require('./src/utils/logger');
+const rateLimit = require('./src/middleware/rateLimit');
 
 // Initialize store (must happen before routes import it)
 require('./src/services/storeService');
@@ -63,7 +66,8 @@ app.use(cors({
     callback(null, false);
   },
   methods: ['GET', 'POST', 'DELETE', 'PUT'],
-  allowedHeaders: ['Content-Type', 'X-Admin-Key'],
+  allowedHeaders: ['Content-Type', 'X-Admin-Key', 'X-Request-Id'],
+  exposedHeaders: ['X-Request-Id'],
 }));
 
 // ─── Stripe Webhook (raw body — must be before express.json) ────
@@ -71,6 +75,42 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), hand
 
 // ─── Body Parser ─────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));
+
+// Handle malformed JSON payloads with a controlled response.
+app.use((err, req, res, next) => {
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'invalid_json', request_id: req.requestId || null });
+  }
+  return next(err);
+});
+
+// ─── Request Tracking & Access Logs ──────────────────────────────
+app.use((req, res, next) => {
+  const startedAt = Date.now();
+  const requestIdHeader = req.headers['x-request-id'];
+  const sanitizedRequestId = typeof requestIdHeader === 'string'
+    ? requestIdHeader.trim().replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 100)
+    : '';
+  const requestId = sanitizedRequestId
+    ? sanitizedRequestId
+    : randomUUID();
+  req.requestId = requestId;
+  res.setHeader('X-Request-Id', requestId);
+
+  res.on('finish', () => {
+    logger.info({
+      request_id: requestId,
+      method: req.method,
+      path: req.originalUrl,
+      status_code: res.statusCode,
+      duration_ms: Date.now() - startedAt,
+      ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown',
+      user_agent: req.headers['user-agent'] || '',
+    }, 'http_request');
+  });
+
+  next();
+});
 
 // ─── Serve Next.js Static Site ──────────────────────────────────
 const siteDir = path.join(__dirname, 'site');
@@ -93,6 +133,38 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '3.0.0', timestamp: new Date().toISOString() });
 });
 
+app.use('/api/auth', async (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+    const allowed = await rateLimit(ip, 'auth_perimeter', 120, 60 * 1000);
+    if (!allowed) return res.status(429).json({ error: 'rate_limited', request_id: req.requestId || null });
+  } catch (error) {
+    logger.error({ err: error?.message || String(error) }, 'auth_perimeter_rate_limit_failed');
+    return res.status(503).json({ error: 'service_unavailable', request_id: req.requestId || null });
+  }
+
+  next();
+});
+
+app.use('/api/admin', async (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+
+  try {
+    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+    const allowed = await rateLimit(ip, 'admin_perimeter', 120, 60 * 1000);
+    if (!allowed) return res.status(429).json({ error: 'rate_limited', request_id: req.requestId || null });
+  } catch (error) {
+    logger.error({ err: error?.message || String(error) }, 'admin_perimeter_rate_limit_failed');
+    return res.status(503).json({ error: 'service_unavailable', request_id: req.requestId || null });
+  }
+
+  next();
+});
+
 app.use('/api/auth', authRouter);
 app.use('/api', renderRouter);
 app.use('/api/stripe', stripeRouter);
@@ -108,18 +180,41 @@ app.post('/api/email/test', requireAdmin, async (req, res) => {
   if (!email || typeof email !== 'string' || !email.includes('@')) {
     return res.status(400).json({ error: 'A valid email address is required' });
   }
+  const normalizedPlan = typeof plan === 'string' && ['LITE', 'PRO'].includes(plan.toUpperCase())
+    ? plan.toUpperCase()
+    : 'LITE';
   try {
     await sendWelcomeEmail({
       email: email.trim(),
       name: 'Test User',
       licenseKey: 'VXEL-TEST-XXXX-XXXX',
-      plan: plan || 'LITE',
+      plan: normalizedPlan,
     });
     res.json({ ok: true, sent_to: email.trim() });
   } catch (err) {
     console.error('[Email Test] Error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Failed to send test email' });
   }
+});
+
+// ─── Central Error Handler ──────────────────────────────────────
+app.use((err, req, res, next) => {
+  const status = Number(err?.status) || 500;
+  const message = status >= 500 ? 'internal_server_error' : 'request_failed';
+  const requestId = req?.requestId || res.getHeader('X-Request-Id') || randomUUID();
+  if (!res.getHeader('X-Request-Id')) res.setHeader('X-Request-Id', requestId);
+
+  logger.error({
+    request_id: requestId,
+    method: req?.method,
+    path: req?.originalUrl,
+    status_code: status,
+    error_message: err?.message || 'Unknown error',
+    stack: err?.stack,
+  }, 'http_error');
+
+  if (res.headersSent) return next(err);
+  return res.status(status).json({ error: message, request_id: requestId });
 });
 
 // ─── Fallback 404 ───────────────────────────────────────────────
@@ -130,7 +225,7 @@ app.use((req, res) => {
       return res.status(404).sendFile(notFoundPath);
     }
   }
-  res.status(404).json({ error: 'not_found' });
+  res.status(404).json({ error: 'not_found', request_id: req.requestId || null });
 });
 
 // ─── Graceful Shutdown ──────────────────────────────────────────

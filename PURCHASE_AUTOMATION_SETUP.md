@@ -50,6 +50,8 @@ Required variables for automatic license creation:
 Optional:
 - `RESEND_FROM_EMAIL` - Sender email (defaults to `noreply@vexel.app`)
 - `SITE_URL` - Base URL for links in emails (defaults to vercel app URL)
+- `PUBLIC_BASE_URL` - Canonical public origin used for Stripe success/cancel redirects
+- `CHECKOUT_ALLOWED_ORIGINS` - Comma-separated allowlist for checkout request origins (recommended in production)
 
 #### To Add Variables:
 1. Go to your Vercel Project → **Settings** → **Environment Variables**
@@ -243,6 +245,8 @@ Resend Dashboard → Emails → Check delivery status for welcome emails
 
 - [ ] `STRIPE_WEBHOOK_SECRET` added to Vercel environment variables
 - [ ] Webhook endpoint registered in Stripe Dashboard
+- [ ] `PUBLIC_BASE_URL` set to your canonical domain (for safe checkout redirects)
+- [ ] `CHECKOUT_ALLOWED_ORIGINS` set (comma-separated trusted domains)
 - [ ] `RESEND_API_KEY` set for customer emails
 - [ ] `KV_REST_API_URL` & `KV_REST_API_TOKEN` configured (Upstash)
 - [ ] Test webhook in Stripe Dashboard sending successfully

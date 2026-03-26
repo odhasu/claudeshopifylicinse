@@ -2,10 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { getStore } = require('../services/storeService');
 const { kvGetLicenses } = require('../services/kvService');
+const rateLimit = require('../middleware/rateLimit');
 
 const LOOKUP_CACHE_TTL_MS = 5000;
 const LOOKUP_CACHE_MAX_ENTRIES = 500;
 const lookupCache = new Map();
+const NOT_READY_RESPONSE = {
+  error: 'License not ready yet',
+  hint: 'License is being created. Try again in 1-2 seconds.'
+};
+const LOOKUP_ERROR_RESPONSE = { error: 'Failed to retrieve license' };
+const ID_PATTERNS = {
+  payment_intent: /^pi_[A-Za-z0-9_]{8,128}$/,
+  session: /^cs_[A-Za-z0-9_]{8,200}$/,
+};
 
 function pruneLookupCache() {
   const now = Date.now();
@@ -56,62 +66,70 @@ function toLookupResponse(license) {
   };
 }
 
-router.get('/by-payment-intent/:pi_id', async (req, res) => {
-  const { pi_id } = req.params;
-  if (!pi_id || !pi_id.startsWith('pi_')) return res.status(400).json({ error: 'Invalid payment_intent id' });
-  const cacheKey = `pi:${pi_id}`;
-  
-  try {
-    let response = getCachedLicense(cacheKey);
+function sendInvalidId(res, label) {
+  return res.status(400).json({ error: `Invalid ${label}` });
+}
 
-    if (!response) {
-      const license = await findLicense((l) => l.stripe_payment_intent_id === pi_id);
-
-      if (!license) {
-        return res.status(404).json({
-          error: 'License not ready yet',
-          hint: 'License is being created. Try again in 1-2 seconds.'
-        });
-      }
-
-      response = toLookupResponse(license);
-      setCachedLicense(cacheKey, response);
+function createLookupHandler({
+  paramName,
+  idPattern,
+  cachePrefix,
+  invalidLabel,
+  predicate,
+  rateLimitKey,
+}) {
+  return async (req, res) => {
+    const value = req.params[paramName];
+    if (!value || !idPattern.test(value)) {
+      return sendInvalidId(res, invalidLabel);
     }
 
-    res.json(response);
-  } catch (err) {
-    console.error('[License Lookup] Error fetching license:', err.message);
-    res.status(500).json({ error: 'Failed to retrieve license' });
-  }
-});
-
-router.get('/by-session/:session_id', async (req, res) => {
-  const { session_id } = req.params;
-  if (!session_id || !session_id.startsWith('cs_')) return res.status(400).json({ error: 'Invalid session_id' });
-  const cacheKey = `cs:${session_id}`;
-  
-  try {
-    let response = getCachedLicense(cacheKey);
-
-    if (!response) {
-      const license = await findLicense((l) => l.stripe_session_id === session_id);
-
-      if (!license) {
-        return res.status(404).json({
-          error: 'License not ready yet',
-          hint: 'License is being created. Try again in 1-2 seconds.'
-        });
-      }
-
-      response = toLookupResponse(license);
-      setCachedLicense(cacheKey, response);
+    const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+    const allowed = await rateLimit(ip, `license_lookup:${rateLimitKey}`, 60, 60 * 1000);
+    if (!allowed) {
+      return res.status(429).json({ error: 'Too many lookup attempts. Please try again shortly.' });
     }
 
-    res.json(response);
-  } catch (err) {
-    console.error('[License Lookup] Error fetching license:', err.message);
-    res.status(500).json({ error: 'Failed to retrieve license' });
-  }
-});
+    const cacheKey = `${cachePrefix}:${value}`;
+
+    try {
+      let response = getCachedLicense(cacheKey);
+
+      if (!response) {
+        const license = await findLicense((l) => predicate(l, value));
+
+        if (!license) {
+          return res.status(404).json(NOT_READY_RESPONSE);
+        }
+
+        response = toLookupResponse(license);
+        setCachedLicense(cacheKey, response);
+      }
+
+      return res.json(response);
+    } catch (err) {
+      console.error('[License Lookup] Error fetching license:', err.message);
+      return res.status(500).json(LOOKUP_ERROR_RESPONSE);
+    }
+  };
+}
+
+router.get('/by-payment-intent/:pi_id', createLookupHandler({
+  paramName: 'pi_id',
+  idPattern: ID_PATTERNS.payment_intent,
+  cachePrefix: 'pi',
+  invalidLabel: 'payment_intent id',
+  predicate: (license, value) => license.stripe_payment_intent_id === value,
+  rateLimitKey: 'pi',
+}));
+
+router.get('/by-session/:session_id', createLookupHandler({
+  paramName: 'session_id',
+  idPattern: ID_PATTERNS.session,
+  cachePrefix: 'cs',
+  invalidLabel: 'session_id',
+  predicate: (license, value) => license.stripe_session_id === value,
+  rateLimitKey: 'cs',
+}));
 
 module.exports = router;

@@ -125,7 +125,7 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
   const [sending, setSending] = useState<number | null>(null);
   const [filter, setFilter] = useState<"all" | TicketStatus>("all");
 
-  const headers = { "X-Admin-Key": adminKey };
+  const headers = useMemo(() => ({ "X-Admin-Key": adminKey }), [adminKey]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -135,7 +135,7 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
       setTickets(data.tickets || []);
       setUnread(data.unread || 0);
     } finally { setLoading(false); }
-  }, [adminKey]);
+  }, [headers]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -360,7 +360,7 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all");
   const [planFilter, setPlanFilter] = useState<"all" | string>("all");
 
-  const headers = { "X-Admin-Key": adminKey };
+  const headers = useMemo(() => ({ "X-Admin-Key": adminKey }), [adminKey]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -369,7 +369,7 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
       const data = await res.json();
       setLicenses(data.licenses || []);
     } finally { setLoading(false); }
-  }, [adminKey]);
+  }, [headers]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -621,14 +621,12 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
 type Tab = "tickets" | "licenses";
 
 export default function AdminPage() {
-  const [adminKey, setAdminKey] = useState<string | null>(null);
+  const [adminKey, setAdminKey] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem("vx_admin_key");
+  });
   const [activeTab, setActiveTab] = useState<Tab>("tickets");
   const [unread, setUnread] = useState(0);
-
-  useEffect(() => {
-    const saved = sessionStorage.getItem("vx_admin_key");
-    if (saved) setAdminKey(saved);
-  }, []);
 
   // Poll unread count
   useEffect(() => {

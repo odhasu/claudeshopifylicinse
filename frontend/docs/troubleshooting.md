@@ -12,3 +12,10 @@ If something looks off, start with these basics:
 For license issues, verify your exact key and target store domain.
 
 If the issue persists, contact support with your order number and screenshots.
+
+---
+
+[Back to Documentation](README.md)
+
+**Related Articles:** [Troubleshooting](troubleshooting.md)
+

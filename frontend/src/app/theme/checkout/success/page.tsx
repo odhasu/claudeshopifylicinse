@@ -48,7 +48,7 @@ export default function CheckoutSuccessPage() {
     const sessionId = params.get("session_id");
 
     if (!paymentIntentId && !sessionId) {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 0);
       return;
     }
 

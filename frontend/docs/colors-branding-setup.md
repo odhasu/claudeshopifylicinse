@@ -12,3 +12,10 @@ For best results, use your brand's hex color codes. Set the Primary color to you
 Logo upload is under Theme settings → Header. We recommend a PNG with a transparent background at 400×120px or similar wide format.
 
 Changes are previewed live in the editor. Click 'Save' when you're happy with the result.
+
+---
+
+[Back to Documentation](README.md)
+
+**Related Articles:** [Accessing the Theme Editor](accessing-the-theme-editor.md) | [Colors & Branding Setup](colors-branding-setup.md) | [Changing Theme Language](changing-theme-language.md)
+
