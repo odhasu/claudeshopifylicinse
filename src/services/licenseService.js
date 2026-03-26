@@ -61,7 +61,6 @@ async function validateLicense(licenseKey, domain) {
     return { valid: true, license };
   }
 }
-}
 
 function logRequest(licenseKey, domain, ip, userAgent, status) {
   const store = getStore();
