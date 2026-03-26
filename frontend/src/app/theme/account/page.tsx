@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   BookOpen, MessageCircle, Download, ExternalLink, CheckCircle, Package,
   RefreshCw, User, ShoppingBag, AlertTriangle, X, ArrowRight, LogOut,
@@ -9,6 +9,16 @@ import {
 import Link from "next/link";
 import { Particles } from "@/components/ui/particles";
 import { UPDATES, QUICK_LINKS } from "@/lib/account-data";
+
+interface AccountLicense {
+  key: string;
+  plan?: string;
+  active: boolean;
+  created_at: string | null;
+  last_verified_at: string | null;
+  permanent_domain?: string | null;
+  domain?: string | null;
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Never";
@@ -35,7 +45,7 @@ function CopyButton({ value, label = "Copy" }: { value: string; label?: string }
   );
 }
 
-function LoginGate({ onLogin }: { onLogin: (licenseData: any) => void }) {
+function LoginGate({ onLogin }: { onLogin: (licenseData: AccountLicense) => void }) {
   const [licenseKey, setLicenseKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,9 +82,6 @@ function LoginGate({ onLogin }: { onLogin: (licenseData: any) => void }) {
       <div className="relative z-10 w-full max-w-sm">
         <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-900/5 p-8 space-y-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 flex items-center justify-center shadow-md">
-              <img src="/logo.png" alt="Vexel" className="w-9 h-9" />
-            </div>
             <span className="text-lg font-bold text-slate-900 tracking-tight">Vexel Themes</span>
           </div>
           <div className="space-y-1">
@@ -110,7 +117,7 @@ function LoginGate({ onLogin }: { onLogin: (licenseData: any) => void }) {
 }
 
 export default function AccountPage() {
-  const [license, setLicense] = useState<any>(null);
+  const [license, setLicense] = useState<AccountLicense | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -132,7 +139,7 @@ export default function AccountPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
     } else {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 0);
     }
   }, []);
 

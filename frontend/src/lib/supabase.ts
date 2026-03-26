@@ -36,7 +36,29 @@ export interface WaitlistEntry {
   created_at?: string;
 }
 
-export const supabase = {
+interface MockQueryResult<T = unknown> {
+  data: T[];
+  error: null;
+}
+
+interface MockSupabase {
+  auth: {
+    signInWithPassword: () => Promise<{ error: null }>;
+    signOut: () => Promise<{ error: null }>;
+    updateUser: () => Promise<{ error: null }>;
+    onAuthStateChange: () => { data: { subscription: { unsubscribe: () => void } } };
+  };
+  from: () => {
+    select: () => {
+      order: () => Promise<MockQueryResult>;
+    };
+    insert: () => {
+      select: () => Promise<MockQueryResult>;
+    };
+  };
+}
+
+export const supabase: MockSupabase = {
   auth: {
     signInWithPassword: async () => ({ error: null }),
     signOut: async () => ({ error: null }),
@@ -51,7 +73,7 @@ export const supabase = {
       select: async () => ({ data: [], error: null })
     })
   })
-} as any;
+};
 
 export function createServiceRoleClient() {
   return supabase;
@@ -62,8 +84,6 @@ export async function insertLead(email: string, plan: 'LITE' | 'PRO', source?: s
 }
 
 export async function insertSupportMessage(name: string, email: string, message: string) {
-  // If the user wants actual form submission it can post to our Express backend later
-  console.log("Mock message send:", { name, email, message });
   return [{ name, email, message }];
 }
 

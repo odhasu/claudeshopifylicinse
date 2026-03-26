@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Inbox, Key, LogOut, RefreshCw, Plus, Trash2, CheckCircle,
   Clock, XCircle, ChevronDown, ChevronRight, Send, Eye,
@@ -21,6 +21,7 @@ interface License {
   id: number; license_key: string; domain: string; store_name: string;
   plan: string; active: number | boolean; created_at: string;
   last_verified_at: string | null; request_count: number;
+  username?: string; customer_name?: string; notes?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
   const [sending, setSending] = useState<number | null>(null);
   const [filter, setFilter] = useState<"all" | TicketStatus>("all");
 
-  const headers = { "X-Admin-Key": adminKey };
+  const headers = useMemo(() => ({ "X-Admin-Key": adminKey }), [adminKey]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -134,7 +135,7 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
       setTickets(data.tickets || []);
       setUnread(data.unread || 0);
     } finally { setLoading(false); }
-  }, [adminKey]);
+  }, [headers]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -170,14 +171,24 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
         : t
       ));
       setReplyText(r => ({ ...r, [ticket.id]: "" }));
-      // Open email client to actually send the reply
-      const subject = encodeURIComponent("Re: Your Vexel Support Request");
-      const body = encodeURIComponent(`Hi ${ticket.name},\n\n${msg}\n\n— Vexel Support`);
-      window.open(`mailto:${ticket.email}?subject=${subject}&body=${body}`);
     } finally { setSending(null); }
   }
 
-  const filtered = filter === "all" ? tickets : tickets.filter(t => t.status === filter);
+  const filtered = useMemo(
+    () => filter === "all" ? tickets : tickets.filter(t => t.status === filter),
+    [filter, tickets]
+  );
+
+  const statusCounts = useMemo(() => ({
+    all: tickets.length,
+    open: tickets.filter(t => t.status === "open").length,
+    "in-progress": tickets.filter(t => t.status === "in-progress").length,
+    closed: tickets.filter(t => t.status === "closed").length,
+  }), [tickets]);
+
+  const onFilterChange = useCallback((next: "all" | TicketStatus) => {
+    setFilter(next);
+  }, []);
 
   if (loading) return (
     <div className="flex items-center justify-center py-20 text-slate-400">
@@ -203,12 +214,12 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
         {(["all", "open", "in-progress", "closed"] as const).map(f => (
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={() => onFilterChange(f)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${
               filter === f ? "bg-[#3a0ca3] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            {f === "all" ? `All (${tickets.length})` : f === "open" ? `Open (${tickets.filter(t => t.status === "open").length})` : f === "in-progress" ? `In Progress (${tickets.filter(t => t.status === "in-progress").length})` : `Closed (${tickets.filter(t => t.status === "closed").length})`}
+            {f === "all" ? `All (${statusCounts.all})` : f === "open" ? `Open (${statusCounts.open})` : f === "in-progress" ? `In Progress (${statusCounts["in-progress"]})` : `Closed (${statusCounts.closed})`}
           </button>
         ))}
       </div>
@@ -314,7 +325,7 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
                       className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3a0ca3] focus:border-transparent resize-none"
                     />
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-xs text-slate-400">Saves reply + opens your email client to send</p>
+                      <p className="text-xs text-slate-400">Automatically sends email reply</p>
                       <button
                         onClick={() => sendReply(ticket)}
                         disabled={!replyText[ticket.id]?.trim() || sending === ticket.id}
@@ -345,8 +356,11 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
   const [creating, setCreating] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all");
+  const [planFilter, setPlanFilter] = useState<"all" | string>("all");
 
-  const headers = { "X-Admin-Key": adminKey };
+  const headers = useMemo(() => ({ "X-Admin-Key": adminKey }), [adminKey]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -355,7 +369,7 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
       const data = await res.json();
       setLicenses(data.licenses || []);
     } finally { setLoading(false); }
-  }, [adminKey]);
+  }, [headers]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -382,6 +396,28 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
       setLicenses(ls => ls.map(l => l.license_key === key ? { ...l, active: 0 } : l));
     } finally { setRevoking(null); }
   }
+
+  // Filter and search licenses
+  const filteredLicenses = licenses.filter(license => {
+    // Status filter
+    if (statusFilter === "active" && !license.active) return false;
+    if (statusFilter === "revoked" && license.active) return false;
+
+    // Plan filter
+    if (planFilter !== "all" && license.plan !== planFilter) return false;
+
+    // Search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesKey = license.license_key.toLowerCase().includes(query);
+      const matchesDomain = license.domain?.toLowerCase().includes(query);
+      const matchesCustomer = (license.customer_name || license.username)?.toLowerCase().includes(query);
+      const matchesStore = license.store_name?.toLowerCase().includes(query);
+      if (!matchesKey && !matchesDomain && !matchesCustomer && !matchesStore) return false;
+    }
+
+    return true;
+  });
 
   if (loading) return (
     <div className="flex items-center justify-center py-20 text-slate-400">
@@ -457,6 +493,54 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
         </div>
       )}
 
+      {/* Search and filters */}
+      <div className="mb-6 space-y-4">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search by license key, domain, customer, or store…"
+          className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3a0ca3] focus:border-transparent"
+        />
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="flex gap-2">
+            {(["all", "active", "revoked"] as const).map(s => {
+              const counts = {
+                all: licenses.length,
+                active: licenses.filter(l => l.active).length,
+                revoked: licenses.filter(l => !l.active).length,
+              };
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${
+                    statusFilter === s ? "bg-[#3a0ca3] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {s} ({counts[s]})
+                </button>
+              );
+            })}
+          </div>
+          <select
+            value={planFilter}
+            onChange={e => setPlanFilter(e.target.value)}
+            className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3a0ca3] focus:border-transparent"
+          >
+            <option value="all">All Plans</option>
+            <option value="lite">Lite</option>
+            <option value="pro">Pro</option>
+            <option value="unlimited">Unlimited</option>
+          </select>
+          {(searchQuery || statusFilter !== "all" || planFilter !== "all") && (
+            <p className="text-xs text-slate-500 ml-auto ml-2">
+              Showing {filteredLicenses.length} of {licenses.length} licenses
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* License table */}
       <div className="rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -473,7 +557,7 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {licenses.map(license => (
+              {filteredLicenses.map(license => (
                 <tr key={license.id} className={`hover:bg-slate-50 transition-colors ${!license.active ? "opacity-50" : ""}`}>
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs text-slate-700 flex items-center gap-1">
@@ -515,8 +599,14 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
                   </td>
                 </tr>
               ))}
-              {licenses.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">No licenses yet</td></tr>
+              {filteredLicenses.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">
+                    {searchQuery || statusFilter !== "all" || planFilter !== "all"
+                      ? "No licenses match your filters"
+                      : "No licenses yet"}
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -531,14 +621,12 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
 type Tab = "tickets" | "licenses";
 
 export default function AdminPage() {
-  const [adminKey, setAdminKey] = useState<string | null>(null);
+  const [adminKey, setAdminKey] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem("vx_admin_key");
+  });
   const [activeTab, setActiveTab] = useState<Tab>("tickets");
   const [unread, setUnread] = useState(0);
-
-  useEffect(() => {
-    const saved = sessionStorage.getItem("vx_admin_key");
-    if (saved) setAdminKey(saved);
-  }, []);
 
   // Poll unread count
   useEffect(() => {
