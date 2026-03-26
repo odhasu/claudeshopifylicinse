@@ -2,21 +2,53 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM    = process.env.RESEND_FROM_EMAIL || 'noreply@vexel.app';
 const SITE_URL       = process.env.SITE_URL || 'https://claudecodethemeshopify.vercel.app';
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function getResend() {
   if (!RESEND_API_KEY) return null;
   const { Resend } = require('resend');
   return new Resend(RESEND_API_KEY);
 }
 
-async function sendWelcomeEmail({ email, name, licenseKey, plan }) {
+function getMailerOrSkip(email, skipMessage) {
   const resend = getResend();
   if (!resend || !email) {
-    console.log('[Email] Skipping — Resend not configured or no email address');
-    return;
+    console.log(skipMessage);
+    return null;
   }
+  return resend;
+}
+
+async function sendEmailWithResend({ resend, to, subject, html, successLog, errorLog }) {
+  try {
+    const result = await resend.emails.send({
+      from: RESEND_FROM,
+      to,
+      subject,
+      html,
+    });
+    console.log(successLog, result?.data?.id || '');
+  } catch (err) {
+    console.error(errorLog, err.message);
+  }
+}
+
+async function sendWelcomeEmail({ email, name, licenseKey, plan }) {
+  const resend = getMailerOrSkip(email, '[Email] Skipping — Resend not configured or no email address');
+  if (!resend) return;
+
   const planKey = (plan || 'LITE').toUpperCase() === 'PRO' ? 'PRO' : 'LITE';
   const planName = planKey === 'PRO' ? 'Vexel Pro' : 'Vexel Lite';
   const loginUrl = `${SITE_URL}/theme/account`;
+  const safeName = name ? escapeHtml(name) : '';
+  const safeLicenseKey = escapeHtml(licenseKey || '');
 
   const planFeatures = planKey === 'PRO'
     ? ['Full theme with 140+ features', '3 store licenses', '1-on-1 full store setup call',
@@ -43,11 +75,11 @@ async function sendWelcomeEmail({ email, name, licenseKey, plan }) {
         <tr>
           <td style="padding:32px 40px;">
             <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 24px;">
-              ${name ? `Hi ${name},<br><br>` : ''}Thank you for your purchase! Your license is ready to use.
+              ${safeName ? `Hi ${safeName},<br><br>` : ''}Thank you for your purchase! Your license is ready to use.
             </p>
             <div style="background:#f1f5f9;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
               <h2 style="margin:0 0 12px;color:#0f172a;font-size:16px;font-weight:700;">Your License Key</h2>
-              <p style="margin:0;font-family:monospace;font-size:18px;font-weight:700;color:#3a0ca3;letter-spacing:2px;">${licenseKey}</p>
+              <p style="margin:0;font-family:monospace;font-size:18px;font-weight:700;color:#3a0ca3;letter-spacing:2px;">${safeLicenseKey}</p>
               <p style="margin:12px 0 0;color:#94a3b8;font-size:11px;">Enter this key in your Shopify theme settings to activate. Keep it safe &mdash; it&rsquo;s tied to your purchase.</p>
             </div>
             <div style="margin-bottom:24px;">
@@ -84,25 +116,22 @@ async function sendWelcomeEmail({ email, name, licenseKey, plan }) {
 </body>
 </html>`;
 
-  try {
-    const result = await resend.emails.send({
-      from: RESEND_FROM,
-      to: email,
-      subject: `Your ${planName} License Key`,
-      html,
-    });
-    console.log(`[Email] Welcome email sent to ${email}`, result?.data?.id || '');
-  } catch (err) {
-    console.error('[Email] Failed to send welcome email:', err.message);
-  }
+  await sendEmailWithResend({
+    resend,
+    to: email,
+    subject: `Your ${planName} License Key`,
+    html,
+    successLog: `[Email] Welcome email sent to ${email}`,
+    errorLog: '[Email] Failed to send welcome email:',
+  });
 }
 
 async function sendTicketReplyEmail({ email, name, message, ticketId }) {
-  const resend = getResend();
-  if (!resend || !email) {
-    console.log('[Email] Skipping ticket reply — Resend not configured or no email address');
-    return;
-  }
+  const resend = getMailerOrSkip(email, '[Email] Skipping ticket reply — Resend not configured or no email address');
+  if (!resend) return;
+
+  const safeName = name ? escapeHtml(name) : '';
+  const safeMessage = escapeHtml(message || '');
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -119,13 +148,13 @@ async function sendTicketReplyEmail({ email, name, message, ticketId }) {
         <tr>
           <td style="padding:32px 40px;">
             <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 16px;">
-              ${name ? `Hi ${name},` : 'Hi,'}
+              ${safeName ? `Hi ${safeName},` : 'Hi,'}
             </p>
             <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 24px;">
               We've replied to your support ticket:
             </p>
             <div style="background:#f1f5f9;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
-              <p style="margin:0;color:#334155;font-size:14px;line-height:1.6;white-space:pre-wrap;">${message}</p>
+              <p style="margin:0;color:#334155;font-size:14px;line-height:1.6;white-space:pre-wrap;">${safeMessage}</p>
             </div>
             <p style="color:#64748b;font-size:13px;margin:0;">
               If you need further help, reply to this email or visit our <a href="${SITE_URL}/theme/support" style="color:#3a0ca3;font-weight:600;">support page</a>.
@@ -143,17 +172,14 @@ async function sendTicketReplyEmail({ email, name, message, ticketId }) {
 </body>
 </html>`;
 
-  try {
-    const result = await resend.emails.send({
-      from: RESEND_FROM,
-      to: email,
-      subject: `Re: Your Support Ticket #${ticketId}`,
-      html,
-    });
-    console.log(`[Email] Ticket reply sent to ${email}`, result?.data?.id || '');
-  } catch (err) {
-    console.error('[Email] Failed to send ticket reply:', err.message);
-  }
+  await sendEmailWithResend({
+    resend,
+    to: email,
+    subject: `Re: Your Support Ticket #${ticketId}`,
+    html,
+    successLog: `[Email] Ticket reply sent to ${email}`,
+    errorLog: '[Email] Failed to send ticket reply:',
+  });
 }
 
 module.exports = { sendWelcomeEmail, sendTicketReplyEmail, SITE_URL };

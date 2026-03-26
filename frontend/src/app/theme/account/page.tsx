@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   BookOpen, MessageCircle, Download, ExternalLink, CheckCircle, Package,
   RefreshCw, User, ShoppingBag, AlertTriangle, X, ArrowRight, LogOut,
@@ -9,6 +9,16 @@ import {
 import Link from "next/link";
 import { Particles } from "@/components/ui/particles";
 import { UPDATES, QUICK_LINKS } from "@/lib/account-data";
+
+interface AccountLicense {
+  key: string;
+  plan?: string;
+  active: boolean;
+  created_at: string | null;
+  last_verified_at: string | null;
+  permanent_domain?: string | null;
+  domain?: string | null;
+}
 
 function formatDate(iso: string | null): string {
   if (!iso) return "Never";
@@ -35,7 +45,7 @@ function CopyButton({ value, label = "Copy" }: { value: string; label?: string }
   );
 }
 
-function LoginGate({ onLogin }: { onLogin: (licenseData: any) => void }) {
+function LoginGate({ onLogin }: { onLogin: (licenseData: AccountLicense) => void }) {
   const [licenseKey, setLicenseKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +117,7 @@ function LoginGate({ onLogin }: { onLogin: (licenseData: any) => void }) {
 }
 
 export default function AccountPage() {
-  const [license, setLicense] = useState<any>(null);
+  const [license, setLicense] = useState<AccountLicense | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -129,7 +139,7 @@ export default function AccountPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
     } else {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 0);
     }
   }, []);
 

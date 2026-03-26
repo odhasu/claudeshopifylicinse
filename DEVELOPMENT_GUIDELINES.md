@@ -305,6 +305,7 @@ cp .env.example .env
 - ✅ Secrets not in code (environment variables)
 - ✅ Rate limiting on public endpoints
 - ✅ Admin endpoints require authentication
+- ✅ Production blocks admin endpoints when `ADMIN_KEY` is missing
 - ✅ Webhook signatures verified
 - ✅ HTTPS enforced in production
 - ✅ Keep dependencies updated

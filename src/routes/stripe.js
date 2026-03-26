@@ -6,11 +6,84 @@ const { getStripe, STRIPE_WEBHOOK_SECRET, PLAN_PRICES } = require('../services/s
 const { getStore, saveStore } = require('../services/storeService');
 const { generateLicenseKey, createLicense } = require('../services/licenseService');
 const { sendWelcomeEmail } = require('../services/emailService');
-const { kvGetLicenses } = require('../services/kvService');
+const { kvGetLicenses, kvAcquireIdempotencyLock } = require('../services/kvService');
+
+const DEFAULT_PUBLIC_ORIGIN = 'https://claudecodethemeshopify.vercel.app';
+const configuredPublicOrigin = (() => {
+  try {
+    return new URL(process.env.PUBLIC_BASE_URL || DEFAULT_PUBLIC_ORIGIN).origin;
+  } catch (_) {
+    return DEFAULT_PUBLIC_ORIGIN;
+  }
+})();
+
+const checkoutAllowedOrigins = (process.env.CHECKOUT_ALLOWED_ORIGINS || process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean)
+  .map((value) => {
+    try {
+      return new URL(value).origin;
+    } catch (_) {
+      return null;
+    }
+  })
+  .filter(Boolean);
+
+const PLAN_PATTERN = /^(LITE|PRO)$/;
+const PAYMENT_INTENT_PATTERN = /^pi_[A-Za-z0-9_]{8,128}$/;
+const SESSION_ID_PATTERN = /^cs_[A-Za-z0-9_]{8,200}$/;
+
+function sanitizePlan(plan) {
+  return PLAN_PATTERN.test(String(plan || '').toUpperCase()) ? String(plan).toUpperCase() : 'LITE';
+}
+
+function getClientIp(req) {
+  const header = req.headers['x-forwarded-for'];
+  if (typeof header === 'string' && header) {
+    return header.split(',')[0].trim();
+  }
+  return req.socket?.remoteAddress || '';
+}
+
+function resolveCheckoutOrigin(req) {
+  const requestOriginHeader = req.headers.origin;
+  if (typeof requestOriginHeader === 'string' && requestOriginHeader) {
+    try {
+      const requestOrigin = new URL(requestOriginHeader).origin;
+      if (checkoutAllowedOrigins.includes(requestOrigin)) return requestOrigin;
+      if (process.env.NODE_ENV !== 'production' && checkoutAllowedOrigins.length === 0) return requestOrigin;
+      console.warn('[Stripe] Rejected untrusted checkout origin:', requestOrigin);
+    } catch (_) {
+      console.warn('[Stripe] Invalid checkout origin header received');
+    }
+  }
+  return configuredPublicOrigin;
+}
+
+const localWebhookLocks = new Map();
+
+function acquireLocalWebhookLock(eventId, ttlMs) {
+  const now = Date.now();
+  const existing = localWebhookLocks.get(eventId);
+  if (existing && existing > now) return false;
+  localWebhookLocks.set(eventId, now + ttlMs);
+  return true;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [eventId, expiresAt] of localWebhookLocks.entries()) {
+    if (expiresAt <= now) localWebhookLocks.delete(eventId);
+  }
+}, 5 * 60 * 1000).unref();
 
 // Stripe Webhook (raw body required — mounted separately in index.js)
 async function handleWebhook(req, res) {
   const sig = req.headers['stripe-signature'];
+  if (!sig || typeof sig !== 'string') {
+    return res.status(400).json({ error: 'Missing stripe-signature header' });
+  }
 
   if (!STRIPE_WEBHOOK_SECRET) {
     console.error('[Webhook] STRIPE_WEBHOOK_SECRET not set');
@@ -23,6 +96,15 @@ async function handleWebhook(req, res) {
   } catch (err) {
     console.error('[Webhook] Signature verification failed:', err.message);
     return res.status(400).send(`Webhook error: ${err.message}`);
+  }
+
+  const lockTtlMs = 10 * 60 * 1000;
+  const lockKey = `webhook:stripe:event:${event.id}`;
+  let lockAcquired = await kvAcquireIdempotencyLock(lockKey, lockTtlMs);
+  if (lockAcquired === null) lockAcquired = acquireLocalWebhookLock(event.id, lockTtlMs);
+  if (!lockAcquired) {
+    console.log(`[Webhook] Duplicate event skipped: ${event.id}`);
+    return res.json({ received: true, duplicate: true });
   }
 
   try {
@@ -41,7 +123,7 @@ async function handleWebhook(req, res) {
 
       const email = session.customer_details?.email || null;
       const name  = session.customer_details?.name  || null;
-      const plan  = session.metadata?.plan || 'LITE';
+      const plan  = sanitizePlan(session.metadata?.plan);
 
       if (!email && !name) {
         console.warn(`[Webhook] Warning: No email or name provided for session ${session.id}`);
@@ -83,7 +165,7 @@ async function handleWebhook(req, res) {
 
       const email = pi.receipt_email || pi.metadata?.email || null;
       const name  = pi.metadata?.customer_name || null;
-      const plan  = pi.metadata?.plan || 'LITE';
+      const plan  = sanitizePlan(pi.metadata?.plan);
 
       if (!email && !name) {
         console.warn(`[Webhook] Warning: No email or name provided for PaymentIntent ${pi.id}`);
@@ -124,8 +206,9 @@ async function handleWebhook(req, res) {
 
 // Payment Intent
 router.post('/create-payment-intent', validate(schemas.createPaymentIntent), async (req, res) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
-  if (!rateLimit(ip, 'stripe', 10)) return res.status(429).json({ error: 'rate_limited' });
+  const ip = getClientIp(req);
+  const allowed = await rateLimit(ip, 'stripe', 10);
+  if (!allowed) return res.status(429).json({ error: 'rate_limited' });
   const { plan, email, customerName } = req.body;
   try {
     const stripe = getStripe();
@@ -147,13 +230,19 @@ router.post('/create-payment-intent', validate(schemas.createPaymentIntent), asy
     res.json({ clientSecret: paymentIntent.client_secret, amount, planName: name, plan });
   } catch (err) {
     console.error('[Stripe] create-payment-intent error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to create payment intent' });
   }
 });
 
 router.get('/payment-intent', async (req, res) => {
+  const ip = getClientIp(req);
+  const allowed = await rateLimit(ip, 'stripe_lookup', 120);
+  if (!allowed) return res.status(429).json({ error: 'rate_limited' });
+
   const { payment_intent } = req.query;
-  if (!payment_intent) return res.status(400).json({ error: 'payment_intent required' });
+  if (typeof payment_intent !== 'string' || !PAYMENT_INTENT_PATTERN.test(payment_intent)) {
+    return res.status(400).json({ error: 'Invalid payment_intent' });
+  }
   try {
     const stripe = getStripe();
     const pi = await stripe.paymentIntents.retrieve(payment_intent);
@@ -165,18 +254,19 @@ router.get('/payment-intent', async (req, res) => {
     });
   } catch (err) {
     console.error('[Stripe] payment-intent retrieve error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to retrieve payment intent' });
   }
 });
 
 router.post('/checkout', validate(schemas.checkout), async (req, res) => {
-  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
-  if (!rateLimit(ip, 'stripe', 10)) return res.status(429).json({ error: 'rate_limited' });
+  const ip = getClientIp(req);
+  const allowed = await rateLimit(ip, 'stripe', 10);
+  if (!allowed) return res.status(429).json({ error: 'rate_limited' });
   const { plan } = req.body;
   try {
     const stripe = getStripe();
     const { amount, name } = PLAN_PRICES[plan];
-    const origin = req.headers.origin || `https://${req.headers.host}` || 'https://claudecodethemeshopify.vercel.app';
+    const origin = resolveCheckoutOrigin(req);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -199,16 +289,27 @@ router.post('/checkout', validate(schemas.checkout), async (req, res) => {
       billing_address_collection: 'auto',
     });
 
+    if (!session.url) {
+      console.error('[Stripe] checkout session missing URL:', session.id);
+      return res.status(502).json({ error: 'Checkout URL unavailable' });
+    }
+
     res.json({ url: session.url });
   } catch (err) {
     console.error('[Stripe] checkout error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to create checkout session' });
   }
 });
 
 router.get('/session', async (req, res) => {
+  const ip = getClientIp(req);
+  const allowed = await rateLimit(ip, 'stripe_lookup', 120);
+  if (!allowed) return res.status(429).json({ error: 'rate_limited' });
+
   const { session_id } = req.query;
-  if (!session_id) return res.status(400).json({ error: 'session_id required' });
+  if (typeof session_id !== 'string' || !SESSION_ID_PATTERN.test(session_id)) {
+    return res.status(400).json({ error: 'Invalid session_id' });
+  }
   try {
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(session_id);
@@ -217,7 +318,8 @@ router.get('/session', async (req, res) => {
       email: session.customer_email || session.customer_details?.email || null,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[Stripe] session retrieve error:', err.message);
+    res.status(500).json({ error: 'Unable to retrieve checkout session' });
   }
 });
 

@@ -10,3 +10,10 @@ A single license does NOT cover multiple stores. If you want to run two separate
 Your license includes lifetime updates for the version tier you purchased (Lite or Pro). If we release a new major version, existing license holders receive a discounted upgrade path.
 
 License transfers are possible — contact support if you need to move your license to a different store or if your store was banned.
+
+---
+
+[Back to Documentation](README.md)
+
+**Related Articles:** [Understanding Your License](understanding-your-license.md) | [Understanding myshopify.com Domains](understanding-myshopify-com-domains.md) | [Understanding Auto-Generated Shopify Domains](auto-generated-shopify-domains.md) | [License Activation Step-by-Step](license-activation-step-by-step.md) | [Finding Your Auto-Generated Domain](finding-your-auto-generated-domain.md) | [Activated on Wrong Domain?](activated-on-wrong-domain.md) | [Custom Domains and Your License](custom-domains-and-your-license.md)
+

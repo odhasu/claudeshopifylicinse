@@ -14,7 +14,7 @@ interface SessionInfo {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
-async function pollForLicense(id: string, type: "session" | "pi", attempts = 6): Promise<string | null> {
+async function pollForLicense(id: string, type: "session" | "pi", attempts = 8): Promise<string | null> {
   const url = type === "session"
     ? `${API_BASE}/api/licenses/by-session/${id}`
     : `${API_BASE}/api/licenses/by-payment-intent/${id}`;
@@ -28,7 +28,11 @@ async function pollForLicense(id: string, type: "session" | "pi", attempts = 6):
     } catch {
       // ignore network errors during polling
     }
-    if (i < attempts - 1) await new Promise((res) => setTimeout(res, 2000));
+    if (i < attempts - 1) {
+      // Exponential backoff with a cap keeps quick retries early but tolerates webhook lag.
+      const delayMs = Math.min(400 * (2 ** i), 5000);
+      await new Promise((res) => setTimeout(res, delayMs));
+    }
   }
   return null;
 }
@@ -44,7 +48,7 @@ export default function CheckoutSuccessPage() {
     const sessionId = params.get("session_id");
 
     if (!paymentIntentId && !sessionId) {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 0);
       return;
     }
 

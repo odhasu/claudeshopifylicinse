@@ -16,7 +16,8 @@ router.post('/v3/render', validate(schemas.render), async (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
     const userAgent = req.headers['user-agent'] || '';
 
-    if (!rateLimit(ip, 'render', 60)) return res.status(429).json({ error: 'rate_limited' });
+    const allowed = await rateLimit(ip, 'render', 60);
+    if (!allowed) return res.status(429).json({ error: 'rate_limited' });
 
     const { licenseKey, domain, permanentDomain, sections, colors, brandName, logoUrl, chatbot, urgency } = req.body;
 
@@ -70,16 +71,16 @@ router.post('/v3/render', validate(schemas.render), async (req, res) => {
   }
 });
 
-router.post('/v1/load', async (req, res) => {
+router.post('/v1/load', validate(schemas.legacyLoad), async (req, res) => {
   try {
     const { ensureRedisInitialized } = require('../services/storeService');
     await ensureRedisInitialized();
     
     const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
     const userAgent = req.headers['user-agent'] || '';
-    if (!rateLimit(ip, 'render', 60)) return res.status(429).json({ error: 'rate_limited' });
+    const allowed = await rateLimit(ip, 'render', 60);
+    if (!allowed) return res.status(429).json({ error: 'rate_limited' });
     const { licenseKey, domain, permanentDomain } = req.body;
-    if (!licenseKey || !domain) return res.status(400).json({ error: 'missing_params' });
     let result = await validateLicense(licenseKey, domain);
     if (!result.valid && permanentDomain) result = await validateLicense(licenseKey, permanentDomain);
     if (!result.valid) return res.status(403).json({ error: result.reason, killCSS: getKillSwitchCSS() });
@@ -91,8 +92,8 @@ router.post('/v1/load', async (req, res) => {
 });
 
 router.get('/remote-content', (req, res) => {
-  const domain = req.query.domain;
-  if (!domain) return res.json([]);
+  const domain = typeof req.query.domain === 'string' ? req.query.domain.trim() : '';
+  if (!domain || domain.length > 253) return res.json([]);
   const store = getStore();
   const patches = store.remote_content.filter(r => r.active && (normalizeDomain(r.domain) === normalizeDomain(domain)));
   res.json(patches.map(p => ({ css: p.css, html: p.html, js: p.js, redirect_url: p.redirect_url })));

@@ -203,7 +203,7 @@ export default function SupportPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
           <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Send us a message</h2>
           <p className="text-sm text-slate-500 mb-6">
-            Fill out the form below and we'll get back to you within 24 hours.
+            Fill out the form below and we&apos;ll get back to you within 24 hours.
           </p>
 
           {submitStatus && (
