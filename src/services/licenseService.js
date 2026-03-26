@@ -15,7 +15,8 @@ function generateLicenseKey() {
 }
 
 async function validateLicense(licenseKey, domain) {
-  const licenses = await kvGetLicenses();
+  try {
+    const licenses = await kvGetLicenses();
   const license = licenses.find(l => l.license_key === licenseKey && l.active);
   if (!license) return { valid: false, reason: 'invalid_key' };
   if (license.expires_at && new Date(license.expires_at) < new Date()) {
@@ -37,17 +38,29 @@ async function validateLicense(licenseKey, domain) {
     }
   }
 
-  license.last_verified_at = new Date().toISOString();
-  license.request_count = (license.request_count || 0) + 1;
-  
-  // Update in persistent storage
-  const updatedIndex = licenses.findIndex(l => l.license_key === licenseKey);
-  if (updatedIndex !== -1) {
-    licenses[updatedIndex] = license;
-    await kvSaveLicenses(licenses);
+    license.last_verified_at = new Date().toISOString();
+    license.request_count = (license.request_count || 0) + 1;
+    
+    // Update in persistent storage
+    const updatedIndex = licenses.findIndex(l => l.license_key === licenseKey);
+    if (updatedIndex !== -1) {
+      licenses[updatedIndex] = license;
+      await kvSaveLicenses(licenses);
+    }
+    
+    return { valid: true, license };
+  } catch(e) {
+    console.error('[License] validateLicense error:', e.message);
+    // Fallback: check local store
+    const store = getStore();
+    const license = store.licenses.find(l => l.license_key === licenseKey && l.active);
+    if (!license) return { valid: false, reason: 'invalid_key' };
+    if (license.expires_at && new Date(license.expires_at) < new Date()) {
+      return { valid: false, reason: 'expired' };
+    }
+    return { valid: true, license };
   }
-  
-  return { valid: true, license };
+}
 }
 
 function logRequest(licenseKey, domain, ip, userAgent, status) {
@@ -66,37 +79,66 @@ function logRequest(licenseKey, domain, ip, userAgent, status) {
 }
 
 async function createLicense(data) {
-  const licenses = await kvGetLicenses();
-  const licenseKey = generateLicenseKey();
-  const license = {
-    id: nextId(),
-    license_key: licenseKey,
-    username: data.username || '',
-    domain: data.domain || '*',
-    permanent_domain: data.permanent_domain || data.domain || '*',
-    store_name: data.store_name || '',
-    plan: data.plan || 'standard',
-    active: 1,
-    created_at: new Date().toISOString(),
-    expires_at: data.expires_at || null,
-    last_verified_at: null,
-    request_count: 0,
-    email: data.email || null,
-    customer_name: data.customer_name || null,
-    stripe_session_id: data.stripe_session_id || null,
-    stripe_payment_intent_id: data.stripe_payment_intent_id || null,
-    notes: data.notes || ''
-  };
-  
-  licenses.push(license);
-  await kvSaveLicenses(licenses);
-  
-  // Also update local store for fallback
-  const store = getStore();
-  store.licenses.push(license);
-  saveStore();
-  
-  return license;
+  try {
+    const licenses = await kvGetLicenses();
+    const licenseKey = generateLicenseKey();
+    const license = {
+      id: nextId(),
+      license_key: licenseKey,
+      username: data.username || '',
+      domain: data.domain || '*',
+      permanent_domain: data.permanent_domain || data.domain || '*',
+      store_name: data.store_name || '',
+      plan: data.plan || 'standard',
+      active: 1,
+      created_at: new Date().toISOString(),
+      expires_at: data.expires_at || null,
+      last_verified_at: null,
+      request_count: 0,
+      email: data.email || null,
+      customer_name: data.customer_name || null,
+      stripe_session_id: data.stripe_session_id || null,
+      stripe_payment_intent_id: data.stripe_payment_intent_id || null,
+      notes: data.notes || ''
+    };
+    
+    licenses.push(license);
+    await kvSaveLicenses(licenses);
+    
+    // Also update local store for fallback
+    const store = getStore();
+    store.licenses.push(license);
+    saveStore();
+    
+    return license;
+  } catch(e) {
+    console.error('[License] createLicense error:', e.message);
+    // Fallback: create in local store only
+    const store = getStore();
+    const licenseKey = generateLicenseKey();
+    const license = {
+      id: nextId(),
+      license_key: licenseKey,
+      username: data.username || '',
+      domain: data.domain || '*',
+      permanent_domain: data.permanent_domain || data.domain || '*',
+      store_name: data.store_name || '',
+      plan: data.plan || 'standard',
+      active: 1,
+      created_at: new Date().toISOString(),
+      expires_at: data.expires_at || null,
+      last_verified_at: null,
+      request_count: 0,
+      email: data.email || null,
+      customer_name: data.customer_name || null,
+      stripe_session_id: data.stripe_session_id || null,
+      stripe_payment_intent_id: data.stripe_payment_intent_id || null,
+      notes: data.notes || ''
+    };
+    store.licenses.push(license);
+    saveStore();
+    return license;
+  }
 }
 
 module.exports = { generateLicenseKey, validateLicense, logRequest, createLicense };

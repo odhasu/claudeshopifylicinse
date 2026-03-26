@@ -25,7 +25,9 @@ async function handleWebhook(req, res) {
     return res.status(400).send(`Webhook error: ${err.message}`);
   }
 
-  const store = getStore();
+  try {
+    const { ensureRedisInitialized } = require('../services/storeService');
+    await ensureRedisInitialized();
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
@@ -84,6 +86,10 @@ async function handleWebhook(req, res) {
   }
 
   res.json({ received: true });
+  } catch (error) {
+    console.error('[Webhook] Processing error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
 }
 
 // Payment Intent

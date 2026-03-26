@@ -10,6 +10,9 @@ const normalizeDomain = require('../utils/domainNorm');
 
 router.post('/v3/render', validate(schemas.render), async (req, res) => {
   try {
+    const { ensureRedisInitialized } = require('../services/storeService');
+    await ensureRedisInitialized();
+    
     const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
     const userAgent = req.headers['user-agent'] || '';
 
@@ -69,6 +72,9 @@ router.post('/v3/render', validate(schemas.render), async (req, res) => {
 
 router.post('/v1/load', async (req, res) => {
   try {
+    const { ensureRedisInitialized } = require('../services/storeService');
+    await ensureRedisInitialized();
+    
     const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
     const userAgent = req.headers['user-agent'] || '';
     if (!rateLimit(ip, 'render', 60)) return res.status(429).json({ error: 'rate_limited' });

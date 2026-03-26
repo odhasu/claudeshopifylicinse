@@ -9,6 +9,9 @@ router.post('/login', async (req, res) => {
     const { licenseKey } = req.body;
     if (!licenseKey) return res.status(400).json({ error: 'License key required' });
     
+    const { ensureRedisInitialized } = require('../services/storeService');
+    await ensureRedisInitialized();
+    
     const licenses = await kvGetLicenses();
     const license = licenses.find(l => l.license_key === licenseKey && l.active);
     if (!license) return res.status(401).json({ error: 'Invalid license key' });
