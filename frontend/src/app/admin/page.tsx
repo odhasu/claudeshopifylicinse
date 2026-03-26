@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Inbox, Key, LogOut, RefreshCw, Plus, Trash2, CheckCircle,
   Clock, XCircle, ChevronDown, ChevronRight, Send, Eye,
@@ -174,7 +174,21 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
     } finally { setSending(null); }
   }
 
-  const filtered = filter === "all" ? tickets : tickets.filter(t => t.status === filter);
+  const filtered = useMemo(
+    () => filter === "all" ? tickets : tickets.filter(t => t.status === filter),
+    [filter, tickets]
+  );
+
+  const statusCounts = useMemo(() => ({
+    all: tickets.length,
+    open: tickets.filter(t => t.status === "open").length,
+    "in-progress": tickets.filter(t => t.status === "in-progress").length,
+    closed: tickets.filter(t => t.status === "closed").length,
+  }), [tickets]);
+
+  const onFilterChange = useCallback((next: "all" | TicketStatus) => {
+    setFilter(next);
+  }, []);
 
   if (loading) return (
     <div className="flex items-center justify-center py-20 text-slate-400">
@@ -200,12 +214,12 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
         {(["all", "open", "in-progress", "closed"] as const).map(f => (
           <button
             key={f}
-            onClick={() => setFilter(f)}
+            onClick={() => onFilterChange(f)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${
               filter === f ? "bg-[#3a0ca3] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            {f === "all" ? `All (${tickets.length})` : f === "open" ? `Open (${tickets.filter(t => t.status === "open").length})` : f === "in-progress" ? `In Progress (${tickets.filter(t => t.status === "in-progress").length})` : `Closed (${tickets.filter(t => t.status === "closed").length})`}
+            {f === "all" ? `All (${statusCounts.all})` : f === "open" ? `Open (${statusCounts.open})` : f === "in-progress" ? `In Progress (${statusCounts["in-progress"]})` : `Closed (${statusCounts.closed})`}
           </button>
         ))}
       </div>
