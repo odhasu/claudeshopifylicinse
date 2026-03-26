@@ -345,6 +345,9 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
   const [creating, setCreating] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all");
+  const [planFilter, setPlanFilter] = useState<"all" | string>("all");
 
   const headers = { "X-Admin-Key": adminKey };
 
@@ -382,6 +385,28 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
       setLicenses(ls => ls.map(l => l.license_key === key ? { ...l, active: 0 } : l));
     } finally { setRevoking(null); }
   }
+
+  // Filter and search licenses
+  const filteredLicenses = licenses.filter(license => {
+    // Status filter
+    if (statusFilter === "active" && !license.active) return false;
+    if (statusFilter === "revoked" && license.active) return false;
+
+    // Plan filter
+    if (planFilter !== "all" && license.plan !== planFilter) return false;
+
+    // Search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesKey = license.license_key.toLowerCase().includes(query);
+      const matchesDomain = license.domain?.toLowerCase().includes(query);
+      const matchesCustomer = license.username?.toLowerCase().includes(query);
+      const matchesStore = license.store_name?.toLowerCase().includes(query);
+      if (!matchesKey && !matchesDomain && !matchesCustomer && !matchesStore) return false;
+    }
+
+    return true;
+  });
 
   if (loading) return (
     <div className="flex items-center justify-center py-20 text-slate-400">
@@ -457,6 +482,54 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
         </div>
       )}
 
+      {/* Search and filters */}
+      <div className="mb-6 space-y-4">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search by license key, domain, customer, or store…"
+          className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3a0ca3] focus:border-transparent"
+        />
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="flex gap-2">
+            {(["all", "active", "revoked"] as const).map(s => {
+              const counts = {
+                all: licenses.length,
+                active: licenses.filter(l => l.active).length,
+                revoked: licenses.filter(l => !l.active).length,
+              };
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${
+                    statusFilter === s ? "bg-[#3a0ca3] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {s} ({counts[s]})
+                </button>
+              );
+            })}
+          </div>
+          <select
+            value={planFilter}
+            onChange={e => setPlanFilter(e.target.value)}
+            className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3a0ca3] focus:border-transparent"
+          >
+            <option value="all">All Plans</option>
+            <option value="lite">Lite</option>
+            <option value="pro">Pro</option>
+            <option value="unlimited">Unlimited</option>
+          </select>
+          {(searchQuery || statusFilter !== "all" || planFilter !== "all") && (
+            <p className="text-xs text-slate-500 ml-auto ml-2">
+              Showing {filteredLicenses.length} of {licenses.length} licenses
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* License table */}
       <div className="rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -473,7 +546,7 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {licenses.map(license => (
+              {filteredLicenses.map(license => (
                 <tr key={license.id} className={`hover:bg-slate-50 transition-colors ${!license.active ? "opacity-50" : ""}`}>
                   <td className="px-4 py-3">
                     <span className="font-mono text-xs text-slate-700 flex items-center gap-1">
@@ -515,8 +588,14 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
                   </td>
                 </tr>
               ))}
-              {licenses.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">No licenses yet</td></tr>
+              ))}  {filteredLicenses.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">
+                    {searchQuery || statusFilter !== "all" || planFilter !== "all"
+                      ? "No licenses match your filters"
+                      : "No licenses yet"}
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
