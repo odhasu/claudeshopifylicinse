@@ -134,8 +134,8 @@ export default function CheckoutPage() {
         elementsRef.current = elements;
 
         const paymentElement = elements.create("payment", { layout: "tabs" });
+        paymentElement.on("ready", () => setStatus("ready"));
         paymentElement.mount("#stripe-payment-element");
-        setStatus("ready");
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Failed to load checkout";
         setErrorMsg(msg);
@@ -294,7 +294,7 @@ export default function CheckoutPage() {
                     <div
                       id="stripe-payment-element"
                       className="mb-6"
-                      style={{ display: status === "loading" ? "none" : "block" }}
+                      style={{ visibility: status === "loading" ? "hidden" : "visible", height: status === "loading" ? 0 : "auto" }}
                     />
 
                     {errorMsg && status === "ready" && (
