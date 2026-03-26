@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Lock, ShieldCheck, Loader2, ArrowLeft, CreditCard } from "lucide-react";
+import { Check, Lock, ShieldCheck, Loader2, ArrowLeft, CreditCard, Mail } from "lucide-react";
 import { loadStripe, type Stripe, type StripeElements } from "@stripe/stripe-js";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -37,15 +37,18 @@ const PLANS: Record<string, { name: string; price: number; features: string[] }>
   },
 };
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
 export default function CheckoutPage() {
   const [plan, setPlan] = useState<"LITE" | "PRO">("PRO");
-  const [status, setStatus] = useState<"loading" | "ready" | "submitting" | "error">("loading");
+  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"email" | "payment">("email");
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "submitting" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   const stripeRef = useRef<Stripe | null>(null);
   const elementsRef = useRef<StripeElements | null>(null);
-  const initStarted = useRef(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -54,97 +57,98 @@ export default function CheckoutPage() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!mounted || initStarted.current) return;
-    initStarted.current = true;
+  async function handleEmailSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email || !email.includes("@")) return;
+    setStatus("loading");
+    setErrorMsg(null);
 
-    async function init() {
-      try {
-        const stripe = await loadStripe(PUBLISHABLE_KEY);
-        if (!stripe) throw new Error("Failed to load Stripe");
-        stripeRef.current = stripe;
+    try {
+      const stripe = await loadStripe(PUBLISHABLE_KEY);
+      if (!stripe) throw new Error("Failed to load Stripe");
+      stripeRef.current = stripe;
 
-        const res = await fetch("/api/stripe/create-payment-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Could not start checkout");
+      const res = await fetch(`${API_BASE}/api/stripe/create-payment-intent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan, email: email.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not start checkout");
 
-        const elements = stripe.elements({
-          clientSecret: data.clientSecret,
-          appearance: {
-            theme: "flat",
-            variables: {
-              colorPrimary: "#7c3aed",
-              colorBackground: "rgba(255,255,255,0.06)",
-              colorText: "#f1f5f9",
-              colorTextSecondary: "#94a3b8",
-              colorTextPlaceholder: "#64748b",
-              colorDanger: "#f87171",
-              fontFamily: "system-ui, -apple-system, sans-serif",
-              fontSizeBase: "15px",
-              spacingUnit: "4px",
-              borderRadius: "10px",
-              gridRowSpacing: "16px",
+      const elements = stripe.elements({
+        clientSecret: data.clientSecret,
+        appearance: {
+          theme: "flat",
+          variables: {
+            colorPrimary: "#7c3aed",
+            colorBackground: "rgba(255,255,255,0.06)",
+            colorText: "#f1f5f9",
+            colorTextSecondary: "#94a3b8",
+            colorTextPlaceholder: "#64748b",
+            colorDanger: "#f87171",
+            fontFamily: "system-ui, -apple-system, sans-serif",
+            fontSizeBase: "15px",
+            spacingUnit: "4px",
+            borderRadius: "10px",
+            gridRowSpacing: "16px",
+          },
+          rules: {
+            ".Input": {
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "none",
+              padding: "12px 14px",
+              backgroundColor: "rgba(255,255,255,0.06)",
+              backdropFilter: "blur(8px)",
+              color: "#f1f5f9",
             },
-            rules: {
-              ".Input": {
-                border: "1px solid rgba(255,255,255,0.12)",
-                boxShadow: "none",
-                padding: "12px 14px",
-                backgroundColor: "rgba(255,255,255,0.06)",
-                backdropFilter: "blur(8px)",
-                color: "#f1f5f9",
-              },
-              ".Input:focus": {
-                border: "1px solid rgba(124,58,237,0.6)",
-                boxShadow: "0 0 0 3px rgba(124,58,237,0.15)",
-                backgroundColor: "rgba(255,255,255,0.10)",
-              },
-              ".Label": {
-                fontWeight: "500",
-                fontSize: "13px",
-                color: "#cbd5e1",
-                marginBottom: "6px",
-              },
-              ".Tab": {
-                border: "1px solid rgba(255,255,255,0.12)",
-                backgroundColor: "rgba(255,255,255,0.06)",
-                color: "#94a3b8",
-              },
-              ".Tab:hover": {
-                backgroundColor: "rgba(255,255,255,0.10)",
-              },
-              ".Tab--selected": {
-                border: "1px solid rgba(124,58,237,0.6)",
-                backgroundColor: "rgba(124,58,237,0.15)",
-                color: "#c4b5fd",
-              },
-              ".TabIcon--selected": {
-                fill: "#c4b5fd",
-              },
-              ".TabLabel--selected": {
-                color: "#c4b5fd",
-              },
+            ".Input:focus": {
+              border: "1px solid rgba(124,58,237,0.6)",
+              boxShadow: "0 0 0 3px rgba(124,58,237,0.15)",
+              backgroundColor: "rgba(255,255,255,0.10)",
+            },
+            ".Label": {
+              fontWeight: "500",
+              fontSize: "13px",
+              color: "#cbd5e1",
+              marginBottom: "6px",
+            },
+            ".Tab": {
+              border: "1px solid rgba(255,255,255,0.12)",
+              backgroundColor: "rgba(255,255,255,0.06)",
+              color: "#94a3b8",
+            },
+            ".Tab:hover": {
+              backgroundColor: "rgba(255,255,255,0.10)",
+            },
+            ".Tab--selected": {
+              border: "1px solid rgba(124,58,237,0.6)",
+              backgroundColor: "rgba(124,58,237,0.15)",
+              color: "#c4b5fd",
+            },
+            ".TabIcon--selected": {
+              fill: "#c4b5fd",
+            },
+            ".TabLabel--selected": {
+              color: "#c4b5fd",
             },
           },
-        });
-        elementsRef.current = elements;
+        },
+      });
+      elementsRef.current = elements;
 
-        const paymentElement = elements.create("payment", { layout: "tabs" });
-        paymentElement.on("ready", () => setStatus("ready"));
-        paymentElement.mount("#stripe-payment-element");
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Failed to load checkout";
-        setErrorMsg(msg);
-        setStatus("error");
-      }
+      const paymentElement = elements.create("payment", { layout: "tabs" });
+      paymentElement.on("ready", () => {
+        setStep("payment");
+        setStatus("ready");
+      });
+      paymentElement.mount("#stripe-payment-element");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load checkout";
+      setErrorMsg(msg);
+      setStatus("error");
     }
-
-    init();
-  }, [mounted, plan]);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -156,6 +160,7 @@ export default function CheckoutPage() {
       elements: elementsRef.current,
       confirmParams: {
         return_url: `${window.location.origin}/theme/checkout/success`,
+        receipt_email: email.trim(),
       },
     });
 
@@ -282,19 +287,67 @@ export default function CheckoutPage() {
                       Try again
                     </button>
                   </div>
+                ) : step === "email" ? (
+                  <form onSubmit={handleEmailSubmit}>
+                    <div className="mb-6">
+                      <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                        Email address
+                      </label>
+                      <p className="text-xs text-slate-500 mb-3">
+                        Your license key and receipt will be sent here.
+                      </p>
+                      <div className="relative">
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                        <input
+                          id="email"
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          className="w-full rounded-xl border border-white/12 bg-white/[0.06] px-4 py-3 pl-10 text-sm text-white placeholder:text-slate-600 focus:border-violet-500/60 focus:outline-none focus:ring-2 focus:ring-violet-500/15 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={!email.includes("@") || status === "loading"}
+                      className="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-violet-600/25 hover:shadow-violet-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                    >
+                      {status === "loading" ? (
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading payment form…
+                        </span>
+                      ) : (
+                        "Continue to Payment"
+                      )}
+                    </Button>
+
+                    {/* Hidden container — Stripe mounts here while email form is shown */}
+                    <div
+                      id="stripe-payment-element"
+                      style={{ position: "absolute", left: "-9999px", opacity: 0 }}
+                    />
+                  </form>
                 ) : (
                   <form onSubmit={handleSubmit}>
-                    {status === "loading" && (
-                      <div className="flex items-center justify-center py-12 gap-3 text-slate-500 mb-6">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span className="text-sm">Loading payment form…</span>
-                      </div>
-                    )}
+                    <div className="mb-4 flex items-center gap-2 rounded-lg bg-white/[0.04] border border-white/8 px-3 py-2 text-sm text-slate-400">
+                      <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">{email}</span>
+                      <button
+                        type="button"
+                        onClick={() => { setStep("email"); setStatus("idle"); }}
+                        className="ml-auto text-xs text-violet-400 hover:text-violet-300 flex-shrink-0"
+                      >
+                        Change
+                      </button>
+                    </div>
 
                     <div
                       id="stripe-payment-element"
                       className="mb-6"
-                      style={{ visibility: status === "loading" ? "hidden" : "visible", height: status === "loading" ? 0 : "auto" }}
                     />
 
                     {errorMsg && status === "ready" && (

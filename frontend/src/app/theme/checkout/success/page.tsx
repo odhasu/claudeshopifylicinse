@@ -12,10 +12,15 @@ interface SessionInfo {
   licenseKey?: string | null;
 }
 
-async function pollForLicense(sessionId: string, attempts = 4): Promise<string | null> {
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+
+async function pollForLicense(id: string, type: "session" | "pi", attempts = 6): Promise<string | null> {
+  const url = type === "session"
+    ? `${API_BASE}/api/licenses/by-session/${id}`
+    : `${API_BASE}/api/licenses/by-payment-intent/${id}`;
   for (let i = 0; i < attempts; i++) {
     try {
-      const r = await fetch(`/api/licenses/by-session/${sessionId}`);
+      const r = await fetch(url);
       if (r.ok) {
         const d = await r.json();
         if (d.license_key) return d.license_key;
@@ -44,8 +49,8 @@ export default function CheckoutSuccessPage() {
     }
 
     const url = paymentIntentId
-      ? `/api/stripe/payment-intent?payment_intent=${paymentIntentId}`
-      : `/api/stripe/session?session_id=${sessionId}`;
+      ? `${API_BASE}/api/stripe/payment-intent?payment_intent=${paymentIntentId}`
+      : `${API_BASE}/api/stripe/session?session_id=${sessionId}`;
 
     fetch(url)
       .then((res) => res.json())
@@ -57,9 +62,11 @@ export default function CheckoutSuccessPage() {
           licenseKey: null,
         };
 
-        // Poll for the license key if we have a session_id (webhook may take a moment)
-        if (sessionId) {
-          info.licenseKey = await pollForLicense(sessionId);
+        // Poll for the license key (webhook may take a moment)
+        if (paymentIntentId) {
+          info.licenseKey = await pollForLicense(paymentIntentId, "pi");
+        } else if (sessionId) {
+          info.licenseKey = await pollForLicense(sessionId, "session");
         }
 
         setSession(info);

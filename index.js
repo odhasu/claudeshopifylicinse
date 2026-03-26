@@ -173,6 +173,46 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
     await sendWelcomeEmail({ email, name, licenseKey: key, plan });
   }
 
+  // ── PaymentIntent flow (custom checkout) ──
+  if (event.type === 'payment_intent.succeeded') {
+    const pi = event.data.object;
+
+    // Idempotency guard
+    if (store.licenses.find(l => l.stripe_payment_intent_id === pi.id)) {
+      console.log('[Webhook] Duplicate event — license already exists for PaymentIntent', pi.id);
+      return res.json({ received: true });
+    }
+
+    const email = pi.receipt_email || pi.metadata?.email || null;
+    const name  = pi.metadata?.customer_name || null;
+    const plan  = pi.metadata?.plan || 'LITE';
+    const key   = generateLicenseKey();
+    const now   = new Date().toISOString();
+
+    store.licenses.push({
+      id:                        store._nextId++,
+      license_key:               key,
+      username:                  name || email || '',
+      domain:                    '*',
+      permanent_domain:          '*',
+      store_name:                '',
+      plan,
+      active:                    1,
+      created_at:                now,
+      expires_at:                null,
+      last_verified_at:          null,
+      request_count:             0,
+      email,
+      customer_name:             name,
+      stripe_payment_intent_id:  pi.id,
+      notes:                     'Auto-created via Stripe PaymentIntent',
+    });
+    saveStore();
+    console.log(`[Webhook] License created: ${key} for ${email} (${plan}) [PaymentIntent]`);
+
+    await sendWelcomeEmail({ email, name, licenseKey: key, plan });
+  }
+
   res.json({ received: true });
 });
 
@@ -1060,19 +1100,70 @@ async function sendWelcomeEmail({ email, name, licenseKey, plan }) {
   }
 }
 
+// ─── Test Email Endpoint ────────────────────────────────────────
+// POST /api/email/test  { email: "you@example.com", plan?: "LITE"|"PRO" }
+app.post('/api/email/test', async (req, res) => {
+  const { email, plan } = req.body;
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ error: 'A valid email address is required' });
+  }
+  const resend = getResend();
+  if (!resend) {
+    return res.status(500).json({ error: 'RESEND_API_KEY not configured' });
+  }
+  try {
+    await sendWelcomeEmail({
+      email: email.trim(),
+      name: 'Test User',
+      licenseKey: 'VXEL-TEST-XXXX-XXXX',
+      plan: plan || 'LITE',
+    });
+    res.json({ ok: true, sent_to: email.trim() });
+  } catch (err) {
+    console.error('[Email Test] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Look up a license by its PaymentIntent ID
+app.get('/api/licenses/by-payment-intent/:pi_id', (req, res) => {
+  const { pi_id } = req.params;
+  if (!pi_id || !pi_id.startsWith('pi_')) {
+    return res.status(400).json({ error: 'Invalid payment_intent id' });
+  }
+  const lic = store.licenses.find(l => l.stripe_payment_intent_id === pi_id);
+  if (!lic) {
+    return res.status(404).json({ error: 'License not ready yet' });
+  }
+  res.json({
+    license_key: lic.license_key,
+    plan:        lic.plan,
+    email:       lic.email || null,
+    created_at:  lic.created_at,
+  });
+});
+
 // Custom checkout: create a PaymentIntent and return client secret
 app.post('/api/stripe/create-payment-intent', async (req, res) => {
-  const { plan } = req.body;
+  const { plan, email, customerName } = req.body;
   if (!plan || !PLAN_PRICES[plan]) return res.status(400).json({ error: 'Invalid plan. Use LITE or PRO.' });
   try {
     const stripe = getStripe();
     const { amount, name } = PLAN_PRICES[plan];
-    const paymentIntent = await stripe.paymentIntents.create({
+    const intentData = {
       amount,
       currency: 'usd',
       metadata: { plan, planName: name },
       automatic_payment_methods: { enabled: true },
-    });
+    };
+    if (email) {
+      intentData.receipt_email = email.trim();
+      intentData.metadata.email = email.trim();
+    }
+    if (customerName) {
+      intentData.metadata.customer_name = customerName.trim();
+    }
+    const paymentIntent = await stripe.paymentIntents.create(intentData);
     res.json({ clientSecret: paymentIntent.client_secret, amount, planName: name, plan });
   } catch (err) {
     console.error('[Stripe] create-payment-intent error:', err.message);
