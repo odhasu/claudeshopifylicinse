@@ -32,6 +32,8 @@ const adminRouter = require('./src/routes/admin');
 const supportRouter = require('./src/routes/support');
 const loaderRouter = require('./src/routes/loader');
 const licensesRouter = require('./src/routes/licenses');
+const emailRouter = require('./src/routes/email');
+const systemRouter = require('./src/routes/system');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -129,9 +131,7 @@ app.use((req, res, next) => {
 app.use(express.static(siteDir, { extensions: ['html'] }));
 
 // ─── API Routes ─────────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '3.0.0', timestamp: new Date().toISOString() });
-});
+app.use(systemRouter); // /api/health
 
 app.use('/api/auth', async (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -172,30 +172,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/loader', loaderRouter);
 app.use('/api/licenses', licensesRouter);
-// Email test endpoint (admin-only, mounted at /api/email/test)
-const { requireAdmin } = require('./src/middleware/requireAdmin');
-const { sendWelcomeEmail } = require('./src/services/emailService');
-app.post('/api/email/test', requireAdmin, async (req, res) => {
-  const { email, plan } = req.body;
-  if (!email || typeof email !== 'string' || !email.includes('@')) {
-    return res.status(400).json({ error: 'A valid email address is required' });
-  }
-  const normalizedPlan = typeof plan === 'string' && ['LITE', 'PRO'].includes(plan.toUpperCase())
-    ? plan.toUpperCase()
-    : 'LITE';
-  try {
-    await sendWelcomeEmail({
-      email: email.trim(),
-      name: 'Test User',
-      licenseKey: 'VXEL-TEST-XXXX-XXXX',
-      plan: normalizedPlan,
-    });
-    res.json({ ok: true, sent_to: email.trim() });
-  } catch (err) {
-    console.error('[Email Test] Error:', err.message);
-    res.status(500).json({ error: 'Failed to send test email' });
-  }
-});
+app.use('/api/email', emailRouter);
 
 // ─── Central Error Handler ──────────────────────────────────────
 app.use((err, req, res, next) => {
