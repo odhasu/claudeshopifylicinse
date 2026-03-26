@@ -101,9 +101,9 @@ export function Pricing({
                       <p className="text-white/70 text-sm mt-1">{plan.period}</p>
                       <p className="text-white/70 text-sm mt-0.5">{plan.description}</p>
                     </div>
-                    {/* 3D chart icon */}
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-300/40 to-blue-500/20 backdrop-blur-sm flex items-center justify-center text-3xl shadow-lg border border-white/20 flex-shrink-0 mt-1">
-                      📈
+                    {/* Diamond logo */}
+                    <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/20 flex-shrink-0 mt-1 p-3">
+                      <img src="/diamond-logo.svg" alt="Vexel" className="w-full h-full object-contain" />
                     </div>
                   </div>
                 </div>
