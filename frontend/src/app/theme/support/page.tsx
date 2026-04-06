@@ -283,7 +283,7 @@ export default function SupportPage() {
             </div>
             <div className="py-6 sm:py-0 sm:px-8">
               <p className="text-3xl font-extrabold text-white">Mon – Sun</p>
-              <p className="mt-1.5 text-sm text-slate-400">9 AM – 10 PM PST</p>
+              <p className="mt-1.5 text-sm text-slate-400">8 AM – 8 PM CET</p>
             </div>
             <div className="py-6 sm:py-0 sm:px-8">
               <p className="text-3xl font-extrabold text-white">1-on-1</p>
