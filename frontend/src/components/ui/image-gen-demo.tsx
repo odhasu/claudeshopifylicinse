@@ -31,50 +31,6 @@ export function ImageGenDemo() {
   const bg = BG_IMAGES[bgIndex];
 
   return (
-    <div className="space-y-10">
-      {/* Phone mockups */}
-      <div className="flex justify-center gap-4 sm:gap-6 lg:gap-8">
-        {BG_IMAGES.slice(0, 3).map((img, i) => (
-          <div key={i} className="relative w-[140px] sm:w-[180px] lg:w-[200px]">
-            {/* Phone frame */}
-            <div className="relative rounded-[24px] sm:rounded-[28px] border-[3px] border-slate-800 bg-slate-900 shadow-2xl shadow-slate-400/30 overflow-hidden">
-              {/* Notch */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-900 rounded-b-xl z-10" />
-              {/* Screen */}
-              <div className="aspect-[9/19] overflow-hidden">
-                <img
-                  src={img.src}
-                  alt={img.alt}
-                  className="w-full h-full object-cover"
-                />
-                {/* Product overlay on middle phone */}
-                {i === 1 && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-8 sm:w-10 h-8 sm:h-10 drop-shadow-lg" aria-hidden="true">
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
-                      </svg>
-                    </div>
-                  </div>
-                )}
-                {/* Text overlay on last phone */}
-                {i === 2 && (
-                  <div className="absolute bottom-4 left-2 right-2">
-                    <div className="px-2 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm">
-                      <p className="text-white text-[9px] sm:text-[10px] font-bold text-center tracking-wide">YOUR BRAND</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            {/* Label under phone */}
-            <p className="text-center text-xs sm:text-sm font-medium text-slate-500 mt-3">
-              {STEPS[i].label}
-            </p>
-          </div>
-        ))}
-      </div>
-
     <div className="rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden bg-white">
       {/* Image canvas */}
       <div className="relative aspect-square bg-black overflow-hidden">
@@ -170,7 +126,6 @@ export function ImageGenDemo() {
           <p className="text-xs text-slate-400">{STEPS[stepIndex].sub}</p>
         </div>
       </div>
-    </div>
     </div>
   );
 }
