@@ -1,104 +1,66 @@
-# OGResell Licensing Server — Project Context
+# Vexel Store
 
-This is the backend server for ogresells.com. Read this file every session before touching anything.
+The store where Oscar sells his Shopify theme to resellers. Like usekenso.com but for Vexel.
 
-## What this repo is
+Live: claudecodethemeshopify.vercel.app
+Repo: github.com/odhasu/claudeshopifylicinse
+Owner: Oscar (odhasu / 0xlouiss is his alt account)
 
-An Express.js backend that powers the OGResell licensing system. When a customer visits ogresells.com, the Shopify theme's loader.js pings this server to validate their license. The server also runs an admin dashboard for Oscar and handles support tickets.
+## How it works
 
-**Deployed on:** Vercel (serverless)
-**Paired theme repo:** github.com/odhasu/claudecodethemeshopify
+- Express.js server on Vercel (serverless)
+- Frontend is Next.js static export — edit source in `frontend/src/`, build it, copy `frontend/out/` to `site/`, then push
+- Vercel serves from `site/` — source changes alone do nothing until you build and copy
+- Vercel redeploys automatically on push to main
 
-## Rules — always follow these
+## Build steps (every time you edit frontend)
 
-- After every file change: git add → git commit → git push (Vercel redeploys automatically on push)
-- Never store persistent data in /tmp — it doesn't survive across Vercel serverless instances
-- All persistent data goes through Upstash Redis (tickets) or SQLite (licenses)
-- The frontend is a Next.js static export — no API routes can exist inside frontend/src/app/api/
+1. Edit files in `frontend/src/`
+2. Run `npm run build` in `frontend/`
+3. Copy `frontend/out/*` to `site/`
+4. Git add, commit, push
 
-## Architecture
+## Rules
 
-```
-index.js                  → Main Express server (license validation, admin API, ticket API)
-src/                      → Server source files
-dashboard/                → Admin dashboard HTML/JS (served as static files)
-frontend/                 → Next.js static export (public-facing pages: pricing, docs, etc.)
-  src/app/theme/          → Pages accessible at /theme/* (docs, pricing, support)
-  src/components/         → React components
-  src/lib/                → Data files (plans, docs content)
-site/                     → Built frontend output (auto-generated, don't edit manually)
-```
+- Never store data in /tmp — use Upstash Redis
+- No API routes in frontend/src/app/api/ — breaks static export
+- Support person name: Sam
+- Support hours: 8AM–8PM CET, Mon–Sun
+- Talk plain language, no jargon
+- Don't add things Oscar didn't ask for
 
-## Key endpoints
+## What's built
 
-| Endpoint | What it does |
-|----------|--------------|
-| POST /api/validate | Validates a license key — called by loader.js on every page load |
-| GET /api/admin/licenses | Lists all licenses (admin only) |
-| POST /api/support/ticket | Creates a support ticket |
-| GET /api/admin/tickets | Lists all support tickets (admin only) |
-| GET /dashboard | Admin dashboard UI |
+- Homepage: hero, stats ($300K+ / 10K+ / 4.9 rating), 6 feature cards, creators marquee, image generator demo, AI customizer demo, pricing, FAQ, footer
+- Pricing: Lite $179 (1 store), Pro $379 (5 stores) — Stripe links coming later
+- Docs: 29 articles across 6 categories + floating chat widget (name, phone, message)
+- Support page: Sam as support person, 8AM–8PM CET, contact form, FAQ cards
+- Admin dashboard: licenses, tickets, theme downloads
+- License validation: theme's loader.js pings /api/validate on every page load
+- Tickets: Upstash Redis (not /tmp)
 
 ## Storage
 
-### Licenses — SQLite
-Stored in a SQLite database. Managed through the admin dashboard. Fields: license key, customer email, domain, plan (Lite/Pro), expiry, status.
+- Licenses: SQLite
+- Tickets: Upstash Redis (UPSTASH_REDIS_REST_URL or KV_REST_API_URL)
 
-### Support Tickets — Upstash Redis
-Tickets are stored in Upstash Redis so they persist across Vercel serverless restarts. The env var is checked in two ways:
-```
-UPSTASH_REDIS_REST_URL  (set by Vercel marketplace)
-KV_REST_API_URL         (alternative naming)
-```
-Both are checked — whichever is set gets used.
+## Key folders
 
-### Why not /tmp?
-Vercel serverless functions can spin up multiple instances. Data saved to /tmp on one instance isn't visible on another. That's why tickets were getting lost — fixed by switching to Upstash Redis.
+- `frontend/src/` — React/Next.js source
+- `frontend/out/` — build output
+- `site/` — what Vercel serves (copy of out/)
+- `dashboard/` — admin panel
+- `index.js` — Express server
 
-## Frontend (Next.js static export)
+## Resellers using the theme
 
-The frontend is built as a static site (`output: "export"` in next.config.js). This means:
-- No server-side rendering
-- No API routes inside frontend/src/app/api/ — these will break the build
-- All data is either hardcoded in lib/ files or fetched client-side
+- omar.resells1 (Instagram) — more handles coming
+- keanusvendors.com, flippavendors.com, resellersrealm.shop, piaresells.com — these are Kenso's customers, used as reference
 
-**Key pages:**
-- /theme/docs → Docs page with 29 articles + chat widget
-- /theme/pricing → Pricing cards (Lite + Pro)
-- /theme/support → Support page
+## What needs work
 
-**Key components:**
-- ChatWidget.tsx → Floating support chat, bottom-left, submits to /api/support/ticket
-- pricing.tsx → Lite and Pro pricing cards
-
-**Key data files:**
-- lib/plans.ts → Plan names, prices, features, button text
-- lib/docs-content.ts → All 29 article HTML contents
-
-## Changelog
-
-### March 15 2026
-- Added Upstash Redis for persistent ticket storage (fixed lost tickets bug)
-- Updated 403 handler — now sends footerHtml in response for loader.js to inject
-- Added ChatWidget component to docs page
-- Fixed static export breaking due to API route in frontend/src/app/api/
-
-### March 10 2026
-- Built admin dashboard (licenses, tickets, theme downloads)
-- Built support ticket system
-- Added frontend with pricing and docs pages
-- Deployed to Vercel
-
-## Environment variables (set in Vercel dashboard)
-
-| Variable | What it is |
-|----------|------------|
-| ADMIN_KEY | Secret key to access admin dashboard |
-| UPSTASH_REDIS_REST_URL | Upstash Redis URL for ticket storage |
-| UPSTASH_REDIS_REST_TOKEN | Upstash Redis auth token |
-| PORT | Server port (default 3000, set by Vercel automatically) |
-
-## Still to do
-- Support page redesign (match Kenso support page style)
-- Reseller management section in admin dashboard
-- Changelog/updates page for customers
+- Docs page needs fixes
+- Creators marquee: needs real reseller profiles
+- Phone mockups in "Used by Biggest Names" section: need real screenshots
+- Refund/terms/privacy pages: not built yet
+- Purchase buttons: need Stripe links (Oscar will add)

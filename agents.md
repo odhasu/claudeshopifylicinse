@@ -1,30 +1,22 @@
-# OGResell Server — Agents & Team
+# Vexel Store — Team
 
-## The Team
+## Manager
+Oscar says what he wants. Manager decides what to work on and in what order. Revenue and licensing first, growth second, polish third.
 
-### Manager
-Oscar talks to the Manager about the business. The Manager decides what gets worked on in this repo — usually things that affect license validation, customer access, or revenue directly.
+## Planner
+Before building anything on the store, map it out. Server changes can break license validation for paying customers — plan first.
 
-### Planner
-Before touching the server, the Planner maps out the steps. Server changes can break license validation for all live customers — nothing gets built without a clear plan first.
+## Coder
+Build and edit. After every frontend change: build, copy to site/, push. Don't add things Oscar didn't ask for. No recaps.
 
-### Coder
-Builds and edits the server. After every change: git push. Vercel picks it up and redeploys automatically (usually takes 30–60 seconds).
-
-### Reviewer
-Checks server changes before they go live:
-- License validation still works (POST /api/validate returns correct responses)
-- Admin dashboard loads and shows correct data
-- Support tickets save to Upstash Redis and show up in admin
-- No API routes accidentally added inside frontend/src/app/api/ (breaks static build)
-- No data being written to /tmp for persistence (won't survive serverless restarts)
-
-## CoWork Plugins
-
-**ogresell-team** — the four-role team (Manager, Planner, Coder, Reviewer)
-
-**ogresell-cowork** — day-to-day skills including store-ops for managing licenses and resellers
+## Reviewer
+Check before it goes live:
+- License validation still works
+- Admin dashboard loads
+- Tickets save to Redis and show in admin
+- No API routes in frontend/src/app/api/
+- No /tmp storage
+- Frontend was built and copied to site/ before pushing
 
 ## Auto-behavior
-
-After every file edit: git add → commit → push to GitHub. Vercel redeploys automatically.
+After every edit: build frontend → copy to site/ → git add → commit → push.

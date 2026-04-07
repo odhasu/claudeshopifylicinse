@@ -1,79 +1,47 @@
-# OGResell Server — Skills & How-Tos
+# Vexel Store — How Things Work
 
-Reference for working on this server. What each part does and how to work on it correctly.
-
-## How to add a new API endpoint
-
-1. Open `index.js`
-2. Add your route — `app.get('/api/your-route', async (req, res) => { ... })`
-3. If it needs admin access, check the ADMIN_KEY header first
-4. If it needs persistent storage, use Upstash Redis — not /tmp, not in-memory variables
-5. Push to GitHub — Vercel redeploys automatically
-
-## How to work with Upstash Redis
-
-The server uses Upstash Redis via REST API (no npm package needed — just fetch).
-
-```javascript
-// Read tickets
-const raw = await upstashCmd(['GET', 'vexel_tickets']);
-const tickets = raw ? JSON.parse(raw) : [];
-
-// Save tickets
-await upstashCmd(['SET', 'vexel_tickets', JSON.stringify(tickets)]);
-```
-
-The `upstashCmd` function is already defined in index.js. Use it for any data that needs to survive server restarts.
-
-## How to update the frontend (pricing, docs, etc.)
-
-The frontend is a Next.js static export inside `frontend/`.
+## Updating the frontend
 
 1. Edit files in `frontend/src/`
-2. Data files are in `frontend/src/lib/` — edit plans.ts for pricing, docs-content.ts for articles
-3. Components are in `frontend/src/components/`
-4. **Never add files to `frontend/src/app/api/`** — API routes break the static export
-5. Push to GitHub — Vercel rebuilds the frontend automatically
+2. Run `npm run build` in `frontend/`
+3. Copy everything from `frontend/out/` to `site/`
+4. Push to GitHub
 
-## How the license validation works
+Source changes alone don't show up on the live site. You must build and copy to site/ every time.
 
-When loader.js on the theme calls `/api/validate`:
+## Adding a new page
 
-1. Server receives the license key + domain
-2. Looks up the key in SQLite database
-3. Checks: does it exist? is it active? does the domain match? is it expired?
-4. **Valid** → returns 200 with section HTML and settings
-5. **Invalid** → returns 403 with `{ message: "...", footerHtml: "..." }`
+1. Create `frontend/src/app/theme/your-page/page.tsx`
+2. Never add anything to `frontend/src/app/api/` — breaks the build
+3. Build, copy to site/, push
 
-The `footerHtml` in the 403 response gets injected into the page footer by loader.js so the page doesn't look completely broken.
+## Adding an API endpoint
 
-## How to access the admin dashboard
+1. Open `index.js`
+2. Add route
+3. If it needs admin access, check ADMIN_KEY
+4. If it needs storage, use Upstash Redis via `upstashCmd()`
+5. Push — Vercel redeploys
 
-URL: your-vercel-url.vercel.app/dashboard
+## License validation flow
 
-Requires the ADMIN_KEY set in Vercel environment variables. Use it to:
-- View and manage all licenses
-- See support tickets
-- Download theme packages for customers
+1. Customer visits a reseller store using the theme
+2. Theme's loader.js sends license key + domain to POST /api/validate
+3. Server checks SQLite: exists? active? domain match? expired?
+4. Valid → 200 + section HTML
+5. Invalid → 403 + message + footerHtml (loader.js injects it)
 
 ## Key files
 
-| File | What it does |
-|------|--------------|
-| index.js | Main server — all routes, license validation, Redis integration |
-| src/ | Source modules |
-| dashboard/ | Admin dashboard static files |
-| frontend/src/lib/plans.ts | Pricing plan data (names, prices, features) |
-| frontend/src/lib/docs-content.ts | All 29 article HTML contents |
-| frontend/src/components/ChatWidget.tsx | Floating support chat component |
-| frontend/src/components/ui/pricing.tsx | Pricing cards (Lite + Pro) |
-
-## After every change
-
-```
-git add .
-git commit -m "short description of what changed"
-git push
-```
-
-Vercel detects the push and redeploys. Usually live within 60 seconds.
+| File | What |
+|------|------|
+| index.js | Express server, all routes |
+| frontend/src/app/theme/page.tsx | Homepage |
+| frontend/src/app/theme/docs/page.tsx | Docs page |
+| frontend/src/app/theme/support/page.tsx | Support page |
+| frontend/src/components/ui/pricing.tsx | Pricing cards |
+| frontend/src/components/ui/hero-section.tsx | Hero + stats |
+| frontend/src/components/ui/vexel-logo.tsx | Logo (black diamond, no purple) |
+| frontend/src/lib/plans.ts | Plan data |
+| frontend/src/lib/docs-content.ts | 29 article HTMLs |
+| dashboard/ | Admin panel |
