@@ -102,7 +102,7 @@ export function Pricing({
                       <p className="text-white/70 text-sm mt-0.5">{plan.description}</p>
                     </div>
                     {/* Diamond logo */}
-                    <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/20 flex-shrink-0 mt-1 p-3">
+                    <div className="w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-lg flex-shrink-0 mt-1 p-3">
                       <img src="/diamond-logo.svg" alt="Vexel" className="w-full h-full object-contain" />
                     </div>
                   </div>
