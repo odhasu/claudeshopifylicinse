@@ -256,10 +256,27 @@ export default function AccountPage() {
                 Lifetime
               </span>
             </div>
-            <div className="flex justify-between items-center mt-4">
-               <a href="/theme-download.zip" download className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#3a0ca3] text-white text-sm font-semibold hover:bg-[#2d0980] transition-colors shadow-lg shadow-[#3a0ca3]/20">
-                  <Download className="h-4 w-4" /> Download Theme
-               </a>
+            <div className="space-y-3 mt-4">
+              {/* V2 — coming soon */}
+              <div className="flex items-center justify-between rounded-xl border border-[#3a0ca3]/20 bg-[#3a0ca3]/5 px-4 py-3">
+                <div>
+                  <p className="text-sm font-bold text-slate-900">Vexel V2 <span className="ml-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">Coming Soon</span></p>
+                  <p className="text-xs text-slate-400 mt-0.5">Image protection, 3D cards, new sections & more</p>
+                </div>
+                <button disabled className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed">
+                  <Download className="h-3.5 w-3.5" /> Download
+                </button>
+              </div>
+              {/* V1 — available */}
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-700">Vexel V1 <span className="ml-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-500">Legacy</span></p>
+                  <p className="text-xs text-slate-400 mt-0.5">Current stable release</p>
+                </div>
+                <a href="/theme-v1.zip" download className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#3a0ca3] text-white text-xs font-semibold hover:bg-[#2d0980] transition-colors shadow shadow-[#3a0ca3]/20">
+                  <Download className="h-3.5 w-3.5" /> Download
+                </a>
+              </div>
             </div>
           </div>
         </div>

@@ -5,13 +5,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, CreditCard, BookOpen, MessageCircle, User } from "lucide-react"
+import { Home, CreditCard, BookOpen, MessageCircle, User, Newspaper } from "lucide-react"
 
 const BASE_NAV_ITEMS = [
   { name: "Home",    url: "/theme",          icon: Home },
   { name: "Pricing", url: "/theme/pricing",  icon: CreditCard },
   { name: "Docs",    url: "/theme/docs",     icon: BookOpen },
   { name: "Support", url: "/theme/support",  icon: MessageCircle },
+  { name: "News",    url: "/theme/news",     icon: Newspaper },
   { name: "Account", url: "/theme/account",  icon: User },
 ]
 
