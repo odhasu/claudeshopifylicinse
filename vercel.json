@@ -1,15 +1,22 @@
 {
   "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
   "builds": [
+    {
+      "src": "site/**",
+      "use": "@vercel/static"
+    },
     {
       "src": "index.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["dashboard/**", "src/**", "theme-dist/**", "site/**"]
+        "includeFiles": ["src/**", "theme-dist/**"]
       }
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "/index.js" }
+    { "src": "/api/(.*)", "dest": "/index.js" },
+    { "src": "/(.*)", "dest": "/site/$1" }
   ]
 }
