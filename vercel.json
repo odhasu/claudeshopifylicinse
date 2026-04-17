@@ -16,6 +16,7 @@
     }
   ],
   "routes": [
+    { "src": "/", "dest": "/site/theme.html", "status": 308 },
     { "src": "/api/(.*)", "dest": "/index.js" },
     { "src": "/(.*)", "dest": "/site/$1" }
   ]
