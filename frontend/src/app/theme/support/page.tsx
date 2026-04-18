@@ -57,9 +57,9 @@ const FOOTER_GROUPS = [
   {
     label: "Legal & Policies",
     links: [
-      { text: "Terms of Service", href: "/theme/error" },
-      { text: "Privacy Policy", href: "/theme/error" },
-      { text: "Refund Policy", href: "/theme/error" },
+      { text: "Terms of Service", href: "/theme/terms" },
+      { text: "Privacy Policy", href: "/theme/privacy" },
+      { text: "Refund Policy", href: "/theme/refund" },
     ],
   },
 ];

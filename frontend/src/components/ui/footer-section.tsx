@@ -18,10 +18,10 @@ const accordionSections = [
   {
     label: 'Legal & Policies',
     links: [
-      { title: 'Privacy Policy', href: '/theme/error' },
-      { title: 'Terms of Service', href: '/theme/error' },
-      { title: 'Refund Policy', href: '/theme/error' },
-      { title: 'Disclosures', href: '/theme/error' },
+      { title: 'Privacy Policy', href: '/theme/privacy' },
+      { title: 'Terms of Service', href: '/theme/terms' },
+      { title: 'Refund Policy', href: '/theme/refund' },
+      { title: 'Disclosures', href: '/theme/terms' },
     ],
   },
 ];

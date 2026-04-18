@@ -34,6 +34,7 @@ const loaderRouter = require('./src/routes/loader');
 const licensesRouter = require('./src/routes/licenses');
 const emailRouter = require('./src/routes/email');
 const systemRouter = require('./src/routes/system');
+const customerRouter = require('./src/routes/customer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -173,6 +174,7 @@ app.use('/api/support', supportRouter);
 app.use('/api/loader', loaderRouter);
 app.use('/api/licenses', licensesRouter);
 app.use('/api/email', emailRouter);
+app.use('/api/customer', customerRouter);
 
 // ─── Central Error Handler ──────────────────────────────────────
 app.use((err, req, res, next) => {

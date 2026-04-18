@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   BookOpen, MessageCircle, Download, ExternalLink, CheckCircle, Package,
-  User, LogOut, Copy, Check, KeyRound, Zap, ChevronRight,
+  User, LogOut, Copy, Check, KeyRound, Zap, ChevronRight, Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { Particles } from "@/components/ui/particles";
@@ -125,6 +125,30 @@ function LoginGate({ onLogin }: { onLogin: (licenseData: AccountLicense) => void
 export default function AccountPage() {
   const [license, setLicense] = useState<AccountLicense | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownloadV1() {
+    const key = localStorage.getItem("vexel_license_key");
+    if (!key) return;
+    setDownloading(true);
+    try {
+      const res = await fetch("/api/customer/download", {
+        headers: { "X-License-Key": key },
+      });
+      if (!res.ok) throw new Error("Download failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "vexel-v1.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Download failed. Please contact support.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   useEffect(() => {
     const savedKey = localStorage.getItem("vexel_license_key");
@@ -273,12 +297,16 @@ export default function AccountPage() {
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">Current release · Full feature set</p>
               </div>
-              <Link
-                href="/theme/support"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#3a0ca3] text-white text-xs font-semibold hover:bg-[#2d0980] transition-colors shadow shadow-[#3a0ca3]/20"
+              <button
+                onClick={handleDownloadV1}
+                disabled={downloading}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#3a0ca3] text-white text-xs font-semibold hover:bg-[#2d0980] transition-colors shadow shadow-[#3a0ca3]/20 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <MessageCircle className="h-3.5 w-3.5" /> Get Link
-              </Link>
+                {downloading
+                  ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Downloading…</>
+                  : <><Download className="h-3.5 w-3.5" /> Download</>
+                }
+              </button>
             </div>
           </div>
         </div>

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Inbox, Key, LogOut, RefreshCw, Plus, Trash2, CheckCircle,
   Clock, XCircle, ChevronDown, ChevronRight, Send, Eye,
-  LayoutDashboard, Copy, Check, AlertCircle
+  LayoutDashboard, Copy, Check, AlertCircle, CalendarClock,
+  RotateCcw, Upload
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -20,8 +21,14 @@ interface Ticket {
 interface License {
   id: number; license_key: string; domain: string; store_name: string;
   plan: string; active: number | boolean; created_at: string;
+  expires_at?: string | null;
   last_verified_at: string | null; request_count: number;
   username?: string; customer_name?: string; notes?: string;
+}
+interface ExpiringLicense {
+  license_key: string; domain: string | null; plan: string | null;
+  email: string | null; customer_name: string | null;
+  active: boolean; expires_at: string; days_remaining: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -52,6 +59,94 @@ function CopyBtn({ value }: { value: string }) {
       className="ml-1 text-slate-400 hover:text-slate-700 transition-colors">
       {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
     </button>
+  );
+}
+
+// ─── Renew Modal ──────────────────────────────────────────────────────────────
+
+function RenewModal({
+  licenseKey, adminKey, onClose, onDone,
+}: {
+  licenseKey: string; adminKey: string; onClose: () => void; onDone: () => void;
+}) {
+  const [mode, setMode] = useState<"days" | "permanent">("days");
+  const [days, setDays] = useState("365");
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleRenew(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true); setError("");
+    try {
+      const body: Record<string, unknown> = { note: note.trim() || undefined };
+      if (mode === "permanent") {
+        body.make_permanent = true;
+      } else {
+        const d = parseInt(days, 10);
+        if (!d || d < 1) { setError("Enter a valid number of days"); setLoading(false); return; }
+        body.days = d;
+      }
+      const res = await fetch(`/api/admin/licenses/${encodeURIComponent(licenseKey)}/renew`, {
+        method: "POST",
+        headers: { "X-Admin-Key": adminKey, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error || "Renewal failed");
+      }
+      onDone();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Renewal failed");
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md p-6">
+        <h3 className="text-base font-bold text-slate-900 mb-1">Renew License</h3>
+        <p className="text-xs text-slate-400 font-mono mb-5 break-all">{licenseKey}</p>
+        <form onSubmit={handleRenew} className="space-y-4">
+          <div className="flex gap-3">
+            <label className={`flex-1 flex items-center gap-2 rounded-xl border px-4 py-3 cursor-pointer transition-colors ${mode === "days" ? "border-[#3a0ca3] bg-[#3a0ca3]/5" : "border-slate-200 hover:border-slate-300"}`}>
+              <input type="radio" name="mode" value="days" checked={mode === "days"} onChange={() => setMode("days")} className="accent-[#3a0ca3]" />
+              <span className="text-sm font-medium text-slate-700">Extend by days</span>
+            </label>
+            <label className={`flex-1 flex items-center gap-2 rounded-xl border px-4 py-3 cursor-pointer transition-colors ${mode === "permanent" ? "border-[#3a0ca3] bg-[#3a0ca3]/5" : "border-slate-200 hover:border-slate-300"}`}>
+              <input type="radio" name="mode" value="permanent" checked={mode === "permanent"} onChange={() => setMode("permanent")} className="accent-[#3a0ca3]" />
+              <span className="text-sm font-medium text-slate-700">Make permanent</span>
+            </label>
+          </div>
+          {mode === "days" && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Days to extend</label>
+              <input
+                type="number" min="1" max="3650"
+                value={days} onChange={e => setDays(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3a0ca3]"
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Note (optional)</label>
+            <input
+              type="text" value={note} onChange={e => setNote(e.target.value)}
+              placeholder="e.g. Annual renewal"
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3a0ca3]"
+            />
+          </div>
+          {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
+          <div className="flex gap-2 justify-end pt-1">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors">Cancel</button>
+            <button type="submit" disabled={loading}
+              className="inline-flex items-center gap-1.5 bg-[#3a0ca3] hover:bg-[#2d0980] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
+              <RotateCcw size={13} /> {loading ? "Renewing…" : "Renew"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -346,12 +441,174 @@ function TicketsTab({ adminKey }: { adminKey: string }) {
   );
 }
 
+// ─── Expiring Tab ─────────────────────────────────────────────────────────────
+
+function ExpiringTab({ adminKey }: { adminKey: string }) {
+  const [data, setData] = useState<{ licenses: ExpiringLicense[]; summary: { expiring_soon: number; expired: number } } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState(30);
+  const [renewTarget, setRenewTarget] = useState<string | null>(null);
+
+  const headers = useMemo(() => ({ "X-Admin-Key": adminKey }), [adminKey]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/licenses/expiring-soon?days=${days}&includeExpired=true&limit=200`, { headers });
+      const d = await res.json();
+      setData(d);
+    } finally { setLoading(false); }
+  }, [headers, days]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const expiringSoon = data?.licenses.filter(l => l.days_remaining >= 0) ?? [];
+  const expired = data?.licenses.filter(l => l.days_remaining < 0) ?? [];
+
+  function daysBadge(days: number) {
+    if (days < 0) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold border border-red-200">Expired {Math.abs(days)}d ago</span>;
+    if (days <= 7) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-semibold border border-orange-200">{days}d left</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">{days}d left</span>;
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20 text-slate-400">
+      <RefreshCw size={20} className="animate-spin mr-2" /> Loading…
+    </div>
+  );
+
+  return (
+    <div>
+      {renewTarget && (
+        <RenewModal
+          licenseKey={renewTarget}
+          adminKey={adminKey}
+          onClose={() => setRenewTarget(null)}
+          onDone={() => { setRenewTarget(null); load(); }}
+        />
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Expiring Licenses</h2>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {data?.summary.expiring_soon ?? 0} expiring soon · {data?.summary.expired ?? 0} already expired
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={days}
+            onChange={e => setDays(Number(e.target.value))}
+            className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3a0ca3]"
+          >
+            <option value={7}>Next 7 days</option>
+            <option value={30}>Next 30 days</option>
+            <option value={90}>Next 90 days</option>
+          </select>
+          <button onClick={load} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors">
+            <RefreshCw size={14} />
+          </button>
+        </div>
+      </div>
+
+      {expiringSoon.length === 0 && expired.length === 0 ? (
+        <div className="text-center py-16 text-slate-400">
+          <CalendarClock size={36} className="mx-auto mb-3 opacity-40" />
+          <p className="text-sm">No licenses expiring in the next {days} days</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {expiringSoon.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Expiring Soon</p>
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">License</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Domain</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Plan</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Expires</th>
+                      <th className="px-4 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {expiringSoon.map(l => (
+                      <tr key={l.license_key} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 font-mono text-xs text-slate-700 flex items-center gap-1">
+                          {l.license_key.slice(0, 9)}… <CopyBtn value={l.license_key} />
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-600">{l.domain || "—"}</td>
+                        <td className="px-4 py-3 text-xs capitalize text-slate-600">{l.plan || "—"}</td>
+                        <td className="px-4 py-3">{daysBadge(l.days_remaining)}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => setRenewTarget(l.license_key)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#3a0ca3] hover:text-[#2d0980] transition-colors"
+                          >
+                            <RotateCcw size={12} /> Renew
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {expired.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Already Expired</p>
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">License</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Domain</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Plan</th>
+                      <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Expired</th>
+                      <th className="px-4 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {expired.map(l => (
+                      <tr key={l.license_key} className="hover:bg-slate-50 opacity-75">
+                        <td className="px-4 py-3 font-mono text-xs text-slate-700 flex items-center gap-1">
+                          {l.license_key.slice(0, 9)}… <CopyBtn value={l.license_key} />
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-600">{l.domain || "—"}</td>
+                        <td className="px-4 py-3 text-xs capitalize text-slate-600">{l.plan || "—"}</td>
+                        <td className="px-4 py-3">{daysBadge(l.days_remaining)}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => setRenewTarget(l.license_key)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-[#3a0ca3] hover:text-[#2d0980] transition-colors"
+                          >
+                            <RotateCcw size={12} /> Renew
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Licenses Tab ─────────────────────────────────────────────────────────────
 
 function LicensesTab({ adminKey }: { adminKey: string }) {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
   const [form, setForm] = useState({ domain: "", store_name: "", plan: "lite", username: "" });
   const [creating, setCreating] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -359,6 +616,14 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "revoked">("all");
   const [planFilter, setPlanFilter] = useState<"all" | string>("all");
+  const [renewTarget, setRenewTarget] = useState<string | null>(null);
+
+  // Bulk create state
+  const [bulkJson, setBulkJson] = useState("");
+  const [bulkSkip, setBulkSkip] = useState(true);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ created: number; skipped: number; failed: number } | null>(null);
+  const [bulkError, setBulkError] = useState("");
 
   const headers = useMemo(() => ({ "X-Admin-Key": adminKey }), [adminKey]);
 
@@ -397,16 +662,31 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
     } finally { setRevoking(null); }
   }
 
+  async function bulkCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setBulkLoading(true); setBulkResult(null); setBulkError("");
+    try {
+      let parsed: unknown;
+      try { parsed = JSON.parse(bulkJson); } catch { throw new Error("Invalid JSON — check your input"); }
+      if (!Array.isArray(parsed)) throw new Error("Input must be a JSON array");
+      const res = await fetch("/api/admin/licenses/bulk-create", {
+        method: "POST", headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ licenses: parsed, on_conflict: bulkSkip ? "skip" : "fail" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Bulk create failed");
+      setBulkResult({ created: data.created ?? 0, skipped: data.skipped ?? 0, failed: data.failed ?? 0 });
+      await load();
+    } catch (e: unknown) {
+      setBulkError(e instanceof Error ? e.message : "Bulk create failed");
+    } finally { setBulkLoading(false); }
+  }
+
   // Filter and search licenses
   const filteredLicenses = licenses.filter(license => {
-    // Status filter
     if (statusFilter === "active" && !license.active) return false;
     if (statusFilter === "revoked" && license.active) return false;
-
-    // Plan filter
     if (planFilter !== "all" && license.plan !== planFilter) return false;
-
-    // Search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const matchesKey = license.license_key.toLowerCase().includes(query);
@@ -415,7 +695,6 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
       const matchesStore = license.store_name?.toLowerCase().includes(query);
       if (!matchesKey && !matchesDomain && !matchesCustomer && !matchesStore) return false;
     }
-
     return true;
   });
 
@@ -427,6 +706,15 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
 
   return (
     <div>
+      {renewTarget && (
+        <RenewModal
+          licenseKey={renewTarget}
+          adminKey={adminKey}
+          onClose={() => setRenewTarget(null)}
+          onDone={() => { setRenewTarget(null); load(); }}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -435,13 +723,59 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
             {licenses.filter(l => l.active).length} active · {licenses.length} total
           </p>
         </div>
-        <button
-          onClick={() => { setShowCreate(!showCreate); setNewKey(null); }}
-          className="inline-flex items-center gap-1.5 bg-[#3a0ca3] hover:bg-[#2d0980] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-        >
-          <Plus size={14} /> New License
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setShowBulk(!showBulk); setShowCreate(false); setBulkResult(null); setBulkError(""); }}
+            className="inline-flex items-center gap-1.5 border border-slate-300 text-slate-700 hover:border-slate-400 text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors"
+          >
+            <Upload size={13} /> Bulk Create
+          </button>
+          <button
+            onClick={() => { setShowCreate(!showCreate); setShowBulk(false); setNewKey(null); }}
+            className="inline-flex items-center gap-1.5 bg-[#3a0ca3] hover:bg-[#2d0980] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus size={14} /> New License
+          </button>
+        </div>
       </div>
+
+      {/* Bulk Create form */}
+      {showBulk && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 mb-6">
+          <h3 className="font-semibold text-slate-800 mb-1 text-sm">Bulk Create Licenses</h3>
+          <p className="text-xs text-slate-400 mb-4">Paste a JSON array of license objects. Each object needs at least a <code className="font-mono bg-slate-200 px-1 rounded">domain</code>.</p>
+          {bulkResult && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm font-medium text-green-800">
+                {bulkResult.created} created · {bulkResult.skipped} skipped · {bulkResult.failed} failed
+              </p>
+            </div>
+          )}
+          {bulkError && <p className="mb-4 text-sm text-red-600 font-medium">{bulkError}</p>}
+          <form onSubmit={bulkCreate} className="space-y-3">
+            <textarea
+              rows={8}
+              value={bulkJson}
+              onChange={e => setBulkJson(e.target.value)}
+              placeholder={`[\n  { "domain": "mystore.myshopify.com", "plan": "LITE", "email": "customer@example.com", "store_name": "My Store" },\n  { "domain": "other.myshopify.com", "plan": "PRO" }\n]`}
+              className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#3a0ca3] resize-y"
+            />
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
+                <input type="checkbox" checked={bulkSkip} onChange={e => setBulkSkip(e.target.checked)} className="accent-[#3a0ca3]" />
+                Skip duplicate domains
+              </label>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setShowBulk(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 transition-colors">Cancel</button>
+                <button type="submit" disabled={bulkLoading || !bulkJson.trim()}
+                  className="inline-flex items-center gap-1.5 bg-[#3a0ca3] hover:bg-[#2d0980] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
+                  <Upload size={13} /> {bulkLoading ? "Creating…" : "Create All"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Create form */}
       {showCreate && (
@@ -584,18 +918,29 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
                   <td className="px-4 py-3 text-slate-500 text-xs">{fmtDate(license.created_at)}</td>
                   <td className="px-4 py-3 text-slate-500 text-xs">{license.request_count || 0}</td>
                   <td className="px-4 py-3">
-                    {license.license_key !== "og" && license.active ? (
-                      <button
-                        onClick={() => revoke(license.license_key)}
-                        disabled={revoking === license.license_key}
-                        className="text-red-400 hover:text-red-600 transition-colors"
-                        title="Revoke license"
-                      >
-                        {revoking === license.license_key
-                          ? <RefreshCw size={14} className="animate-spin" />
-                          : <Trash2 size={14} />}
-                      </button>
-                    ) : null}
+                    <div className="flex items-center gap-2">
+                      {license.active && (
+                        <button
+                          onClick={() => setRenewTarget(license.license_key)}
+                          className="text-[#3a0ca3]/60 hover:text-[#3a0ca3] transition-colors"
+                          title="Renew license"
+                        >
+                          <RotateCcw size={13} />
+                        </button>
+                      )}
+                      {license.license_key !== "og" && license.active ? (
+                        <button
+                          onClick={() => revoke(license.license_key)}
+                          disabled={revoking === license.license_key}
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                          title="Revoke license"
+                        >
+                          {revoking === license.license_key
+                            ? <RefreshCw size={14} className="animate-spin" />
+                            : <Trash2 size={14} />}
+                        </button>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -618,7 +963,7 @@ function LicensesTab({ adminKey }: { adminKey: string }) {
 
 // ─── Main Admin Page ──────────────────────────────────────────────────────────
 
-type Tab = "tickets" | "licenses";
+type Tab = "tickets" | "licenses" | "expiring";
 
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState<string | null>(() => {
@@ -652,6 +997,7 @@ export default function AdminPage() {
   const NAV: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "tickets", label: "Tickets", icon: Inbox },
     { id: "licenses", label: "Licenses", icon: Key },
+    { id: "expiring", label: "Expiring", icon: CalendarClock },
   ];
 
   return (
@@ -712,6 +1058,7 @@ export default function AdminPage() {
         <div className="max-w-5xl mx-auto px-8 py-8">
           {activeTab === "tickets" && <TicketsTab adminKey={adminKey} />}
           {activeTab === "licenses" && <LicensesTab adminKey={adminKey} />}
+          {activeTab === "expiring" && <ExpiringTab adminKey={adminKey} />}
         </div>
       </main>
     </div>
