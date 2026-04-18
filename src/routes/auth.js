@@ -6,7 +6,7 @@ const { validate, schemas } = require('../middleware/validate');
 const { EFFECTIVE_ADMIN_KEY, ADMIN_AUTH_CONFIGURED } = require('../middleware/requireAdmin');
 const { kvGetLicenses } = require('../services/kvService');
 
-const LICENSE_KEY_PATTERN = /^(?:og|[A-Za-z0-9]{4}(?:-[A-Za-z0-9]{4}){3})$/;
+const LICENSE_KEY_PATTERN = /^(?:og\d*|[A-Za-z0-9]{4}(?:-[A-Za-z0-9]{4}){3})$/;
 
 function getRequestIp(req) {
   return req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
@@ -64,10 +64,6 @@ router.post('/login', validate(schemas.authLogin), async (req, res) => {
 });
 
 router.post('/check-admin', validate(schemas.adminCheck), async (req, res) => {
-  if (process.env.NODE_ENV === 'production' && !ADMIN_AUTH_CONFIGURED) {
-    return res.json({ isAdmin: false });
-  }
-
   const ip = getRequestIp(req);
   const allowed = await rateLimit(ip, 'auth_admin_check', 20, 60 * 1000);
   if (!allowed) return res.status(429).json({ isAdmin: false });

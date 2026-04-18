@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   BookOpen, MessageCircle, Download, ExternalLink, CheckCircle, Package,
-  RefreshCw, User, ShoppingBag, AlertTriangle, X, ArrowRight, LogOut,
-  Copy, Check, Eye, EyeOff, Trash2, KeyRound,
+  User, LogOut, Copy, Check, KeyRound, Zap, ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { Particles } from "@/components/ui/particles";
@@ -21,13 +20,13 @@ interface AccountLicense {
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return "Never";
+  if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-US", {
     year: "numeric", month: "short", day: "numeric",
   });
 }
 
-function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
+function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   async function copy() {
     await navigator.clipboard.writeText(value);
@@ -37,10 +36,10 @@ function CopyButton({ value, label = "Copy" }: { value: string; label?: string }
   return (
     <button
       onClick={copy}
-      className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-[#3a0ca3] transition-colors"
+      className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-[#3a0ca3] transition-colors ml-2"
     >
       {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
-      {copied ? "Copied" : label}
+      {copied ? "Copied" : "Copy"}
     </button>
   );
 }
@@ -58,15 +57,14 @@ function LoginGate({ onLogin }: { onLogin: (licenseData: AccountLicense) => void
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ licenseKey })
+        body: JSON.stringify({ licenseKey: licenseKey.trim() })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to login");
-      
-      localStorage.setItem("vexel_license_key", licenseKey);
+      if (!res.ok) throw new Error(data.error || "Invalid license key");
+      localStorage.setItem("vexel_license_key", licenseKey.trim());
       onLogin(data.license);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -74,42 +72,50 @@ function LoginGate({ onLogin }: { onLogin: (licenseData: AccountLicense) => void
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-slate-50 flex items-center justify-center px-4">
-      <Particles color="#3a0ca3" quantity={120} ease={20} className="absolute inset-0" />
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[500px] w-[700px] -translate-y-1/3 rounded-full bg-[radial-gradient(ellipse,#c7d2fe55_0%,transparent_70%)]" />
-        <div className="absolute bottom-0 right-0 h-[400px] w-[500px] translate-y-1/3 rounded-full bg-[radial-gradient(ellipse,#ede9fe44_0%,transparent_70%)]" />
-      </div>
+      <Particles color="#3a0ca3" quantity={80} ease={20} className="absolute inset-0" />
       <div className="relative z-10 w-full max-w-sm">
-        <div className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-xl shadow-xl shadow-slate-900/5 p-8 space-y-6">
-          <div className="flex items-center gap-2.5">
-            <span className="text-lg font-bold text-slate-900 tracking-tight">Vexel Themes</span>
-          </div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-xl shadow-xl p-8 space-y-6">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Access your license</h1>
-            <p className="text-sm text-slate-500">Enter your license key to download the theme and get support.</p>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-[#3a0ca3]/10 flex items-center justify-center">
+                <KeyRound className="h-4 w-4 text-[#3a0ca3]" />
+              </div>
+              <span className="text-sm font-bold text-slate-900">Vexel Themes</span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Your license portal</h1>
+            <p className="text-sm text-slate-500">Enter your license key to access downloads and support.</p>
           </div>
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-600 block">License Key</label>
               <input
-                type="text" value={licenseKey} onChange={(e) => setLicenseKey(e.target.value)}
+                type="text"
+                value={licenseKey}
+                onChange={(e) => setLicenseKey(e.target.value)}
                 placeholder="XXXX-XXXX-XXXX-XXXX"
-                className="w-full border border-slate-200 rounded-lg px-3.5 py-2.5 text-sm text-slate-800 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#3a0ca3]/30 focus:border-[#3a0ca3] transition-colors font-mono"
+                className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-800 bg-white placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#3a0ca3]/30 focus:border-[#3a0ca3] transition-colors font-mono tracking-wider"
                 required
               />
             </div>
             {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200">
                 <p className="text-xs text-red-700 font-medium">{error}</p>
               </div>
             )}
             <button
-              type="submit" disabled={loading}
-              className="w-full h-11 rounded-lg bg-[#3a0ca3] text-white text-sm font-semibold hover:bg-[#2d0980] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-[#3a0ca3]/20"
+              type="submit"
+              disabled={loading || !licenseKey.trim()}
+              className="w-full h-11 rounded-xl bg-[#3a0ca3] text-white text-sm font-semibold hover:bg-[#2d0980] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-[#3a0ca3]/20"
             >
               {loading ? "Verifying…" : "Access Dashboard"}
             </button>
           </form>
+          <p className="text-center text-xs text-slate-400">
+            Need help?{" "}
+            <Link href="/theme/support" className="text-[#3a0ca3] font-medium hover:underline">
+              Contact support
+            </Link>
+          </p>
         </div>
       </div>
     </div>
@@ -128,18 +134,15 @@ export default function AccountPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ licenseKey: savedKey })
       })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          setLicense(data.license);
-        } else {
-          localStorage.removeItem("vexel_license_key");
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) setLicense(data.license);
+          else localStorage.removeItem("vexel_license_key");
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false));
     } else {
-      setTimeout(() => setLoading(false), 0);
+      setLoading(false);
     }
   }, []);
 
@@ -151,133 +154,162 @@ export default function AccountPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-600">Loading…</p>
+        <div className="flex items-center gap-2 text-slate-500 text-sm">
+          <div className="w-4 h-4 border-2 border-[#3a0ca3]/30 border-t-[#3a0ca3] rounded-full animate-spin" />
+          Loading…
+        </div>
       </main>
     );
   }
 
   if (!license) return <LoginGate onLogin={setLicense} />;
 
-  const plan = license.plan || "Standard";
+  const plan = license.plan ? license.plan.charAt(0).toUpperCase() + license.plan.slice(1) : "Standard";
 
   return (
     <main className="min-h-screen bg-slate-50 pt-20 pb-16 px-4">
-      <div className="mx-auto max-w-4xl space-y-5">
+      <div className="mx-auto max-w-3xl space-y-4">
 
-        {/* Profile card */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="p-2 rounded-lg">
-              <User className="h-5 w-5 text-[#3a0ca3]" />
-            </div>
-            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">License Account</h2>
+        {/* Header row */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-slate-900">My Account</h1>
+            <p className="text-xs text-slate-400 mt-0.5">Vexel {plan} · License portal</p>
           </div>
-          <div className="flex items-center gap-5">
-            <div className="flex-1 min-w-0">
-              <p className="text-base font-bold text-slate-900 truncate font-mono">{license.key}</p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Vexel {plan} customer
-              </p>
+          <button
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-500 transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Sign out
+          </button>
+        </div>
+
+        {/* Quick links */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {QUICK_LINKS.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.label}
+                href={link.href}
+                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:border-[#3a0ca3]/30 hover:text-[#3a0ca3] transition-colors shadow-sm"
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {link.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* License card */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-[#3a0ca3]" />
+              <h2 className="text-sm font-bold text-slate-700">License</h2>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="shrink-0 px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:border-red-300 hover:text-red-600 transition-colors flex items-center gap-2"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign Out
-            </button>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+              license.active
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : "bg-slate-100 border-slate-200 text-slate-500"
+            }`}>
+              {license.active && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+              {license.active ? "Active" : "Inactive"}
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between rounded-lg bg-slate-50 border border-slate-200 px-3.5 py-2.5">
+              <span className="text-xs text-slate-400">Key</span>
+              <div className="flex items-center">
+                <span className="text-xs font-mono text-slate-800">{license.key}</span>
+                <CopyButton value={license.key} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 space-y-0.5">
+                <p className="text-slate-400">Plan</p>
+                <p className="font-semibold text-slate-800">{plan}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 space-y-0.5">
+                <p className="text-slate-400">Activated</p>
+                <p className="font-semibold text-slate-800">{formatDate(license.created_at)}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 space-y-0.5">
+                <p className="text-slate-400">Updates</p>
+                <p className="font-semibold text-emerald-600 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Lifetime</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* License Box */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="p-2 rounded-lg">
-              <ShoppingBag className="h-5 w-5 text-[#3a0ca3]" />
-            </div>
-            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">My License</h2>
-          </div>
-          
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-900">
-                  Vexel {plan} Theme
-                </span>
-              </div>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                license.active
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                  : "bg-slate-100 border-slate-200 text-slate-500"
-              }`}>
-                {license.active && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                )}
-                {license.active ? "Active" : "Inactive"}
-              </span>
-            </div>
-            <div className="space-y-2 text-sm text-slate-600">
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-slate-400 shrink-0 text-xs">License Key</span>
-                <span className="flex items-center gap-2 font-mono text-xs text-slate-700 text-right break-all">
-                  {license.key}
-                  <CopyButton value={license.key} />
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400 text-xs">Created At</span>
-                <span className="text-xs">{formatDate(license.created_at)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400 text-xs">Last Verified</span>
-                <span className="text-xs">{formatDate(license.last_verified_at)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400 text-xs">Active Store Domain</span>
-                <span className="text-xs font-mono">{license.permanent_domain || license.domain}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Status summary */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
+        {/* Downloads */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
           <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 rounded-lg">
-              <Package className="h-5 w-5 text-[#3a0ca3]" />
-            </div>
-            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">License Status</h2>
+            <Package className="h-4 w-4 text-[#3a0ca3]" />
+            <h2 className="text-sm font-bold text-slate-700">Downloads</h2>
           </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-400">Updates</span>
-              <span className="inline-flex items-center gap-1 text-[#3a0ca3] font-medium">
-                <CheckCircle className="h-3.5 w-3.5" />
-                Lifetime
-              </span>
-            </div>
-            <div className="space-y-3 mt-4">
-              {/* V2 — coming soon */}
-              <div className="flex items-center justify-between rounded-xl border border-[#3a0ca3]/20 bg-[#3a0ca3]/5 px-4 py-3">
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Vexel V2 <span className="ml-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">Coming Soon</span></p>
-                  <p className="text-xs text-slate-400 mt-0.5">Image protection, 3D cards, new sections & more</p>
+          <div className="space-y-2">
+            {/* V2 */}
+            <div className="flex items-center justify-between rounded-xl border border-[#3a0ca3]/20 bg-[#3a0ca3]/5 px-4 py-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-bold text-slate-900">Vexel V2</p>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">Coming Soon</span>
                 </div>
-                <button disabled className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed">
-                  <Download className="h-3.5 w-3.5" /> Download
-                </button>
+                <p className="text-xs text-slate-400 mt-0.5">Content protection · 3D cards · Premium fonts</p>
               </div>
-              {/* V1 — available */}
-              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-700">Vexel V1 <span className="ml-1.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-500">Legacy</span></p>
-                  <p className="text-xs text-slate-400 mt-0.5">Current stable release</p>
-                </div>
-                <a href="/theme-v1.zip" download className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#3a0ca3] text-white text-xs font-semibold hover:bg-[#2d0980] transition-colors shadow shadow-[#3a0ca3]/20">
-                  <Download className="h-3.5 w-3.5" /> Download
-                </a>
-              </div>
+              <button disabled className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed">
+                <Download className="h-3.5 w-3.5" /> Download
+              </button>
             </div>
+            {/* V1 */}
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-semibold text-slate-700">Vexel V1</p>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-500">Stable</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">Current release · Full feature set</p>
+              </div>
+              <Link
+                href="/theme/support"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#3a0ca3] text-white text-xs font-semibold hover:bg-[#2d0980] transition-colors shadow shadow-[#3a0ca3]/20"
+              >
+                <MessageCircle className="h-3.5 w-3.5" /> Get Link
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Changelog */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Zap className="h-4 w-4 text-[#3a0ca3]" />
+            <h2 className="text-sm font-bold text-slate-700">Recent Updates</h2>
+          </div>
+          <div className="space-y-4">
+            {UPDATES.map((update) => (
+              <div key={update.version} className="flex gap-3">
+                <div className="shrink-0 pt-0.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#3a0ca3]/10 text-[#3a0ca3] text-[10px] font-bold font-mono">
+                    {update.version}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 mb-1">{update.date}</p>
+                  <ul className="space-y-1">
+                    {update.notes.map((note, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
+                        <ChevronRight className="h-3 w-3 shrink-0 mt-0.5 text-slate-300" />
+                        {note}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -285,4 +317,3 @@ export default function AccountPage() {
     </main>
   );
 }
-

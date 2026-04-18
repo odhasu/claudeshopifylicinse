@@ -76,6 +76,23 @@ if (!store.licenses.find(l => l.license_key === 'og')) {
   console.log('[Scaled] Seeded universal "og" license');
 }
 
+// Seed "og1" demo customer license if it doesn't exist
+if (!store.licenses.find(l => l.license_key === 'og1')) {
+  store.licenses.push({
+    id: store._nextId++,
+    license_key: 'og1',
+    domain: '*',
+    permanent_domain: '*',
+    plan: 'pro',
+    active: true,
+    expires_at: null,
+    created_at: new Date().toISOString(),
+    notes: 'Demo customer license'
+  });
+  saveStore();
+  console.log('[Scaled] Seeded demo "og1" license');
+}
+
 function getStore() { return store; }
 
 function nextId() { return store._nextId++; }
