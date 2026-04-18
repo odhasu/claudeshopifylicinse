@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
   "builds": [
     { "src": "site/**", "use": "@vercel/static" },
     { "src": "dashboard/**", "use": "@vercel/static" },
@@ -19,6 +17,20 @@
     { "src": "/dashboard", "dest": "/dashboard/index.html" },
     { "src": "/_next/(.*)", "dest": "/site/_next/$1" },
     { "src": "/((?:.*\\.(?:js|css|svg|ico|png|jpg|jpeg|webp|gif|woff2|woff|ttf|otf|eot|txt|json|xml|webmanifest|map)))", "dest": "/site/$1" },
-    { "src": "/(.*)", "dest": "/site/$1.html" }
+    { "src": "/admin", "dest": "/site/admin.html" },
+    { "src": "/theme", "dest": "/site/theme.html" },
+    { "src": "/theme/account", "dest": "/site/theme/account.html" },
+    { "src": "/theme/checkout", "dest": "/site/theme/checkout.html" },
+    { "src": "/theme/checkout/success", "dest": "/site/theme/checkout/success.html" },
+    { "src": "/theme/docs", "dest": "/site/theme/docs.html" },
+    { "src": "/theme/error", "dest": "/site/theme/error.html" },
+    { "src": "/theme/news", "dest": "/site/theme/news.html" },
+    { "src": "/theme/news/vexel-v2-announcement", "dest": "/site/theme/news/vexel-v2-announcement.html" },
+    { "src": "/theme/pricing", "dest": "/site/theme/pricing.html" },
+    { "src": "/theme/privacy", "dest": "/site/theme/privacy.html" },
+    { "src": "/theme/refund", "dest": "/site/theme/refund.html" },
+    { "src": "/theme/support", "dest": "/site/theme/support.html" },
+    { "src": "/theme/terms", "dest": "/site/theme/terms.html" },
+    { "src": "/(.*)", "dest": "/index.js" }
   ]
 }

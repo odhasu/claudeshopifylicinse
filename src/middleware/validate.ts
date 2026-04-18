@@ -28,14 +28,14 @@ export const schemas = {
     sections: z.array(z.object({
       type: z.string().min(1).max(50),
       elementId: z.string().max(100).optional(),
-      settings: z.record(z.unknown()).optional(),
+      settings: z.record(z.string(), z.unknown()).optional(),
       products: z.array(z.unknown()).optional(),
     })).max(50).optional(),
-    colors: z.record(z.string()).optional(),
+    colors: z.record(z.string(), z.string()).optional(),
     brandName: z.string().max(200).optional(),
     logoUrl: z.string().url().max(2000).or(z.literal('')).optional().nullable(),
-    chatbot: z.record(z.unknown()).optional(),
-    urgency: z.record(z.unknown()).optional(),
+    chatbot: z.record(z.string(), z.unknown()).optional(),
+    urgency: z.record(z.string(), z.unknown()).optional(),
   }),
   supportTicket: z.object({
     name: z.string().min(1).max(100).transform((s: string) => s.trim()),
