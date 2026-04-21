@@ -10,10 +10,11 @@
 - **Next step:** Open DevTools → Performance tab → record a click, identify what's blocking
 
 ### 2. Mobile layout broken
-- **Status:** Not fixed
+- **Status:** Active — dedicated session scoped (Apr 21), ready to fix next
 - **Symptom:** Elements overlap or look off on phones
 - **Impact:** High — most traffic is mobile
-- **Next step:** Full mobile audit of every page, fix breakpoints
+- **Approach confirmed:** Full audit of every page, fix breakpoints, reference usekenso.com, design open to changes, copy stays as-is, no new sections
+- **Next step:** Open new session with the prepared prompt, start with reading current mobile styles
 
 ### 3. Docs page needs fixes
 - **Status:** Known, not detailed

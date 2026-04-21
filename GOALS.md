@@ -12,8 +12,8 @@
 
 ## Short-term (now)
 
-- [ ] Fix the 3s lag — highest priority UX problem
-- [ ] Fix mobile layout — most traffic is on phone
+- [ ] Fix mobile layout — session scoped Apr 21, ready to execute
+- [ ] Fix the 3s lag — undiagnosed, high priority
 - [ ] Fix docs page issues
 - [ ] Add Stripe links when Oscar provides them
 

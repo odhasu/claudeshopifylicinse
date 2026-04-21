@@ -20,15 +20,15 @@
 ---
 
 ## In progress 🔧
-- Mobile layout fixes (broken on phone — needs full audit)
+- Mobile layout fixes — scoped and ready, dedicated session prepared (Apr 21)
 
 ---
 
 ## Todo 🔲
 
 **Must do**
+- Mobile layout — full audit and fix (next session)
 - Fix ~3s lag/freeze on every click (undiagnosed)
-- Mobile layout — full audit and fix
 - Docs page — needs fixes (reported broken)
 
 **Needs content from Oscar**
@@ -42,4 +42,9 @@
 ---
 
 ## Last worked on
-_Update this at the end of every session — what you touched, what state you left it in._
+
+**Apr 21 2026** — Session work:
+- Reorganized all .md files (rewrote README.md + frontend/README.md, deleted redundant agents.md, updated skills.md)
+- Built full agent memory system: CONTEXT.md, BUILD.md, BUGS.md, RULES.md, AGENT.md, GOALS.md
+- Scoped next session: mobile layout full audit + fix, reference usekenso.com, design open to changes, copy stays as-is
+- No code changes this session

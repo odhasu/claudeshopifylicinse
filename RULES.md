@@ -14,6 +14,7 @@
 - Plain language, no jargon
 - Be direct — no filler
 - Only ask Oscar when it's a real business decision
+- When starting a new improvement/design session, ask Oscar ~10 scoping questions first before writing a prompt or touching code
 
 ## Code rules
 
