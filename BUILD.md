@@ -46,5 +46,7 @@
 **Apr 21 2026** — Session work:
 - Reorganized all .md files (rewrote README.md + frontend/README.md, deleted redundant agents.md, updated skills.md)
 - Built full agent memory system: CONTEXT.md, BUILD.md, BUGS.md, RULES.md, AGENT.md, GOALS.md
+- Trimmed CLAUDE.md — removed all duplicate content, now just an entry point to the 6 memory files
 - Scoped next session: mobile layout full audit + fix, reference usekenso.com, design open to changes, copy stays as-is
+- Configured `~/.claude/settings.json`: disabled Co-Authored-By in commits/PRs, set acceptEdits mode (no edit diff prompts)
 - No code changes this session

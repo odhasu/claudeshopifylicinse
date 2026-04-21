@@ -33,6 +33,15 @@ Before pushing any change, verify:
 - [ ] Admin dashboard still loads
 - [ ] Tickets still save to Redis
 
+## Claude Code settings (already configured globally)
+
+- `permissions.defaultMode: "acceptEdits"` — file edits auto-apply, no diff prompt shown
+- `attribution.commit: ""` — no Co-Authored-By line in commits
+- `viewMode: "focus"` — minimal tool output in chat
+
+These are in `~/.claude/settings.json` (Oscar's machine). Don't re-add them to project settings.
+
 ## End of session
 
-Update `BUILD.md` and `BUGS.md` before finishing.
+Update `BUILD.md` and `BUGS.md` before finishing.  
+Trim anything in `CLAUDE.md` that's already covered by the other files — keep it as a lean entry point only.
