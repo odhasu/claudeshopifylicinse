@@ -1,10 +1,13 @@
 # Vexel Store
 
-The store where Oscar sells his Shopify theme to resellers. Like usekenso.com but for Vexel.
+Where Oscar sells the Vexel Shopify theme to other resellers. Think usekenso.com but Vexel.
 
 Live: claudecodethemeshopify.vercel.app
 Repo: github.com/odhasu/claudeshopifylicinse
 Owner: Oscar (odhasu / 0xlouiss is his alt account)
+
+## ⚠️ Known issue
+Store has ~3 second lag/freeze on click — needs diagnosis and fix.
 
 ## How it works
 

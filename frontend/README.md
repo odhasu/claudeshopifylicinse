@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vexel Frontend
 
-## Getting Started
+Next.js static export — the customer-facing store for Vexel.
 
-First, run the development server:
+## Build & deploy
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. Edit source files
+frontend/src/
+
+# 2. Build
+cd frontend && npm run build
+
+# 3. Copy output to site/
+cp -r frontend/out/* site/
+
+# 4. Push — Vercel auto-deploys from site/
+git add . && git commit -m "..." && git push
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Source changes alone do nothing until you build and copy to `site/`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Rules
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- No API routes in `frontend/src/app/api/` — breaks static export
+- All backend calls go to the Express server in `index.js`
 
-## Learn More
+## Key files
 
-To learn more about Next.js, take a look at the following resources:
+| File | What |
+|------|------|
+| `src/app/theme/page.tsx` | Homepage |
+| `src/app/theme/docs/page.tsx` | Docs page |
+| `src/app/theme/support/page.tsx` | Support page |
+| `src/components/ui/pricing.tsx` | Pricing cards |
+| `src/components/ui/hero-section.tsx` | Hero + stats |
+| `src/components/ui/vexel-logo.tsx` | Logo |
+| `src/lib/plans.ts` | Plan data (Lite / Pro) |
+| `src/lib/docs-content.ts` | 29 article HTMLs |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Pages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `/theme/` — homepage (hero, features, pricing, FAQ, footer)
+- `/theme/docs/` — 29 articles across 6 categories
+- `/theme/support/` — contact form, Sam, 8AM–8PM CET
+- `/theme/account/` — customer license management
+- `/admin/` — admin dashboard (licenses, tickets, downloads)
