@@ -194,26 +194,34 @@ export default function AccountPage() {
 
   useEffect(() => {
     const savedKey = localStorage.getItem("vexel_license_key");
-    if (savedKey) {
-      fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ licenseKey: savedKey })
+    if (!savedKey) { setLoading(false); return; }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ licenseKey: savedKey }),
+      signal: controller.signal,
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          setLicense(data.license);
+          fetchSubscription(savedKey);
+        } else {
+          localStorage.removeItem("vexel_license_key");
+        }
       })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) {
-            setLicense(data.license);
-            fetchSubscription(savedKey);
-          } else {
-            localStorage.removeItem("vexel_license_key");
-          }
-        })
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+      .catch(() => {
+        // Timed out or network error — clear key and show login
+        localStorage.removeItem("vexel_license_key");
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
   }, []);
 
   function handleSignOut() {
