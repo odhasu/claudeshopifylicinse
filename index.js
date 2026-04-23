@@ -236,8 +236,11 @@ if (require.main === module) {
   const { EFFECTIVE_ADMIN_KEY } = require('./src/middleware/requireAdmin');
   server = app.listen(PORT, () => {
     console.log(`[Scaled] Theme protection server v3 running on port ${PORT}`);
-    console.log(`[Scaled] Dashboard: http://localhost:${PORT}/dashboard`);
-    console.log(`[Scaled] Admin key: ${process.env.ADMIN_KEY ? '✓ Custom key set' : '⚠️  USING DEFAULT KEY — set ADMIN_KEY env var'}`);
+    console.log(`[Scaled] Admin key: ${process.env.ADMIN_KEY ? '✓ set' : '⚠️  NOT SET — using default key "og"'}`);
+    console.log(`[Scaled] Stripe: ${process.env.STRIPE_SECRET_KEY ? '✓ set' : '⚠️  STRIPE_SECRET_KEY not set'}`);
+    console.log(`[Scaled] KV/Redis: ${(process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL) ? '✓ set' : '⚠️  no KV — data will be lost on cold start'}`);
+    console.log(`[Scaled] Supabase: ${process.env.SUPABASE_URL ? '✓ set' : '⚠️  SUPABASE_URL not set — subscriptions disabled'}`);
+    console.log(`[Scaled] Resend email: ${process.env.RESEND_API_KEY ? '✓ set' : '⚠️  RESEND_API_KEY not set — emails disabled'}`);
   });
 }
 

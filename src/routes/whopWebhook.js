@@ -105,9 +105,11 @@ async function handleWhopWebhook(req, res) {
         whop_user_id: whopUserId,
         license_key: existing?.license_key || null,
       });
-      const key = await ensureLicense(upserted);
-      if (!upserted.license_key && key) {
-        await upsertSubscription({ ...upserted, license_key: key });
+      if (upserted) {
+        const key = await ensureLicense(upserted);
+        if (!upserted.license_key && key) {
+          await upsertSubscription({ ...upserted, license_key: key });
+        }
       }
 
     } else if (action === 'invoice_paid' || action === 'membership.active') {
@@ -122,12 +124,11 @@ async function handleWhopWebhook(req, res) {
         whop_user_id: whopUserId,
         license_key: existing?.license_key || null,
       });
-      await ensureLicense(upserted);
+      if (upserted) await ensureLicense(upserted);
 
     } else if (action === 'membership_deactivated' || action === 'membership.cancelled') {
       const existing = await getSubscriptionByEmail(email);
       if (existing) {
-        // Mark cancelled but keep expires_at — access continues until then
         await upsertSubscription({
           email: existing.email,
           plan: existing.plan,
@@ -137,7 +138,6 @@ async function handleWhopWebhook(req, res) {
           whop_user_id: existing.whop_user_id,
           license_key: existing.license_key,
         });
-        // KV license expires_at stays — no early revocation
       }
     }
 
