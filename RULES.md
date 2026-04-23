@@ -38,8 +38,15 @@ Before pushing any change, verify:
 - `permissions.defaultMode: "acceptEdits"` — file edits auto-apply, no diff prompt shown
 - `attribution.commit: ""` — no Co-Authored-By line in commits
 - `viewMode: "focus"` — minimal tool output in chat
+- Supabase MCP configured in `~/.claude/mcp.json` — Claude can query DB directly after restart
 
-These are in `~/.claude/settings.json` (Oscar's machine). Don't re-add them to project settings.
+These are in `~/.claude/settings.json` and `~/.claude/mcp.json` (Oscar's machine). Don't re-add them to project settings.
+
+## Env vars required in Vercel (not yet added)
+
+- `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` — for Whop webhook + subscription endpoint
+- `WHOP_WEBHOOK_SECRET` — Whop dashboard → webhook settings
+- `NEXT_PUBLIC_WHOP_LIFETIME_URL` — Whop lifetime checkout link (needs rebuild when added)
 
 ## End of session
 

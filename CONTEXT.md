@@ -15,7 +15,8 @@ Vexel — where Oscar sells his Shopify theme to other resellers. Like usekenso.
 |-------|------------|
 | Backend | Node.js, Express 4 (`index.js`) |
 | Frontend | Next.js static export — edit `frontend/src/`, build, copy to `site/` |
-| Licenses | SQLite |
+| Licenses | SQLite + Upstash Redis (KV) |
+| Subscriptions | Supabase (`subscriptions` table) — monthly plan users |
 | Tickets / KV | Upstash Redis (`KV_REST_API_URL` or `UPSTASH_REDIS_REST_URL`) |
 | Hosting | Vercel — serves from `site/`, auto-deploys on push to main |
 
@@ -29,6 +30,9 @@ Vexel — where Oscar sells his Shopify theme to other resellers. Like usekenso.
 | Pro | $379 one-time | 5 store licenses |
 
 Stripe links: not yet live (Oscar will add them).
+
+Monthly plan via Whop: webhook at `POST /api/whop-webhook` → Supabase → KV license sync.
+Lifetime upgrade upsell in dashboard (needs `NEXT_PUBLIC_WHOP_LIFETIME_URL` env var).
 
 ---
 
@@ -72,6 +76,9 @@ Stripe links: not yet live (Oscar will add them).
 | `frontend/src/lib/plans.ts` | Plan data |
 | `frontend/src/lib/docs-content.ts` | 29 article HTMLs |
 | `dashboard/` | Admin panel |
+| `src/services/supabaseService.js` | Supabase client — subscription upsert/get |
+| `src/routes/whopWebhook.js` | Whop webhook handler |
+| `supabase/subscriptions.sql` | Run once in Supabase SQL editor to create table |
 
 ---
 
