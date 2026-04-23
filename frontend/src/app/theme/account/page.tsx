@@ -3,11 +3,40 @@
 import { useState, useEffect } from "react";
 import {
   BookOpen, MessageCircle, Download, ExternalLink, CheckCircle, Package,
-  User, LogOut, Copy, Check, KeyRound, Zap, ChevronRight, Loader2,
+  User, LogOut, Copy, Check, KeyRound, Zap, ChevronRight, Loader2, RefreshCw,
 } from "lucide-react";
+
+const WHOP_LIFETIME_URL = process.env.NEXT_PUBLIC_WHOP_LIFETIME_URL || '';
 import Link from "next/link";
 import { Particles } from "@/components/ui/particles";
 import { UPDATES, QUICK_LINKS } from "@/lib/account-data";
+
+interface SubscriptionInfo {
+  plan: string;       // monthly | lifetime
+  status: string;     // trial | active | cancelled | expired
+  expires_at: string | null;
+  store_limit: number;
+}
+
+function SubscriptionStatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    trial: 'bg-amber-50 border-amber-200 text-amber-700',
+    active: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    cancelled: 'bg-slate-100 border-slate-200 text-slate-500',
+    expired: 'bg-red-50 border-red-200 text-red-600',
+  };
+  const dots: Record<string, string> = {
+    trial: 'bg-amber-500',
+    active: 'bg-emerald-500',
+  };
+  const s = status in styles ? status : 'expired';
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${styles[s]}`}>
+      {dots[s] && <span className={`w-1.5 h-1.5 rounded-full ${dots[s]} animate-pulse`} />}
+      {s.charAt(0).toUpperCase() + s.slice(1)}
+    </span>
+  );
+}
 
 interface AccountLicense {
   key: string;
@@ -124,8 +153,21 @@ function LoginGate({ onLogin }: { onLogin: (licenseData: AccountLicense) => void
 
 export default function AccountPage() {
   const [license, setLicense] = useState<AccountLicense | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+
+  async function fetchSubscription(key: string) {
+    try {
+      const res = await fetch('/api/customer/subscription', {
+        headers: { 'X-License-Key': key },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.subscription) setSubscription(data.subscription);
+      }
+    } catch {}
+  }
 
   async function handleDownloadV1() {
     const key = localStorage.getItem("vexel_license_key");
@@ -160,8 +202,12 @@ export default function AccountPage() {
       })
         .then(r => r.json())
         .then(data => {
-          if (data.success) setLicense(data.license);
-          else localStorage.removeItem("vexel_license_key");
+          if (data.success) {
+            setLicense(data.license);
+            fetchSubscription(savedKey);
+          } else {
+            localStorage.removeItem("vexel_license_key");
+          }
         })
         .catch(() => {})
         .finally(() => setLoading(false));
@@ -173,6 +219,13 @@ export default function AccountPage() {
   function handleSignOut() {
     localStorage.removeItem("vexel_license_key");
     setLicense(null);
+    setSubscription(null);
+  }
+
+  function handleLogin(licenseData: AccountLicense) {
+    setLicense(licenseData);
+    const key = localStorage.getItem("vexel_license_key") || "";
+    if (key) fetchSubscription(key);
   }
 
   if (loading) {
@@ -186,7 +239,7 @@ export default function AccountPage() {
     );
   }
 
-  if (!license) return <LoginGate onLogin={setLicense} />;
+  if (!license) return <LoginGate onLogin={handleLogin} />;
 
   const plan = license.plan ? license.plan.charAt(0).toUpperCase() + license.plan.slice(1) : "Standard";
 
@@ -267,6 +320,69 @@ export default function AccountPage() {
             </div>
           </div>
         </div>
+
+        {/* Subscription */}
+        {subscription && (
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 text-[#3a0ca3]" />
+                <h2 className="text-sm font-bold text-slate-700">Subscription</h2>
+              </div>
+              <SubscriptionStatusBadge status={subscription.status} />
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 space-y-0.5">
+                <p className="text-slate-400">Plan</p>
+                <p className="font-semibold text-slate-800 capitalize">{subscription.plan}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 space-y-0.5">
+                <p className="text-slate-400">
+                  {subscription.status === "cancelled" ? "Access until" : subscription.plan === "lifetime" ? "Valid" : "Renews"}
+                </p>
+                <p className="font-semibold text-slate-800">
+                  {subscription.plan === "lifetime" ? "Forever" : formatDate(subscription.expires_at)}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 space-y-0.5">
+                <p className="text-slate-400">Stores</p>
+                <p className="font-semibold text-slate-800">
+                  {license.domain && license.domain !== "*" ? 1 : 0} / {subscription.store_limit}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Lifetime upsell — only for monthly subscribers */}
+        {subscription?.plan === "monthly" && (
+          <div className="rounded-xl border border-[#3a0ca3]/20 bg-gradient-to-br from-[#3a0ca3]/5 to-transparent shadow-sm p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Zap className="h-4 w-4 text-[#3a0ca3]" />
+                  <h2 className="text-sm font-bold text-slate-800">Upgrade to Lifetime</h2>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#3a0ca3] text-white">20% OFF</span>
+                </div>
+                <p className="text-xs text-slate-500">One payment. Access forever. No more monthly charges.</p>
+              </div>
+              {WHOP_LIFETIME_URL ? (
+                <a
+                  href={WHOP_LIFETIME_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#3a0ca3] text-white text-xs font-semibold hover:bg-[#2d0980] transition-colors shadow shadow-[#3a0ca3]/20"
+                >
+                  Upgrade <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : (
+                <button disabled className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-100 text-slate-400 text-xs font-semibold cursor-not-allowed">
+                  Upgrade
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Downloads */}
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">

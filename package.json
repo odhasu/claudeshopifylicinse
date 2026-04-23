@@ -12,6 +12,7 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.104.1",
     "archiver": "^7.0.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",

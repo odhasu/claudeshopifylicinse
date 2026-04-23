@@ -26,6 +26,7 @@ const rateLimit = require('./src/middleware/rateLimit');
 require('./src/services/storeService');
 
 const { handleWebhook, router: stripeRouter } = require('./src/routes/stripe');
+const { handleWhopWebhook } = require('./src/routes/whopWebhook');
 const authRouter = require('./src/routes/auth');
 const renderRouter = require('./src/routes/render');
 const adminRouter = require('./src/routes/admin');
@@ -75,6 +76,9 @@ app.use(cors({
 
 // ─── Stripe Webhook (raw body — must be before express.json) ────
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), handleWebhook);
+
+// ─── Whop Webhook (raw body — must be before express.json) ─────
+app.post('/api/whop-webhook', express.raw({ type: 'application/json' }), handleWhopWebhook);
 
 // ─── Body Parser ─────────────────────────────────────────────────
 app.use(express.json({ limit: '1mb' }));

@@ -57,4 +57,30 @@ router.get('/download', async (req, res) => {
   }
 });
 
+// GET /api/customer/subscription
+// Header: X-License-Key — returns Supabase subscription data for monthly plan users
+router.get('/subscription', async (req, res) => {
+  const raw = req.headers['x-license-key'];
+  if (!raw || typeof raw !== 'string' || !raw.trim()) {
+    return res.status(401).json({ error: 'license_key_required' });
+  }
+  const licenseKey = raw.trim();
+  try {
+    const { getSubscriptionByLicenseKey } = require('../services/supabaseService');
+    const sub = await getSubscriptionByLicenseKey(licenseKey);
+    if (!sub) return res.json({ subscription: null });
+    res.json({
+      subscription: {
+        plan: sub.plan,
+        status: sub.status,
+        expires_at: sub.expires_at,
+        store_limit: sub.store_limit,
+      },
+    });
+  } catch (err) {
+    logger.error({ err: err?.message }, 'customer_subscription_error');
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 module.exports = router;
