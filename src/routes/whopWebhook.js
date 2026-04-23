@@ -75,11 +75,13 @@ async function handleWhopWebhook(req, res) {
     return res.status(400).json({ error: 'invalid_json' });
   }
 
-  const { action, data } = payload || {};
+  // Whop sends { action, data } or { event, data } depending on version
+  const action = payload?.action || payload?.event;
+  const data = payload?.data || payload?.object || {};
   if (!action || !data) return res.status(400).json({ error: 'missing_fields' });
 
-  // Whop embeds user in data.user or data.object.user depending on webhook version
-  const user = data.user || data.object?.user || {};
+  // Whop embeds user in data.user or data.membership.user depending on webhook version
+  const user = data.user || data.membership?.user || data.object?.user || {};
   const email = typeof user.email === 'string' ? user.email.toLowerCase().trim() : null;
   if (!email) {
     logger.warn({ action }, 'whop_webhook_no_email');
@@ -90,7 +92,8 @@ async function handleWhopWebhook(req, res) {
   const now = new Date();
 
   try {
-    if (action === 'membership.created') {
+    // membership_activated = new member or renewal (replaces membership.created + membership.active)
+    if (action === 'membership_activated' || action === 'membership.created') {
       const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const existing = await getSubscriptionByEmail(email);
       const upserted = await upsertSubscription({
@@ -107,7 +110,7 @@ async function handleWhopWebhook(req, res) {
         await upsertSubscription({ ...upserted, license_key: key });
       }
 
-    } else if (action === 'membership.active') {
+    } else if (action === 'invoice_paid' || action === 'membership.active') {
       const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
       const existing = await getSubscriptionByEmail(email);
       const upserted = await upsertSubscription({
@@ -121,7 +124,7 @@ async function handleWhopWebhook(req, res) {
       });
       await ensureLicense(upserted);
 
-    } else if (action === 'membership.cancelled') {
+    } else if (action === 'membership_deactivated' || action === 'membership.cancelled') {
       const existing = await getSubscriptionByEmail(email);
       if (existing) {
         // Mark cancelled but keep expires_at — access continues until then
