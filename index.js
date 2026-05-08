@@ -179,6 +179,7 @@ app.use('/api/loader', loaderRouter);
 app.use('/api/licenses', licensesRouter);
 app.use('/api/email', emailRouter);
 app.use('/api/customer', customerRouter);
+app.use('/api', require('./src/routes/validate'));
 
 // ─── Central Error Handler ──────────────────────────────────────
 app.use((err, req, res, next) => {
