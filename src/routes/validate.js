@@ -1,35 +1,30 @@
 /**
  * Lightweight license validation endpoint for the client-side loader.
- * Goes directly to Supabase — no Redis/KV dependency.
- * Falls back to KV if Supabase is not configured.
+ * Uses Supabase RPC (validate_license function) via anon key — no service role needed.
+ * Falls back to KV if Supabase is unavailable.
  */
 const express = require('express');
 const router = express.Router();
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eqmagffuzblywevszosw.supabase.co';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxbWFnZmZ1emJseXdldnN6b3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTgwNjcsImV4cCI6MjA4NjQ5NDA2N30.dlSSmQK2C_7ArHOI-SttFLO7hqRoFCLFcDu1n_6VjsY';
 
 async function validateViaSupabase(licenseKey) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return null; // not configured
-
-  const url = `${SUPABASE_URL}/rest/v1/subscriptions?license_key=eq.${encodeURIComponent(licenseKey)}&select=license_key,plan,status,expires_at,store_limit`;
+  const url = `${SUPABASE_URL}/rest/v1/rpc/validate_license`;
   const res = await fetch(url, {
+    method: 'POST',
     headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     },
+    body: JSON.stringify({ p_license_key: licenseKey }),
     signal: AbortSignal.timeout(5000),
   });
 
   if (!res.ok) throw new Error(`Supabase HTTP ${res.status}`);
-  const rows = await res.json();
-  if (!rows || rows.length === 0) return { valid: false, reason: 'invalid_key' };
-
-  const license = rows[0];
-  if (license.status !== 'active') return { valid: false, reason: 'inactive' };
-  if (license.expires_at && new Date(license.expires_at) < new Date()) return { valid: false, reason: 'expired' };
-
-  return { valid: true, plan: license.plan || 'standard' };
+  const data = await res.json();
+  return data; // { valid: true/false, plan: '...', reason: '...' }
 }
 
 async function validateViaKV(licenseKey) {
@@ -50,20 +45,26 @@ router.post('/validate', async (req, res) => {
   if (!licenseKey) return res.status(400).json({ status: 'invalid', reason: 'missing_key' });
 
   try {
-    // Try Supabase first (fast, no Redis dependency)
-    let result = await validateViaSupabase(licenseKey);
-
-    // Fall back to KV if Supabase not configured
-    if (result === null) result = await validateViaKV(licenseKey);
-
-    // If neither is available, fail open
-    if (result === null) return res.json({ status: 'ok', plan: 'standard' });
+    // Supabase RPC — uses anon key, no service role needed
+    const result = await validateViaSupabase(licenseKey);
 
     if (result.valid) return res.json({ status: 'ok', plan: result.plan });
     return res.status(403).json({ status: 'invalid', reason: result.reason });
   } catch (e) {
-    console.error('[Validate] error:', e.message);
-    // Fail open on server errors
+    console.error('[Validate] Supabase failed:', e.message);
+
+    // Fall back to KV
+    try {
+      const kvResult = await validateViaKV(licenseKey);
+      if (kvResult) {
+        if (kvResult.valid) return res.json({ status: 'ok', plan: kvResult.plan });
+        return res.status(403).json({ status: 'invalid', reason: kvResult.reason });
+      }
+    } catch (e2) {
+      console.error('[Validate] KV also failed:', e2.message);
+    }
+
+    // Both failed — fail open
     return res.json({ status: 'ok', plan: 'standard' });
   }
 });
