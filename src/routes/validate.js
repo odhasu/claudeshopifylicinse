@@ -61,20 +61,21 @@ router.post('/validate', async (req, res) => {
     return res.status(403).json({ status: 'invalid', reason: result.reason, _src: 'supabase' });
   } catch (e) {
     console.error('[Validate] Supabase failed:', e.message);
+    const supabaseErr = e.message;
 
     // Fall back to KV
     try {
       const kvResult = await validateViaKV(licenseKey);
       if (kvResult) {
-        if (kvResult.valid) return res.json({ status: 'ok', plan: kvResult.plan, _src: 'kv' });
-        return res.status(403).json({ status: 'invalid', reason: kvResult.reason, _src: 'kv' });
+        if (kvResult.valid) return res.json({ status: 'ok', plan: kvResult.plan, _src: 'kv', _sbErr: supabaseErr });
+        return res.status(403).json({ status: 'invalid', reason: kvResult.reason, _src: 'kv', _sbErr: supabaseErr });
       }
     } catch (e2) {
       console.error('[Validate] KV also failed:', e2.message);
     }
 
     // Both failed — fail open
-    return res.json({ status: 'ok', plan: 'standard', _src: 'failopen', _err: e.message });
+    return res.json({ status: 'ok', plan: 'standard', _src: 'failopen', _err: supabaseErr });
   }
 });
 
