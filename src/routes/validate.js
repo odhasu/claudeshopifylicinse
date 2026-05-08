@@ -10,21 +10,30 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eqmagffuzblywevszosw.s
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxbWFnZmZ1emJseXdldnN6b3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTgwNjcsImV4cCI6MjA4NjQ5NDA2N30.dlSSmQK2C_7ArHOI-SttFLO7hqRoFCLFcDu1n_6VjsY';
 
 async function validateViaSupabase(licenseKey) {
-  const url = `${SUPABASE_URL}/rest/v1/rpc/validate_license`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({ p_license_key: licenseKey }),
-    signal: AbortSignal.timeout(5000),
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 5000);
 
-  if (!res.ok) throw new Error(`Supabase HTTP ${res.status}`);
-  const data = await res.json();
-  return data; // { valid: true/false, plan: '...', reason: '...' }
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/rpc/validate_license`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ p_license_key: licenseKey }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      throw new Error(`Supabase HTTP ${res.status}: ${body}`);
+    }
+    return await res.json(); // { valid: true/false, plan: '...', reason: '...' }
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function validateViaKV(licenseKey) {
