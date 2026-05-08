@@ -57,8 +57,8 @@ router.post('/validate', async (req, res) => {
     // Supabase RPC — uses anon key, no service role needed
     const result = await validateViaSupabase(licenseKey);
 
-    if (result.valid) return res.json({ status: 'ok', plan: result.plan });
-    return res.status(403).json({ status: 'invalid', reason: result.reason });
+    if (result.valid) return res.json({ status: 'ok', plan: result.plan, _src: 'supabase' });
+    return res.status(403).json({ status: 'invalid', reason: result.reason, _src: 'supabase' });
   } catch (e) {
     console.error('[Validate] Supabase failed:', e.message);
 
@@ -66,15 +66,15 @@ router.post('/validate', async (req, res) => {
     try {
       const kvResult = await validateViaKV(licenseKey);
       if (kvResult) {
-        if (kvResult.valid) return res.json({ status: 'ok', plan: kvResult.plan });
-        return res.status(403).json({ status: 'invalid', reason: kvResult.reason });
+        if (kvResult.valid) return res.json({ status: 'ok', plan: kvResult.plan, _src: 'kv' });
+        return res.status(403).json({ status: 'invalid', reason: kvResult.reason, _src: 'kv' });
       }
     } catch (e2) {
       console.error('[Validate] KV also failed:', e2.message);
     }
 
     // Both failed — fail open
-    return res.json({ status: 'ok', plan: 'standard' });
+    return res.json({ status: 'ok', plan: 'standard', _src: 'failopen', _err: e.message });
   }
 });
 
