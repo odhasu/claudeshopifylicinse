@@ -6,8 +6,8 @@
 const express = require('express');
 const router = express.Router();
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://eqmagffuzblywevszosw.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxbWFnZmZ1emJseXdldnN6b3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTgwNjcsImV4cCI6MjA4NjQ5NDA2N30.dlSSmQK2C_7ArHOI-SttFLO7hqRoFCLFcDu1n_6VjsY';
+const SUPABASE_URL = 'https://eqmagffuzblywevszosw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxbWFnZmZ1emJseXdldnN6b3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTgwNjcsImV4cCI6MjA4NjQ5NDA2N30.dlSSmQK2C_7ArHOI-SttFLO7hqRoFCLFcDu1n_6VjsY';
 
 async function validateViaSupabase(licenseKey) {
   const controller = new AbortController();
@@ -57,25 +57,24 @@ router.post('/validate', async (req, res) => {
     // Supabase RPC — uses anon key, no service role needed
     const result = await validateViaSupabase(licenseKey);
 
-    if (result.valid) return res.json({ status: 'ok', plan: result.plan, _src: 'supabase' });
-    return res.status(403).json({ status: 'invalid', reason: result.reason, _src: 'supabase' });
+    if (result.valid) return res.json({ status: 'ok', plan: result.plan });
+    return res.status(403).json({ status: 'invalid', reason: result.reason });
   } catch (e) {
     console.error('[Validate] Supabase failed:', e.message);
-    const supabaseErr = e.message;
 
     // Fall back to KV
     try {
       const kvResult = await validateViaKV(licenseKey);
       if (kvResult) {
-        if (kvResult.valid) return res.json({ status: 'ok', plan: kvResult.plan, _src: 'kv', _sbErr: supabaseErr });
-        return res.status(403).json({ status: 'invalid', reason: kvResult.reason, _src: 'kv', _sbErr: supabaseErr });
+        if (kvResult.valid) return res.json({ status: 'ok', plan: kvResult.plan });
+        return res.status(403).json({ status: 'invalid', reason: kvResult.reason });
       }
     } catch (e2) {
       console.error('[Validate] KV also failed:', e2.message);
     }
 
     // Both failed — fail open
-    return res.json({ status: 'ok', plan: 'standard', _src: 'failopen', _err: supabaseErr });
+    return res.json({ status: 'ok', plan: 'standard' });
   }
 });
 
